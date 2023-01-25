@@ -1,0 +1,18 @@
+{
+  "name": "rpg-viewer-server",
+  "version": "1.0.0",
+  "description": "RPG Viewer's official backend server",
+  "main": "server.js",
+  "scripts": {
+    "start": "set DEBUG=*,-socket.io-parser,-engine:socket,-engine:ws,-socket.io:socket, node ./src/server.js && node ./src/server.js"
+  },
+  "author": "Ithar",
+  "license": "ISC",
+  "dependencies": {
+    "bcrypt": "^5.1.0",
+    "debug": "^4.3.4",
+    "mongodb": "^4.10.0",
+    "mongoose": "^6.7.2",
+    "socket.io": "^4.5.2"
+  }
+}
