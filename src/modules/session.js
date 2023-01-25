@@ -1,7 +1,9 @@
 const { sessionModel, sceneModel } = require('../schemas')
 const socket = require('socket.io')
 const { connect } = require('mongoose')
+const { ObjectId } = require('mongodb')
 const account = require('./account')
+const networking = require('./networking')
 
 async function prepareConnection() {
     return new Promise((resolve, reject) => {
@@ -25,15 +27,21 @@ async function prepareConnection() {
 }
 
 module.exports = {
-    create: async function (master, data) {
-        await prepareConnection()
+    create: async function (master, data, buffer) {
+        return new Promise(async (resolve, reject) => {
+            await prepareConnection()
 
-        const insert = await sessionModel.create(data)
-        if (insert) {
-            const licence = await account.validateLicence(insert._id, master)
-            if (licence) return
-            else throw new Error('Failed to validate licence')
-        } else throw new Error('Failed to create session')
+            await networking.uploadFile(data.background, buffer).then(null, (rejected) => {
+                reject(rejected)
+            })
+
+            const insert = await sessionModel.create(data)
+            if (insert) {
+                const licence = await account.validateLicence(insert._id, master)
+                if (licence) resolve()
+                else reject('Failed to validate licence')
+            } else reject('Failed to create session')
+        })
     },
 
     join: async function (sessionId, socket, username) {

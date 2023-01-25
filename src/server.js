@@ -143,7 +143,7 @@ io.on('connection', (socket) => {
         }
     })
 
-    socket.on('create-session', async (name, callback) => {
+    socket.on('create-session', async (name, buffer, callback) => {
         try {
             await session.create(accountInfo.uid, new sessionModel({
                 name: name,
@@ -153,8 +153,9 @@ io.on('connection', (socket) => {
                     synced: false
                 },
                 blueprints: [],
-                scenes: []
-            }))
+                scenes: [],
+                background: new ObjectId()
+            }), buffer)
             callback(true)
         } catch (e) {
             console.error(e)
@@ -169,7 +170,8 @@ io.on('connection', (socket) => {
                 master: data.master.equals(accountInfo.uid),
                 synced: data.state.synced,
                 scene: data.state.scene,
-                users: data.users
+                users: data.users,
+                background: data.background
             }
             callback(true, sessionInfo)
         } catch (e) {

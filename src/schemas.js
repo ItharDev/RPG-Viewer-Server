@@ -160,7 +160,8 @@ const sessionModel = model('sessions', new Schema({
         scene: ObjectId
     },
     blueprints: Array,
-    scenes: Array
+    scenes: Array,
+    background: ObjectId
 }))
 
 const userModel = model('users', new Schema({
