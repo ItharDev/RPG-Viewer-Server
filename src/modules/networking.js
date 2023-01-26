@@ -45,11 +45,6 @@ networking.uploadFile = (id, base64) => {
     })
 }
 
-/**
- * Downloads file from GridFS collection
- * @param {ObjectId} id id of the file
- * @returns {Promise<String>} file data as base64 String
- */
 networking.downloadFile = (id) => {
     return new Promise(async (resolve, reject) => {
         let exists = false
@@ -74,12 +69,6 @@ networking.downloadFile = (id) => {
     })
 }
 
-/**
- * Modifies file reference count
- * @param {ObjectId} id id of the file
- * @param {Number} increment increment of references
- * @returns {Promise<void>} promise
- */
 networking.modifyFile = (id, increment) => {
     return new Promise(async (resolve, reject) => {
         const file = await fileModel.findById(id).exec()
@@ -89,15 +78,10 @@ networking.modifyFile = (id, increment) => {
                 const remove = await fileModel.findByIdAndRemove(id).exec()
             } else await fileModel.findOneAndUpdate(id, { $inc: { count: increment } }).exec()
             resolve()
-        } else reject('Failed to increment file reference')
+        } else resolve()
     })
 }
 
-/**
- * Deletes file from GridFS collection
- * @param {ObjectId} id id of the file
- * @returns {Promise<void>} Promise
- */
 networking.deleteFile = async (id) => {
     return new Promise(async (resolve, reject) => {
         let exists = false
@@ -106,8 +90,8 @@ networking.deleteFile = async (id) => {
 
         if (!exists) resolve()
         else await gfs.delete(id, (callback) => {
-            if (!callback) resolve()
-            else reject(callback)
+            if (callback) reject(callback)
+            resolve()
         })
     })
 }

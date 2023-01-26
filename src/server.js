@@ -1,14 +1,16 @@
+//#region Dependencies
 const { createServer } = require('http')
 const { ObjectId } = require('mongodb')
 const socket = require('socket.io')
 
 const networking = require('./modules/networking')
-const { blueprintModel, sceneModel, sessionModel, userModel, tokenModel } = require('./schemas')
+const { blueprintModel, sceneModel, sessionModel, userModel, tokenModel, noteModel } = require('./schemas')
 const account = require('./modules/account')
 const scene = require('./modules/scene')
 const blueprint = require('./modules/blueprint')
 const session = require('./modules/session')
 const token = require('./modules/token')
+const notes = require('./modules/notes')
 
 const server = createServer()
 const port = 3000
@@ -28,8 +30,10 @@ async function startDatabaseAndServer() {
     server.listen(port, () => {
     })
 }
+//#endregion
 
 io.on('connection', (socket) => {
+    //#region Data
     let accountInfo = {
         uid: ObjectId,
         username: String
@@ -40,7 +44,9 @@ io.on('connection', (socket) => {
         synced: undefined,
         scene: undefined
     }
+    //#endregion
 
+    //#region Misc
     socket.on('disconnect', async () => {
         try {
             if (!sessionInfo) return;
@@ -66,7 +72,9 @@ io.on('connection', (socket) => {
             callback(false, e.message)
         }
     })
+    //#endregion
 
+    //#region Accounts
     socket.on('get-user', async (uid, callback) => {
         try {
             const acc = await account.get(ObjectId(uid))
@@ -142,7 +150,9 @@ io.on('connection', (socket) => {
             callback(e.message)
         }
     })
+    //#endregion
 
+    //#region Sessions
     socket.on('create-session', async (name, buffer, callback) => {
         try {
             await session.create(accountInfo.uid, new sessionModel({
@@ -194,7 +204,9 @@ io.on('connection', (socket) => {
             callback(false, e.message)
         }
     })
+    //#endregion
 
+    //#region Tokens
     socket.on('get-token', async (id, callback) => {
         try {
             const data = await token.get(ObjectId(id))
@@ -372,7 +384,9 @@ io.on('connection', (socket) => {
             callback(false, e.message)
         }
     })
+    //#endregion
 
+    //#region State
     socket.on('set-scene', async (sceneId, callback) => {
         try {
             const scene = await session.set(sessionInfo.id, sceneId ? ObjectId(sceneId) : undefined)
@@ -397,7 +411,9 @@ io.on('connection', (socket) => {
             callback(false, e.message)
         }
     })
+    //#endregion
 
+    //#region Doors
     socket.on('toggle-door', async (id, state, callback) => {
         try {
             await scene.toggleDoor(sessionInfo.scene, ObjectId(id), state)
@@ -418,6 +434,9 @@ io.on('connection', (socket) => {
             callback(false, e.message)
         }
     })
+    //#endregion
+
+    //#region Lights
     socket.on('create-light', async (json, callback) => {
         try {
             const data = await scene.createLight(sessionInfo.scene, JSON.parse(json))
@@ -448,6 +467,9 @@ io.on('connection', (socket) => {
             callback(false, e.message)
         }
     })
+    //#endregion
+
+    //#region Tools
     socket.on('ping', (position, strong) => {
         io.to(sessionInfo.id.toString()).emit('ping', position, strong)
     })
@@ -471,7 +493,9 @@ io.on('connection', (socket) => {
             callback(false, e.message)
         }
     })
+    //#endregion
 
+    //#region Scenes
     socket.on('get-scene', async (id, callback) => {
         try {
             const data = await scene.get(ObjectId(id))
@@ -588,7 +612,9 @@ io.on('connection', (socket) => {
             callback(false, e.message)
         }
     })
+    //#endregion
 
+    //#region Blueprints
     socket.on('get-blueprint', async (id, callback) => {
         try {
             const bp = await blueprint.get(ObjectId(id))
@@ -725,6 +751,110 @@ io.on('connection', (socket) => {
             callback(false, e.message)
         }
     })
+    //#endregion
+
+    //#region Notes
+    socket.on('get-note', async (id, callback) => {
+        try {
+            const data = await notes.get(ObjectId(id))
+            callback(true, data, data._id.toString())
+        } catch (e) {
+            console.error(e)
+            callback(false, e.message)
+        }
+    })
+
+    socket.on('get-notes', async (id, callback) => {
+        try {
+            const data = await notes.getAll(ObjectId(id))
+            callback(true, data)
+        } catch (e) {
+            console.error(e)
+            callback(false, e.message)
+        }
+    })
+    socket.on('create-note', async (json, callback) => {
+        try {
+            const data = JSON.parse(json)
+            data.owner = accountInfo.uid
+
+            const id = await notes.create(sessionInfo.scene, new noteModel({
+                owner: data.owner,
+                text: data.text,
+                image: undefined,
+                position: data.position,
+                header: data.header,
+                isPublic: data.isPublic
+            }))
+
+            io.to(sessionInfo.id.toString()).emit('create-note', data, id)
+            callback(true)
+        } catch (e) {
+            console.error(e)
+            callback(false, e.message)
+        }
+    })
+    socket.on('modify-note-text', async (id, text, callback) => {
+        try {
+            await notes.modifyText(ObjectId(id), text)
+            io.to(sessionInfo.id.toString()).emit('modify-note-text', id, text)
+            callback(true)
+        } catch (e) {
+            console.error(e)
+            callback(false, e.message)
+        }
+    })
+    socket.on('modify-note-header', async (id, text, callback) => {
+        try {
+            await notes.modifyHeader(ObjectId(id), text)
+            io.to(sessionInfo.id.toString()).emit('modify-note-header', id, text)
+            callback(true)
+        } catch (e) {
+            console.error(e)
+            callback(false, e.message)
+        }
+    })
+    socket.on('modify-note-image', async (id, buffer, callback) => {
+        try {
+            const newImage = await notes.modifyImage(ObjectId(id), buffer)
+            io.to(sessionInfo.id.toString()).emit('modify-note-image', id, newImage)
+            callback(true)
+        } catch (e) {
+            console.error(e)
+            callback(false, e.message)
+        }
+    })
+    socket.on('remove-note', async (id, callback) => {
+        try {
+            await notes.remove(sessionInfo.scene, ObjectId(id))
+            io.to(sessionInfo.id.toString()).emit('remove-note', id)
+            callback(true)
+        } catch (e) {
+            console.error(e)
+            callback(false, e.message)
+        }
+    })
+    socket.on('move-note', async (id, position, callback) => {
+        try {
+            await notes.move(ObjectId(id), JSON.parse(position))
+            io.to(sessionInfo.id.toString()).emit('move-note', id, position)
+            callback(true)
+        } catch (e) {
+            console.error(e)
+            callback(false, e.message)
+        }
+    })
+    socket.on('set-note-state', async (id, isPublic, callback) => {
+        try {
+            await notes.setPublic(ObjectId(id), isPublic)
+            io.to(sessionInfo.id.toString()).emit('set-note-state', id, isPublic)
+            callback(true)
+        } catch (e) {
+            console.error(e)
+            callback(false, e.message)
+        }
+    })
+    //#endregion
 })
 
 startDatabaseAndServer()

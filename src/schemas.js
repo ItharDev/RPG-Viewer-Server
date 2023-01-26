@@ -148,7 +148,8 @@ const sceneModel = model('scenes', new Schema({
             b: Number,
             a: Number
         },
-    })
+    }),
+    notes: Array(ObjectId)
 }))
 
 const sessionModel = model('sessions', new Schema({
@@ -176,11 +177,24 @@ const fileModel = model('files', new Schema({
     count: Number
 }))
 
+const noteModel = model('notes', new Schema({
+    owner: ObjectId,
+    header: String,
+    text: String,
+    image: ObjectId,
+    isPublic: Boolean,
+    position: {
+        x: Number,
+        y: Number
+    },
+}))
+
 module.exports = {
     blueprintModel,
     tokenModel,
     sceneModel,
     sessionModel,
     userModel,
-    fileModel
+    fileModel,
+    noteModel
 }

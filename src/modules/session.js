@@ -1,4 +1,4 @@
-const { sessionModel, sceneModel } = require('../schemas')
+const { sessionModel, sceneModel, noteModel } = require('../schemas')
 const socket = require('socket.io')
 const { connect } = require('mongoose')
 const { ObjectId } = require('mongodb')
@@ -59,7 +59,6 @@ module.exports = {
         if (socket.rooms.has(sessionId.toString())) {
             socket.to(sessionId.toString()).emit('user-disconnected', username)
             socket.leave(sessionId.toString())
-            return
         } else throw new Error('Client not connected to any game session')
     },
 
@@ -67,11 +66,11 @@ module.exports = {
         await prepareConnection()
 
         const scene = await sceneModel.findById(sceneId).exec()
+
         if (scene || !sceneId) {
             const session = await sessionModel.findByIdAndUpdate(sessionId, { $set: { 'state.scene': sceneId } }).exec()
-            if (session) {
-                return scene
-            } else throw new Error('Invalid session id')
+            if (session) return scene
+            else throw new Error('Invalid session id')
         } else throw new Error('Invalid scene id')
     },
 
@@ -79,7 +78,6 @@ module.exports = {
         await prepareConnection()
 
         const update = await sessionModel.findByIdAndUpdate(sessionId, { $set: { 'state.synced': sync } }).exec()
-        if (update) return
-        else throw new Error('Failed to update sync state')
+        if (!update) throw new Error('Failed to update sync state')
     }
 }

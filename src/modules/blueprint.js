@@ -30,8 +30,8 @@ module.exports = {
     get: async function (blueprintId) {
         await prepareConnection()
 
-        const document = await blueprintModel.findById(blueprintId).exec()
-        if (document) return document
+        const blueprint = await blueprintModel.findById(blueprintId).exec()
+        if (blueprint) return blueprint
         else throw new Error('Failed to load blueprint data')
     },
 
@@ -39,9 +39,8 @@ module.exports = {
         await prepareConnection()
 
         const session = await sessionModel.findById(sessionId).exec()
-        if (session) {
-            return session.blueprints
-        } else throw new Error('Invalid session id')
+        if (session) return session.blueprints
+        else throw new Error('Invalid session id')
     },
 
     create: async function (sessionId, path, data, image) {
@@ -50,22 +49,19 @@ module.exports = {
 
             await networking.uploadFile(data.image, image).then(null, (rejected) => {
                 reject(rejected)
-                return
             })
             const document = await sessionModel.findById(sessionId).exec()
             if (document) {
                 const blueprint = await blueprintModel.create(data)
                 if (blueprint) {
-                    const f = await folder.get(document.blueprints, path)
-                    if (f) {
-                        const update = await sessionModel.findByIdAndUpdate(sessionId, { $addToSet: { [`blueprints.${f.path}.contents`]: blueprint._id } }).exec()
-                    } else {
-                        const update = await sessionModel.findByIdAndUpdate(sessionId, { $addToSet: { [`blueprints`]: blueprint._id } }).exec()
-                    }
+                    const targetFolder = await folder.get(document.blueprints, path)
+                    if (targetFolder) await sessionModel.findByIdAndUpdate(sessionId, { $addToSet: { [`blueprints.${targetFolder.path}.contents`]: blueprint._id } }).exec()
+                    else await sessionModel.findByIdAndUpdate(sessionId, { $addToSet: { [`blueprints`]: blueprint._id } }).exec()
+                    
                     resolve(blueprint)
                 }
-                else throw new Error('Failed to create blueprint')
-            } else throw new Error('Failed to create blueprint')
+                else reject('Failed to create blueprint')
+            } else reject('Failed to create blueprint')
         })
     },
 
@@ -73,20 +69,17 @@ module.exports = {
         await prepareConnection()
         const document = await sessionModel.findById(sessionId).exec()
         if (document) {
-            const f = await folder.get(document.blueprints, path)
-            if (f) {
-                const pull = await sessionModel.findByIdAndUpdate(sessionId, { $pull: { [`blueprints.${f.path}.contents`]: blueprintId } }).exec()
-            } else {
-                const pull = await sessionModel.findByIdAndUpdate(sessionId, { $pull: { [`blueprints`]: blueprintId } }).exec()
-            }
+            const targetFolder = await folder.get(document.blueprints, path)
+            if (targetFolder) await sessionModel.findByIdAndUpdate(sessionId, { $pull: { [`blueprints.${targetFolder.path}.contents`]: blueprintId } }).exec()
+            else await sessionModel.findByIdAndUpdate(sessionId, { $pull: { [`blueprints`]: blueprintId } }).exec()
 
             const blueprint = await blueprintModel.findByIdAndDelete(blueprintId)
             if (blueprint) {
                 await networking.modifyFile(blueprint.image, -1)
-                return
+                resolve()
             }
-            else throw new Error('Failed to remove blueprint')
-        } else throw new Error('Failed to create blueprint')
+            else reject('Failed to remove blueprint')
+        } else reject('Failed to remove blueprint')
     },
 
     modify: async function (blueprintId, data, image) {
@@ -98,11 +91,9 @@ module.exports = {
                     data.image = new ObjectId()
                     await networking.uploadFile(data.image, image).then(null, (rejected) => {
                         reject(rejected)
-                        return
                     })
                 }, (rejected) => {
                     reject(rejected)
-                    return
                 })
             }
 
@@ -137,8 +128,7 @@ module.exports = {
         await prepareConnection()
 
         const update = await blueprintModel.findByIdAndUpdate(blueprintId, { $set: { permissions: permissions } }).exec()
-        if (update) return
-        else throw new Error('Failed to update permissions')
+        if (!update) throw new Error('Failed to update permissions')
     },
 
     move: async function (sessionId, blueprintId, oldPath, newPath) {
@@ -151,22 +141,17 @@ module.exports = {
             let pull
             let push
 
-            if (!oldPath) {
-                pull = await sessionModel.findByIdAndUpdate(sessionId, { $pull: { [`blueprints`]: blueprintId } }).exec()
-            } else {
-                pull = await sessionModel.findByIdAndUpdate(sessionId, { $pull: { [`blueprints.${oldFolder.path}.contents`]: blueprintId } }).exec()
-            }
+            if (!oldPath) pull = await sessionModel.findByIdAndUpdate(sessionId, { $pull: { [`blueprints`]: blueprintId } }).exec()
+            else pull = await sessionModel.findByIdAndUpdate(sessionId, { $pull: { [`blueprints.${oldFolder.path}.contents`]: blueprintId } }).exec()
+
             if (pull) {
                 const newState = await sessionModel.findById(sessionId).exec()
                 const newFolder = await folder.get(newState.blueprints, newPath)
 
-                if (!newPath) {
-                    push = await sessionModel.findByIdAndUpdate(sessionId, { $addToSet: { [`blueprints`]: blueprintId } }).exec()
-                } else {
-                    push = await sessionModel.findByIdAndUpdate(sessionId, { $addToSet: { [`blueprints.${newFolder.path}.contents`]: blueprintId } }).exec()
-                }
-                if (push) return
-                else throw new Error('Failed to move blueprint')
+                if (!newPath) push = await sessionModel.findByIdAndUpdate(sessionId, { $addToSet: { [`blueprints`]: blueprintId } }).exec()
+                else push = await sessionModel.findByIdAndUpdate(sessionId, { $addToSet: { [`blueprints.${newFolder.path}.contents`]: blueprintId } }).exec()
+                
+                if (!push) throw new Error('Failed to move blueprint')
             }
             else throw new Error('Failed to move blueprint')
         } else throw new Error('Failed to move blueprint')
@@ -184,9 +169,9 @@ module.exports = {
                 contents: []
             }
 
-            const f = await folder.get(document.blueprints, path)
-            if (f) {
-                const update = await sessionModel.findByIdAndUpdate(sessionId, { $addToSet: { [`blueprints.${f.path}.subFolders`]: struct } }).exec()
+            const targetFolder = await folder.get(document.blueprints, path)
+            if (targetFolder) {
+                const update = await sessionModel.findByIdAndUpdate(sessionId, { $addToSet: { [`blueprints.${targetFolder.path}.subFolders`]: struct } }).exec()
                 if (update) return struct.id
                 else throw new Error('Failed to create folder')
             } else {
@@ -211,15 +196,13 @@ module.exports = {
             let paths = path.split('/')
             const folderId = paths.pop()
 
-            const f = await folder.get(document.blueprints, paths.join('/'))
-            if (f) {
-                const update = await sessionModel.findByIdAndUpdate(sessionId, { $pull: { [`blueprints.${f.path}.subFolders`]: { id: ObjectId(folderId) } } }).exec()
-                if (update) return
-                else throw new Error('Failed to remove folder')
+            const targetFolder = await folder.get(document.blueprints, paths.join('/'))
+            if (targetFolder) {
+                const update = await sessionModel.findByIdAndUpdate(sessionId, { $pull: { [`blueprints.${targetFolder.path}.subFolders`]: { id: ObjectId(folderId) } } }).exec()
+                if (!update) throw new Error('Failed to remove folder')
             } else {
                 const update = await sessionModel.findByIdAndUpdate(sessionId, { $pull: { [`blueprints`]: { id: ObjectId(folderId) } } }).exec()
-                if (update) return
-                else throw new Error('Failed to remove folder')
+                if (!update) throw new Error('Failed to remove folder')
             }
         } else throw new Error('Failed to remove folder')
     },
@@ -229,11 +212,10 @@ module.exports = {
 
         const document = await sessionModel.findById(sessionId).exec()
         if (document) {
-            const f = await folder.get(document.blueprints, path)
-            if (f) {
-                const update = await sessionModel.findByIdAndUpdate(sessionId, { $set: { [`blueprints.${f.path}.name`]: name } }).exec()
-                if (update) return
-                else throw new Error('Failed to rename folder')
+            const targetFolder = await folder.get(document.blueprints, path)
+            if (targetFolder) {
+                const update = await sessionModel.findByIdAndUpdate(sessionId, { $set: { [`blueprints.${targetFolder.path}.name`]: name } }).exec()
+                if (!update) throw new Error('Failed to rename folder')
             } else throw new Error('Failed to rename folder')
         } else throw new Error('Failed to rename folder')
     },
@@ -250,30 +232,20 @@ module.exports = {
             let push
 
             const oldFolder = await folder.get(document.blueprints, oldPaths.join('/'))
-            if (oldFolder) {
-                pull = await sessionModel.findByIdAndUpdate(sessionId, { $pull: { [`blueprints.${oldFolder.path}.subFolders`]: { id: ObjectId(oldId) } } }).exec()
-            } else {
-                pull = await sessionModel.findByIdAndUpdate(sessionId, { $pull: { [`blueprints`]: { id: ObjectId(oldId) } } }).exec()
-            }
+            if (oldFolder) pull = await sessionModel.findByIdAndUpdate(sessionId, { $pull: { [`blueprints.${oldFolder.path}.subFolders`]: { id: ObjectId(oldId) } } }).exec()
+            else pull = await sessionModel.findByIdAndUpdate(sessionId, { $pull: { [`blueprints`]: { id: ObjectId(oldId) } } }).exec()
 
             if (pull) {
                 const newState = await sessionModel.findById(sessionId).exec()
                 const newFolder = await folder.get(newState.blueprints, newPath)
                 if (newFolder) {
-                    if (oldFolder) {
-                        push = await sessionModel.findByIdAndUpdate(sessionId, { $addToSet: { [`blueprints.${newFolder.path}.subFolders`]: oldFolder.subFolders.find(obj => obj.id == oldId) } }).exec()
-                    } else {
-                        push = await sessionModel.findByIdAndUpdate(sessionId, { $addToSet: { [`blueprints.${newFolder.path}.subFolders`]: document.blueprints.find(obj => obj.id == oldId) } }).exec()
-                    }
+                    if (oldFolder) push = await sessionModel.findByIdAndUpdate(sessionId, { $addToSet: { [`blueprints.${newFolder.path}.subFolders`]: oldFolder.subFolders.find(obj => obj.id == oldId) } }).exec()
+                    else push = await sessionModel.findByIdAndUpdate(sessionId, { $addToSet: { [`blueprints.${newFolder.path}.subFolders`]: document.blueprints.find(obj => obj.id == oldId) } }).exec()
                 } else {
-                    if (oldFolder) {
-                        push = await sessionModel.findByIdAndUpdate(sessionId, { $addToSet: { [`blueprints`]: oldFolder.subFolders.find(obj => obj.id == oldId) } }).exec()
-                    } else {
-                        push = await sessionModel.findByIdAndUpdate(sessionId, { $addToSet: { [`blueprints`]: document.blueprints.find(obj => obj.id == oldId) } }).exec()
-                    }
+                    if (oldFolder) push = await sessionModel.findByIdAndUpdate(sessionId, { $addToSet: { [`blueprints`]: oldFolder.subFolders.find(obj => obj.id == oldId) } }).exec()
+                    else push = await sessionModel.findByIdAndUpdate(sessionId, { $addToSet: { [`blueprints`]: document.blueprints.find(obj => obj.id == oldId) } }).exec()
                 }
-                if (push) return
-                else throw new Error('Failed to move folder')
+                if (!push) throw new Error('Failed to move folder')
             }
             else throw new Error('Failed to move folder')
         } else throw new Error('Failed to move folder')

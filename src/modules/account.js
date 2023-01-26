@@ -125,8 +125,7 @@ module.exports = {
             }
 
             const update = await userModel.findByIdAndUpdate(uid, { $pullAll: { licences: licences } }).exec()
-            if (update) return
-            else throw new Error('Failed to remove licences')
+            if (!update) throw new Error('Failed to remove licences')
         } else throw new Error('User not found')
     }
 }
