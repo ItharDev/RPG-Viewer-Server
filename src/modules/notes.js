@@ -69,6 +69,7 @@ module.exports = {
                     }, (rejected) => {
                         reject(rejected)
                     })
+                    else resolve()
                 }
                 else reject('Failed to update directory')
             } else reject('Failed to remove note')

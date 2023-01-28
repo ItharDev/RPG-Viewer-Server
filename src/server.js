@@ -854,6 +854,15 @@ io.on('connection', (socket) => {
             callback(false, e.message)
         }
     })
+    socket.on('show-note', async (id, callback) => {
+        try {
+            socket.to(sessionInfo.id.toString()).emit('show-note', id)
+            callback(true)
+        } catch (e) {
+            console.error(e)
+            callback(false, e.message)
+        }
+    })
     //#endregion
 })
 
