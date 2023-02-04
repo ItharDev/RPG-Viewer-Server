@@ -34,7 +34,7 @@ module.exports = {
         else throw new Error('Failed to load scene data')
     },
 
-    loadDirectory: async function (sessionId) {
+    getAll: async function (sessionId) {
         await prepareConnection()
 
         const session = await sessionModel.findById(sessionId).exec()
@@ -56,13 +56,13 @@ module.exports = {
                     const targetFolder = await folder.get(document.scenes, path)
                     if (targetFolder) await sessionModel.findByIdAndUpdate(sessionId, { $addToSet: { [`scenes.${targetFolder.path}.contents`]: scene._id } }).exec()
                     else await sessionModel.findByIdAndUpdate(sessionId, { $addToSet: { [`scenes`]: scene._id } }).exec()
-                    
+
                     resolve(scene)
                 }
                 else reject('Failed to create scene')
             } else reject('Failed to create scene')
-            
-        })    
+
+        })
     },
 
     remove: async function (sessionId, path, sceneId) {
@@ -102,14 +102,14 @@ module.exports = {
 
             if (!oldPath) pull = await sessionModel.findByIdAndUpdate(sessionId, { $pull: { [`scenes`]: sceneId } }).exec()
             else pull = await sessionModel.findByIdAndUpdate(sessionId, { $pull: { [`scenes.${oldFolder.path}.contents`]: sceneId } }).exec()
-            
+
             if (pull) {
                 const newState = await sessionModel.findById(sessionId).exec()
                 const newFolder = await folder.get(newState.scenes, newPath)
 
                 if (!newPath) push = await sessionModel.findByIdAndUpdate(sessionId, { $addToSet: { [`scenes`]: sceneId } }).exec()
                 else push = await sessionModel.findByIdAndUpdate(sessionId, { $addToSet: { [`scenes.${newFolder.path}.contents`]: sceneId } }).exec()
-                
+
                 if (!push) throw new Error('Failed to move scene')
             }
             else throw new Error('Failed to move scene')
@@ -227,7 +227,7 @@ module.exports = {
 
     createLight: async function (sceneId, data) {
         await prepareConnection()
-        
+
         data.id = new ObjectId()
         const update = await sceneModel.findByIdAndUpdate(sceneId, { $addToSet: { lights: data } }).exec()
         if (update) return JSON.stringify(data)

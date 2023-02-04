@@ -103,7 +103,6 @@ module.exports = {
 
             const id = buffer ? new ObjectId() : undefined
             const note = await noteModel.findById(noteId).exec()
-            console.log(note)
             if (note.image) await networking.modifyFile(note.image, -1).then(null, (rejected) => {
                 reject(rejected)
             })

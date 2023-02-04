@@ -162,6 +162,7 @@ const sessionModel = model('sessions', new Schema({
     },
     blueprints: Array,
     scenes: Array,
+    journals: Array,
     background: ObjectId
 }))
 
@@ -189,6 +190,18 @@ const noteModel = model('notes', new Schema({
     },
 }))
 
+const journalModel = model('journals', new Schema({
+    owner: ObjectId,
+    header: String,
+    text: String,
+    image: ObjectId,
+    collaborators: Array({
+        _id: false,
+        user: ObjectId,
+        isCollaborator: Boolean
+    }),
+}))
+
 module.exports = {
     blueprintModel,
     tokenModel,
@@ -196,5 +209,6 @@ module.exports = {
     sessionModel,
     userModel,
     fileModel,
-    noteModel
+    noteModel,
+    journalModel
 }
