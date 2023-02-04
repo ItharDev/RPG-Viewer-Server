@@ -63,9 +63,6 @@ module.exports = {
             const user = await userModel.findById(ObjectId(uid)).exec()
             if (user) {
                 const update = await userModel.findByIdAndUpdate(uid, { $set: { online: true } }).exec()
-                for await (const doc of sceneModel.find()) {
-                    await sceneModel.findByIdAndUpdate(doc._id, { $set: { 'fogOfWar.requireVision': undefined } }).exec()
-                }
                 return user
             }
             else throw new Error('Invalid or unknown user id')

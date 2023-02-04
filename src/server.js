@@ -4,13 +4,14 @@ const { ObjectId } = require('mongodb')
 const socket = require('socket.io')
 
 const networking = require('./modules/networking')
-const { blueprintModel, sceneModel, sessionModel, userModel, tokenModel, noteModel } = require('./schemas')
+const { blueprintModel, sceneModel, sessionModel, userModel, tokenModel, noteModel, journalModel } = require('./schemas')
 const account = require('./modules/account')
 const scene = require('./modules/scene')
 const blueprint = require('./modules/blueprint')
 const session = require('./modules/session')
 const token = require('./modules/token')
 const notes = require('./modules/notes')
+const journals = require('./modules/journals')
 
 const server = createServer()
 const port = 3000
@@ -178,6 +179,7 @@ io.on('connection', (socket) => {
             sessionInfo = {
                 id: data._id,
                 master: data.master.equals(accountInfo.uid),
+                masterId: data.master,
                 synced: data.state.synced,
                 scene: data.state.scene,
                 users: data.users,
@@ -507,7 +509,7 @@ io.on('connection', (socket) => {
     })
     socket.on('get-scenes', async (callback) => {
         try {
-            const result = await scene.loadDirectory(sessionInfo.id)
+            const result = await scene.getAll(sessionInfo.id)
             callback(true, result)
         } catch (e) {
             console.error(e)
@@ -626,7 +628,7 @@ io.on('connection', (socket) => {
     })
     socket.on('get-blueprints', async (callback) => {
         try {
-            const result = await blueprint.loadDirectory(sessionInfo.id)
+            const result = await blueprint.getAll(sessionInfo.id)
             callback(true, result)
         } catch (e) {
             console.error(e)
@@ -857,6 +859,167 @@ io.on('connection', (socket) => {
     socket.on('show-note', async (id, callback) => {
         try {
             socket.to(sessionInfo.id.toString()).emit('show-note', id)
+            callback(true)
+        } catch (e) {
+            console.error(e)
+            callback(false, e.message)
+        }
+    })
+    //#endregion
+
+    //#region Journals
+    socket.on('get-journal', async (id, callback) => {
+        try {
+            const data = await journals.get(ObjectId(id))
+            callback(true, data)
+        } catch (e) {
+            console.error(e)
+            callback(false, e.message)
+        }
+    })
+    socket.on('get-journals', async (callback) => {
+        try {
+            const result = await journals.getAll(sessionInfo.id, accountInfo.uid)
+            callback(true, result)
+        } catch (e) {
+            console.error(e)
+            callback(false, e.message)
+        }
+    })
+    socket.on('create-journal', async (path, json, callback) => {
+        try {
+            const data = JSON.parse(json)
+            data.owner = accountInfo.uid
+
+            const result = await journals.create(sessionInfo.id, path, new journalModel({
+                owner: data.owner,
+                header: data.header,
+                text: data.text,
+                image: undefined,
+                collaborators: data.collaborators
+            }))
+            callback(true, result)
+        } catch (e) {
+            console.error(e)
+            callback(false, e.message)
+        }
+    })
+    socket.on('remove-journal', async (id, path, callback) => {
+        try {
+            await journals.remove(sessionInfo.id, path, accountInfo.uid, ObjectId(id))
+            io.to(sessionInfo.id.toString()).emit('remove-journal', id)
+            callback(true)
+        } catch (e) {
+            console.error(e)
+            callback(false, e.message)
+        }
+    })
+    socket.on('modify-journal-text', async (id, text, callback) => {
+        try {
+            await journals.modifyText(ObjectId(id), text)
+            io.to(sessionInfo.id.toString()).emit('modify-journal-text', id, text)
+            callback(true)
+        } catch (e) {
+            console.error(e)
+            callback(false, e.message)
+        }
+    })
+    socket.on('modify-journal-header', async (id, text, callback) => {
+        try {
+            await journals.modifyHeader(ObjectId(id), text)
+            io.to(sessionInfo.id.toString()).emit('modify-journal-header', id, text)
+            callback(true)
+        } catch (e) {
+            console.error(e)
+            callback(false, e.message)
+        }
+    })
+    socket.on('modify-journal-image', async (id, buffer, callback) => {
+        try {
+            const newImage = await journals.modifyImage(ObjectId(id), buffer)
+            io.to(sessionInfo.id.toString()).emit('modify-journal-image', id, newImage)
+            callback(true)
+        } catch (e) {
+            console.error(e)
+            callback(false, e.message)
+        }
+    })
+    socket.on('show-journal', async (data, callback) => {
+        try {
+            socket.to(sessionInfo.id.toString()).emit('show-journal', data)
+            callback(true)
+        } catch (e) {
+            console.error(e)
+            callback(false, e.message)
+        }
+    })
+    socket.on('set-collaborators', async (journalId, json, callback) => {
+        try {
+            let list = []
+            for (let i = 0; i < json.length; i++) {
+                const element = JSON.parse(json[i]);
+                list.push({
+                    user: ObjectId(element.user),
+                    isCollaborator: element.isCollaborator
+                })
+            }
+            await journals.setCollaborators(ObjectId(journalId), list, sessionInfo.id)
+            socket.to(sessionInfo.id.toString()).emit('set-collaborators', journalId, json)
+            callback(true)
+        } catch (e) {
+            console.error(e)
+            callback(false, e.message)
+        }
+    })
+    socket.on('refresh-collaborators', async (blueprintId, callback) => {
+        try {
+            const bp = await journals.refreshCollaborators(sessionInfo.id, ObjectId(blueprintId))
+            callback(true, bp)
+        } catch (e) {
+            console.error(e)
+            callback(false, e.message)
+        }
+    })
+    socket.on('move-journal', async (id, oldPath, newPath, callback) => {
+        try {
+            await journals.move(sessionInfo.id, ObjectId(id), oldPath, newPath)
+            callback(true)
+        } catch (e) {
+            console.error(e)
+            callback(false, e.message)
+        }
+    })
+
+    socket.on('create-journal-folder', async (path, name, callback) => {
+        try {
+            const id = await journals.createFolder(sessionInfo.id, path, accountInfo.uid, name)
+            callback(true, id)
+        } catch (e) {
+            console.error(e)
+            callback(false, e.message)
+        }
+    })
+    socket.on('remove-journal-folder', async (path, callback) => {
+        try {
+            await journals.removeFolder(sessionInfo.id, path, accountInfo.uid)
+            callback(true)
+        } catch (e) {
+            console.error(e)
+            callback(false, e.message)
+        }
+    })
+    socket.on('rename-journal-folder', async (path, name, callback) => {
+        try {
+            await journals.renameFolder(sessionInfo.id, path, accountInfo.uid, name)
+            callback(true)
+        } catch (e) {
+            console.error(e)
+            callback(false, e.message)
+        }
+    })
+    socket.on('move-journal-folder', async (oldPath, newPath, callback) => {
+        try {
+            await journals.moveFolder(sessionInfo.id, oldPath, newPath, accountInfo.uid)
             callback(true)
         } catch (e) {
             console.error(e)

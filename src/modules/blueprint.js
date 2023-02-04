@@ -35,7 +35,7 @@ module.exports = {
         else throw new Error('Failed to load blueprint data')
     },
 
-    loadDirectory: async function (sessionId) {
+    getAll: async function (sessionId) {
         await prepareConnection()
 
         const session = await sessionModel.findById(sessionId).exec()
