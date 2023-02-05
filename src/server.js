@@ -54,6 +54,8 @@ io.on('connection', (socket) => {
             if (sessionInfo.id && sessionInfo.master) {
                 await session.sync(sessionInfo.id, false)
                 await session.set(sessionInfo.id, undefined)
+
+                io.to(sessionInfo.id.toString()).emit('change-state', false, '')
             }
 
             sessionInfo = undefined
@@ -197,6 +199,7 @@ io.on('connection', (socket) => {
             if (sessionInfo.master) {
                 await session.sync(sessionInfo.id, false)
                 await session.set(sessionInfo.id, undefined)
+                io.to(sessionInfo.id.toString()).emit('change-state', false, '')
             }
 
             sessionInfo = undefined
