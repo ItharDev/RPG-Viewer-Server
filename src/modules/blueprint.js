@@ -32,7 +32,10 @@ module.exports = {
 
         const blueprint = await blueprintModel.findById(blueprintId).exec()
         if (blueprint) return blueprint
-        else throw new Error('Failed to load blueprint data')
+        else {
+            console.log(blueprintId)
+            throw new Error('Failed to load blueprint data')
+        }
     },
 
     getAll: async function (sessionId) {
@@ -57,7 +60,7 @@ module.exports = {
                     const targetFolder = await folder.get(document.blueprints, path)
                     if (targetFolder) await sessionModel.findByIdAndUpdate(sessionId, { $addToSet: { [`blueprints.${targetFolder.path}.contents`]: blueprint._id } }).exec()
                     else await sessionModel.findByIdAndUpdate(sessionId, { $addToSet: { [`blueprints`]: blueprint._id } }).exec()
-                    
+
                     resolve(blueprint)
                 }
                 else reject('Failed to create blueprint')
@@ -150,7 +153,7 @@ module.exports = {
 
                 if (!newPath) push = await sessionModel.findByIdAndUpdate(sessionId, { $addToSet: { [`blueprints`]: blueprintId } }).exec()
                 else push = await sessionModel.findByIdAndUpdate(sessionId, { $addToSet: { [`blueprints.${newFolder.path}.contents`]: blueprintId } }).exec()
-                
+
                 if (!push) throw new Error('Failed to move blueprint')
             }
             else throw new Error('Failed to move blueprint')

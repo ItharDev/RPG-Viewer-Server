@@ -70,11 +70,7 @@ module.exports = {
             const user = await userModel.findOne({ email: email }).exec()
             if (user) {
                 const match = await bcrypt.compare(password, user.password)
-                await userModel.findByIdAndUpdate(user._id,)
-                if (match) {
-                    const update = await userModel.findOneAndUpdate({ email: email }, { $set: { online: true } }).exec()
-                    return user
-                }
+                if (match) return user
                 else throw new Error('Invalid password')
             }
             else throw new Error('Invalid email address')
