@@ -88,6 +88,7 @@ const sceneModel = model('scenes', new Schema({
         },
         enabled: Boolean,
         globalLighting: Boolean,
+        translucency: Number
     },
     grid: {
         cellSize: Number,

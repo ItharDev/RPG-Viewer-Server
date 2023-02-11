@@ -33,7 +33,6 @@ module.exports = {
         const blueprint = await blueprintModel.findById(blueprintId).exec()
         if (blueprint) return blueprint
         else {
-            console.log(blueprintId)
             throw new Error('Failed to load blueprint data')
         }
     },
@@ -79,10 +78,9 @@ module.exports = {
             const blueprint = await blueprintModel.findByIdAndDelete(blueprintId)
             if (blueprint) {
                 await networking.modifyFile(blueprint.image, -1)
-                resolve()
             }
-            else reject('Failed to remove blueprint')
-        } else reject('Failed to remove blueprint')
+            else throw new Error('Failed to remove blueprint')
+        } else throw new Error('Failed to remove blueprint')
     },
 
     modify: async function (blueprintId, data, image) {
