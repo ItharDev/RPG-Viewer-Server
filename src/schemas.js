@@ -88,7 +88,8 @@ const sceneModel = model('scenes', new Schema({
         },
         enabled: Boolean,
         globalLighting: Boolean,
-        translucency: Number
+        translucency: Number,
+        nightVisionStrength: Number
     },
     grid: {
         cellSize: Number,
