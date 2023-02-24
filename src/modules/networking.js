@@ -5,11 +5,7 @@ let networking = {}
 
 let db
 let gfs
-// Functions
-/**
- * Starts the database
- * @returns {void} void
- */
+
 networking.startDatabase = async () => {
     const client = await new MongoClient('mongodb://127.0.0.1:27017').connect()
 
@@ -19,12 +15,6 @@ networking.startDatabase = async () => {
     networking.gfs = gfs
 }
 
-/**
- * Uploads file to GridFS collection
- * @param {ObjectId} id id of the file
- * @param {String} base64 file data as base64 String
- * @returns {Promise<void>} promise
- */
 networking.uploadFile = (id, base64) => {
     return new Promise(async (resolve, reject) => {
         let stream = gfs.openUploadStreamWithId(id, id.toString())
