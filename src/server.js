@@ -17,7 +17,7 @@ const server = createServer()
 const port = 3000
 const io = socket(server, {
     pingInterval: 10000,
-    pingTimeout: 30000,
+    pingTimeout: 120000,
     maxHttpBufferSize: 1e8
 
 })

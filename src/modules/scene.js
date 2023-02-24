@@ -76,6 +76,7 @@ module.exports = {
             const scene = await sceneModel.findByIdAndDelete(sceneId).exec()
             if (scene) {
                 await networking.modifyFile(scene.image)
+                if (!document.state.scene) return false
                 return document.state.scene.equals(sceneId)
             }
             else throw new Error('Failed to remove scene')
