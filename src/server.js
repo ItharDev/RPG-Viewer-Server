@@ -49,7 +49,6 @@ io.on('connection', (socket) => {
 
     //#region Misc
     socket.on('disconnect', async () => {
-        console.log('Received package: disconnect')
         try {
             if (!sessionInfo) return;
             if (sessionInfo.id && sessionInfo.master) {
@@ -65,7 +64,6 @@ io.on('connection', (socket) => {
         }
     })
     socket.on('download-image', async (imageId, callback) => {
-        console.log('Received package: download-image')
         try {
             await networking.downloadFile(ObjectId(imageId)).then((buffer) => {
                 callback(true, buffer)
@@ -81,7 +79,6 @@ io.on('connection', (socket) => {
 
     //#region Accounts
     socket.on('get-user', async (uid, callback) => {
-        console.log('Received package: get-user')
         try {
             const acc = await account.get(ObjectId(uid))
             callback(true, acc)
@@ -91,7 +88,6 @@ io.on('connection', (socket) => {
         }
     })
     socket.on('register', async (email, name, password, callback) => {
-        console.log('Received package: register')
         try {
             await account.register(new userModel({
                 email: email,
@@ -108,7 +104,6 @@ io.on('connection', (socket) => {
         }
     })
     socket.on('sign-in', async (email, password, uid, callback) => {
-        console.log('Received package: sign-in')
         try {
             const user = await account.signIn(email, password, uid)
             accountInfo = {
@@ -122,7 +117,6 @@ io.on('connection', (socket) => {
         }
     })
     socket.on('sign-out', async (callback) => {
-        console.log('Received package: sign-out')
         try {
             accountInfo = undefined
             callback(true)
@@ -133,7 +127,6 @@ io.on('connection', (socket) => {
     })
 
     socket.on('validate-licence', async (licenceKey, callback) => {
-        console.log('Received package: validate-licence')
         try {
             const name = await account.validateLicence(ObjectId(licenceKey), accountInfo.uid)
             callback(true)
@@ -143,7 +136,6 @@ io.on('connection', (socket) => {
         }
     })
     socket.on('load-licences', async (callback) => {
-        console.log('Received package: load-licences')
         try {
             const licences = await account.loadLicences(accountInfo.uid)
             callback(true, licences)
@@ -153,7 +145,6 @@ io.on('connection', (socket) => {
         }
     })
     socket.on('remove-licences', async (callback) => {
-        console.log('Received package: remove-licences')
         try {
             await account.removeLicences(accountInfo.uid)
             callback(true)
@@ -166,7 +157,6 @@ io.on('connection', (socket) => {
 
     //#region Sessions
     socket.on('create-session', async (name, buffer, callback) => {
-        console.log('Received package: create-session')
         try {
             await session.create(accountInfo.uid, new sessionModel({
                 name: name,
@@ -186,7 +176,6 @@ io.on('connection', (socket) => {
         }
     })
     socket.on('join-session', async (sessionId, callback) => {
-        console.log('Received package: join-session')
         try {
             const data = await session.join(ObjectId(sessionId), socket, accountInfo.username)
             sessionInfo = {
@@ -205,7 +194,6 @@ io.on('connection', (socket) => {
         }
     })
     socket.on('leave-session', async (callback) => {
-        console.log('Received package: leave-session')
         try {
             await session.leave(socket, sessionInfo.id, accountInfo.username)
             if (sessionInfo.master) {
@@ -225,7 +213,6 @@ io.on('connection', (socket) => {
 
     //#region Tokens
     socket.on('get-token', async (id, callback) => {
-        console.log('Received package: get-token')
         try {
             const data = await token.get(ObjectId(id))
             callback(true, data, data._id.toString())
@@ -236,7 +223,6 @@ io.on('connection', (socket) => {
     })
 
     socket.on('get-tokens', async (id, callback) => {
-        console.log('Received package: get-tokens')
         try {
             const data = await token.getAll(ObjectId(id))
             callback(true, data)
@@ -247,7 +233,6 @@ io.on('connection', (socket) => {
     })
 
     socket.on('create-token', async (json, callback) => {
-        console.log('Received package: create-token')
         try {
             if (!sessionInfo.master) throw new Error('Operation not allowed')
             const data = JSON.parse(json)
@@ -285,7 +270,6 @@ io.on('connection', (socket) => {
         }
     })
     socket.on('move-token', async (id, json, callback) => {
-        console.log('Received package: move-token')
         try {
             const data = JSON.parse(json)
             await token.move(ObjectId(id), data.points[data.points.length - 1])
@@ -297,7 +281,6 @@ io.on('connection', (socket) => {
         }
     })
     socket.on('modify-token', async (json, image, callback) => {
-        console.log('Received package: modify-token')
         try {
             const data = JSON.parse(json)
             const newImage = await token.modify(ObjectId(data.id), new tokenModel({
@@ -336,7 +319,6 @@ io.on('connection', (socket) => {
         }
     })
     socket.on('remove-token', async (id, callback) => {
-        console.log('Received package: remove-token')
         try {
             await token.remove(sessionInfo.scene, ObjectId(id))
             io.to(sessionInfo.id.toString()).emit('remove-token', id)
@@ -348,7 +330,6 @@ io.on('connection', (socket) => {
     })
 
     socket.on('update-visibility', async (id, state, callback) => {
-        console.log('Received package: update-visibility')
         try {
             await token.setVisibility(ObjectId(id), state)
             io.to(sessionInfo.id.toString()).emit('update-visibility', id, state)
@@ -359,7 +340,6 @@ io.on('connection', (socket) => {
         }
     })
     socket.on('update-elevation', async (id, elevation, callback) => {
-        console.log('Received package: update-elevation')
         try {
             await token.setElevation(ObjectId(id), elevation)
             io.to(sessionInfo.id.toString()).emit('update-elevation', id, elevation)
@@ -370,7 +350,6 @@ io.on('connection', (socket) => {
         }
     })
     socket.on('update-conditions', async (id, conditions, callback) => {
-        console.log('Received package: update-conditions')
         try {
             await token.setConditions(ObjectId(id), conditions)
             io.to(sessionInfo.id.toString()).emit('update-conditions', id, conditions)
@@ -381,7 +360,6 @@ io.on('connection', (socket) => {
         }
     })
     socket.on('rotate-token', async (id, angle, callback) => {
-        console.log('Received package: rotate-token')
         try {
             await token.setRotation(ObjectId(id), angle)
             io.to(sessionInfo.id.toString()).emit('rotate-token', id, angle)
@@ -392,7 +370,6 @@ io.on('connection', (socket) => {
         }
     })
     socket.on('lock-token', async (id, state, callback) => {
-        console.log('Received package: lock-token')
         try {
             await token.lock(ObjectId(id), state)
             io.to(sessionInfo.id.toString()).emit('lock-token', id, state)
@@ -403,7 +380,6 @@ io.on('connection', (socket) => {
         }
     })
     socket.on('update-health', async (id, health, callback) => {
-        console.log('Received package: update-health')
         try {
             await token.setHealth(ObjectId(id), health)
             io.to(sessionInfo.id.toString()).emit('update-health', id, health)
@@ -417,7 +393,6 @@ io.on('connection', (socket) => {
 
     //#region State
     socket.on('set-scene', async (sceneId, callback) => {
-        console.log('Received package: set-scene')
         try {
             const scene = await session.set(sessionInfo.id, sceneId ? ObjectId(sceneId) : undefined)
             io.to(sessionInfo.id.toString()).emit('set-scene', sceneId)
@@ -428,11 +403,9 @@ io.on('connection', (socket) => {
         }
     })
     socket.on('update-scene', (id) => {
-        console.log('Received package: update-scene')
         if (id) sessionInfo.scene = ObjectId(id)
     })
     socket.on('change-state', async (callback) => {
-        console.log('Received package: change-state')
         try {
             await session.sync(sessionInfo.id, !sessionInfo.synced)
             sessionInfo.synced = !sessionInfo.synced
@@ -447,7 +420,6 @@ io.on('connection', (socket) => {
 
     //#region Doors
     socket.on('toggle-door', async (id, state, callback) => {
-        console.log('Received package: toggle-door')
         try {
             await scene.toggleDoor(sessionInfo.scene, ObjectId(id), state)
             io.to(sessionInfo.id.toString()).emit('toggle-door', id, state)
@@ -458,7 +430,6 @@ io.on('connection', (socket) => {
         }
     })
     socket.on('modify-door', async (json, callback) => {
-        console.log('Received package: modify-door')
         try {
             await scene.modifyDoor(sessionInfo.scene, JSON.parse(json))
             io.to(sessionInfo.id.toString()).emit('modify-door', json)
@@ -472,7 +443,6 @@ io.on('connection', (socket) => {
 
     //#region Lights
     socket.on('create-light', async (json, callback) => {
-        console.log('Received package: create-light')
         try {
             const data = await scene.createLight(sessionInfo.scene, JSON.parse(json))
             io.to(sessionInfo.id.toString()).emit('create-light', data)
@@ -483,7 +453,6 @@ io.on('connection', (socket) => {
         }
     })
     socket.on('modify-light', async (json, callback) => {
-        console.log('Received package: modify-light')
         try {
             const data = await scene.modifyLight(sessionInfo.scene, JSON.parse(json))
             io.to(sessionInfo.id.toString()).emit('modify-light', data)
@@ -494,7 +463,6 @@ io.on('connection', (socket) => {
         }
     })
     socket.on('remove-light', async (id, callback) => {
-        console.log('Received package: remove-light')
         try {
             await scene.removeLight(sessionInfo.scene, ObjectId(id))
             io.to(sessionInfo.id.toString()).emit('remove-light', id)
@@ -508,12 +476,10 @@ io.on('connection', (socket) => {
 
     //#region Tools
     socket.on('ping', (position, strong) => {
-        console.log('Received package: ping')
         io.to(sessionInfo.id.toString()).emit('ping', position, strong)
     })
 
     socket.on('modify-initiatives', async (json, callback) => {
-        console.log('Received package: modify-initiatives')
         try {
             if (!json) {
                 await scene.setInitiatives(sessionInfo.scene, null)
@@ -536,7 +502,6 @@ io.on('connection', (socket) => {
 
     //#region Scenes
     socket.on('get-scene', async (id, callback) => {
-        console.log('Received package: get-scene')
         try {
             const data = await scene.get(ObjectId(id))
             callback(true, data, id)
@@ -546,7 +511,6 @@ io.on('connection', (socket) => {
         }
     })
     socket.on('get-scenes', async (callback) => {
-        console.log('Received package: get-scenes')
         try {
             const result = await scene.getAll(sessionInfo.id)
             callback(true, result)
@@ -556,7 +520,6 @@ io.on('connection', (socket) => {
         }
     })
     socket.on('upload-scene', async (path, json, image, callback) => {
-        console.log('Received package: upload-scene')
         try {
             const data = JSON.parse(json)
 
@@ -579,7 +542,6 @@ io.on('connection', (socket) => {
         }
     })
     socket.on('remove-scene', async (id, path, callback) => {
-        console.log('Received package: remove-scene')
         try {
             const requireUpdate = await scene.remove(sessionInfo.id, path, ObjectId(id))
             if (requireUpdate) io.to(sessionInfo.id.toString()).emit('change-state', false, "")
@@ -590,7 +552,6 @@ io.on('connection', (socket) => {
         }
     })
     socket.on('modify-scene', async (id, json, callback) => {
-        console.log('Received package: modify-scene')
         try {
             const data = JSON.parse(json)
 
@@ -609,7 +570,6 @@ io.on('connection', (socket) => {
         }
     })
     socket.on('move-scene', async (id, oldPath, newPath, callback) => {
-        console.log('Received package: move-scene')
         try {
             await scene.move(sessionInfo.id, ObjectId(id), oldPath, newPath)
             callback(true)
@@ -620,7 +580,6 @@ io.on('connection', (socket) => {
     })
 
     socket.on('create-scene-folder', async (path, name, callback) => {
-        console.log('Received package: create-scene-folder')
         try {
             const id = await scene.createFolder(sessionInfo.id, path, name)
             callback(true, id)
@@ -630,7 +589,6 @@ io.on('connection', (socket) => {
         }
     })
     socket.on('remove-scene-folder', async (path, callback) => {
-        console.log('Received package: remove-scene-folder')
         try {
             const requireUpdate = await scene.removeFolder(sessionInfo.id, path)
             if (requireUpdate) io.to(sessionInfo.id.toString()).emit('change-state', false)
@@ -642,7 +600,6 @@ io.on('connection', (socket) => {
         }
     })
     socket.on('rename-scene-folder', async (path, name, callback) => {
-        console.log('Received package: rename-scene-folder')
         try {
             await scene.renameFolder(sessionInfo.id, path, name)
             callback(true)
@@ -652,7 +609,6 @@ io.on('connection', (socket) => {
         }
     })
     socket.on('move-scene-folder', async (oldPath, newPath, callback) => {
-        console.log('Received package: move-scene-folder')
         try {
             await scene.moveFolder(sessionInfo.id, oldPath, newPath)
             callback(true)
@@ -665,7 +621,6 @@ io.on('connection', (socket) => {
 
     //#region Blueprints
     socket.on('get-blueprint', async (id, callback) => {
-        console.log('Received package: get-blueprint')
         try {
             const bp = await blueprint.get(ObjectId(id))
             callback(true, bp)
@@ -675,7 +630,6 @@ io.on('connection', (socket) => {
         }
     })
     socket.on('get-blueprints', async (callback) => {
-        console.log('Received package: get-blueprints')
         try {
             const result = await blueprint.getAll(sessionInfo.id)
             callback(true, result)
@@ -685,7 +639,6 @@ io.on('connection', (socket) => {
         }
     })
     socket.on('create-blueprint', async (path, json, image, callback) => {
-        console.log('Received package: create-blueprint')
         try {
             const data = JSON.parse(json)
             const result = await blueprint.create(sessionInfo.id, path, new blueprintModel({
@@ -713,7 +666,6 @@ io.on('connection', (socket) => {
         }
     })
     socket.on('remove-blueprint', async (id, path, callback) => {
-        console.log('Received package: remove-blueprint')
         try {
             await blueprint.remove(sessionInfo.id, path, ObjectId(id))
             callback(true)
@@ -723,7 +675,6 @@ io.on('connection', (socket) => {
         }
     })
     socket.on('modify-blueprint', async (id, json, image, callback) => {
-        console.log('Received package: modify-blueprint')
         try {
             const data = JSON.parse(json)
             const bp = await blueprint.modify(ObjectId(id), new blueprintModel(data), image)
@@ -734,7 +685,6 @@ io.on('connection', (socket) => {
         }
     })
     socket.on('set-permissions', async (blueprintId, json, callback) => {
-        console.log('Received package: set-permissions')
         try {
             let list = []
             for (let i = 0; i < json.length; i++) {
@@ -752,7 +702,6 @@ io.on('connection', (socket) => {
         }
     })
     socket.on('refresh-permissions', async (blueprintId, callback) => {
-        console.log('Received package: refresh-permissions')
         try {
             const bp = await blueprint.refreshPermissions(sessionInfo.id, ObjectId(blueprintId))
             callback(true, bp)
@@ -762,7 +711,6 @@ io.on('connection', (socket) => {
         }
     })
     socket.on('move-blueprint', async (id, oldPath, newPath, callback) => {
-        console.log('Received package: move-blueprint')
         try {
             await blueprint.move(sessionInfo.id, ObjectId(id), oldPath, newPath)
             callback(true)
@@ -773,7 +721,6 @@ io.on('connection', (socket) => {
     })
 
     socket.on('create-blueprint-folder', async (path, name, callback) => {
-        console.log('Received package: create-blueprint-folder')
         try {
             const id = await blueprint.createFolder(sessionInfo.id, path, name)
             callback(true, id)
@@ -783,7 +730,6 @@ io.on('connection', (socket) => {
         }
     })
     socket.on('remove-blueprint-folder', async (path, callback) => {
-        console.log('Received package: remove-blueprint-folder')
         try {
             await blueprint.removeFolder(sessionInfo.id, path)
             callback(true)
@@ -793,7 +739,6 @@ io.on('connection', (socket) => {
         }
     })
     socket.on('rename-blueprint-folder', async (path, name, callback) => {
-        console.log('Received package: rename-blueprint-folder')
         try {
             await blueprint.renameFolder(sessionInfo.id, path, name)
             callback(true)
@@ -803,7 +748,6 @@ io.on('connection', (socket) => {
         }
     })
     socket.on('move-blueprint-folder', async (oldPath, newPath, callback) => {
-        console.log('Received package: move-blueprint-folder')
         try {
             await blueprint.moveFolder(sessionInfo.id, oldPath, newPath)
             callback(true)
@@ -816,7 +760,6 @@ io.on('connection', (socket) => {
 
     //#region Notes
     socket.on('get-note', async (id, callback) => {
-        console.log('Received package: get-note')
         try {
             const data = await notes.get(ObjectId(id))
             callback(true, data, data._id.toString())
@@ -827,7 +770,6 @@ io.on('connection', (socket) => {
     })
 
     socket.on('get-notes', async (id, callback) => {
-        console.log('Received package: get-notes')
         try {
             const data = await notes.getAll(ObjectId(id))
             callback(true, data)
@@ -837,7 +779,6 @@ io.on('connection', (socket) => {
         }
     })
     socket.on('create-note', async (json, callback) => {
-        console.log('Received package: create-note')
         try {
             const data = JSON.parse(json)
             data.owner = accountInfo.uid
@@ -859,7 +800,6 @@ io.on('connection', (socket) => {
         }
     })
     socket.on('modify-note-text', async (id, text, callback) => {
-        console.log('Received package: modify-note-text')
         try {
             await notes.modifyText(ObjectId(id), text)
             io.to(sessionInfo.id.toString()).emit('modify-note-text', id, text)
@@ -870,7 +810,6 @@ io.on('connection', (socket) => {
         }
     })
     socket.on('modify-note-header', async (id, text, callback) => {
-        console.log('Received package: modify-note-header')
         try {
             await notes.modifyHeader(ObjectId(id), text)
             io.to(sessionInfo.id.toString()).emit('modify-note-header', id, text)
@@ -881,7 +820,6 @@ io.on('connection', (socket) => {
         }
     })
     socket.on('modify-note-image', async (id, buffer, callback) => {
-        console.log('Received package: modify-note-image')
         try {
             const newImage = await notes.modifyImage(ObjectId(id), buffer)
             io.to(sessionInfo.id.toString()).emit('modify-note-image', id, newImage)
@@ -892,7 +830,6 @@ io.on('connection', (socket) => {
         }
     })
     socket.on('remove-note', async (id, callback) => {
-        console.log('Received package: remove-note')
         try {
             await notes.remove(sessionInfo.scene, ObjectId(id))
             io.to(sessionInfo.id.toString()).emit('remove-note', id)
@@ -903,7 +840,6 @@ io.on('connection', (socket) => {
         }
     })
     socket.on('move-note', async (id, position, callback) => {
-        console.log('Received package: move-note')
         try {
             await notes.move(ObjectId(id), JSON.parse(position))
             io.to(sessionInfo.id.toString()).emit('move-note', id, position)
@@ -914,7 +850,6 @@ io.on('connection', (socket) => {
         }
     })
     socket.on('set-note-state', async (id, isPublic, callback) => {
-        console.log('Received package: set-note-state')
         try {
             await notes.setPublic(ObjectId(id), isPublic)
             io.to(sessionInfo.id.toString()).emit('set-note-state', id, isPublic)
@@ -925,7 +860,6 @@ io.on('connection', (socket) => {
         }
     })
     socket.on('show-note', async (id, callback) => {
-        console.log('Received package: show-note')
         try {
             socket.to(sessionInfo.id.toString()).emit('show-note', id)
             callback(true)
@@ -938,7 +872,6 @@ io.on('connection', (socket) => {
 
     //#region Journals
     socket.on('get-journal', async (id, callback) => {
-        console.log('Received package: get-journal')
         try {
             const data = await journals.get(ObjectId(id))
             callback(true, data)
@@ -948,7 +881,6 @@ io.on('connection', (socket) => {
         }
     })
     socket.on('get-journals', async (callback) => {
-        console.log('Received package: get-journals')
         try {
             const result = await journals.getAll(sessionInfo.id, accountInfo.uid)
             callback(true, result)
@@ -958,7 +890,6 @@ io.on('connection', (socket) => {
         }
     })
     socket.on('create-journal', async (path, json, callback) => {
-        console.log('Received package: create-journal')
         try {
             const data = JSON.parse(json)
             data.owner = accountInfo.uid
@@ -977,7 +908,6 @@ io.on('connection', (socket) => {
         }
     })
     socket.on('remove-journal', async (id, path, callback) => {
-        console.log('Received package: remove-journal')
         try {
             await journals.remove(sessionInfo.id, path, accountInfo.uid, ObjectId(id))
             io.to(sessionInfo.id.toString()).emit('remove-journal', id)
@@ -988,7 +918,6 @@ io.on('connection', (socket) => {
         }
     })
     socket.on('modify-journal-text', async (id, text, callback) => {
-        console.log('Received package: modify-journal-text')
         try {
             await journals.modifyText(ObjectId(id), text)
             io.to(sessionInfo.id.toString()).emit('modify-journal-text', id, text)
@@ -999,7 +928,6 @@ io.on('connection', (socket) => {
         }
     })
     socket.on('modify-journal-header', async (id, text, callback) => {
-        console.log('Received package: modify-journal-header')
         try {
             await journals.modifyHeader(ObjectId(id), text)
             io.to(sessionInfo.id.toString()).emit('modify-journal-header', id, text)
@@ -1010,7 +938,6 @@ io.on('connection', (socket) => {
         }
     })
     socket.on('modify-journal-image', async (id, buffer, callback) => {
-        console.log('Received package: modify-journal-image')
         try {
             const newImage = await journals.modifyImage(ObjectId(id), buffer)
             io.to(sessionInfo.id.toString()).emit('modify-journal-image', id, newImage)
@@ -1021,7 +948,6 @@ io.on('connection', (socket) => {
         }
     })
     socket.on('show-journal', async (data, callback) => {
-        console.log('Received package: show-journal')
         try {
             socket.to(sessionInfo.id.toString()).emit('show-journal', data)
             callback(true)
@@ -1031,7 +957,6 @@ io.on('connection', (socket) => {
         }
     })
     socket.on('set-collaborators', async (journalId, json, callback) => {
-        console.log('Received package: set-collaborators')
         try {
             let list = []
             for (let i = 0; i < json.length; i++) {
@@ -1050,7 +975,6 @@ io.on('connection', (socket) => {
         }
     })
     socket.on('refresh-collaborators', async (blueprintId, callback) => {
-        console.log('Received package: refresh-collaborators')
         try {
             const bp = await journals.refreshCollaborators(sessionInfo.id, ObjectId(blueprintId))
             callback(true, bp)
@@ -1060,7 +984,6 @@ io.on('connection', (socket) => {
         }
     })
     socket.on('move-journal', async (id, oldPath, newPath, callback) => {
-        console.log('Received package: move-journal')
         try {
             await journals.move(sessionInfo.id, ObjectId(id), oldPath, newPath)
             callback(true)
@@ -1071,7 +994,6 @@ io.on('connection', (socket) => {
     })
 
     socket.on('create-journal-folder', async (path, name, callback) => {
-        console.log('Received package: create-journal-folder')
         try {
             const id = await journals.createFolder(sessionInfo.id, path, accountInfo.uid, name)
             callback(true, id)
@@ -1081,7 +1003,6 @@ io.on('connection', (socket) => {
         }
     })
     socket.on('remove-journal-folder', async (path, callback) => {
-        console.log('Received package: remove-journal-folder')
         try {
             await journals.removeFolder(sessionInfo.id, path, accountInfo.uid)
             callback(true)
@@ -1091,7 +1012,6 @@ io.on('connection', (socket) => {
         }
     })
     socket.on('rename-journal-folder', async (path, name, callback) => {
-        console.log('Received package: rename-journal-folder')
         try {
             await journals.renameFolder(sessionInfo.id, path, accountInfo.uid, name)
             callback(true)
@@ -1101,7 +1021,6 @@ io.on('connection', (socket) => {
         }
     })
     socket.on('move-journal-folder', async (oldPath, newPath, callback) => {
-        console.log('Received package: move-journal-folder')
         try {
             await journals.moveFolder(sessionInfo.id, oldPath, newPath, accountInfo.uid)
             callback(true)
