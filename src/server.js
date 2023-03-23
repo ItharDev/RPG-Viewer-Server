@@ -479,6 +479,18 @@ io.on('connection', (socket) => {
         io.to(sessionInfo.id.toString()).emit('ping', position, strong)
     })
 
+    socket.on('start-pointer', (position, id) => {
+        socket.to(sessionInfo.id.toString()).emit('start-pointer', position, id)
+    })
+
+    socket.on('update-pointer', (position, id) => {
+        socket.to(sessionInfo.id.toString()).emit('update-pointer', position, id)
+    })
+
+    socket.on('end-pointer', (id) => {
+        socket.to(sessionInfo.id.toString()).emit('end-pointer', id)
+    })
+
     socket.on('modify-initiatives', async (json, callback) => {
         try {
             if (!json) {
