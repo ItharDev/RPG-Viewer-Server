@@ -261,7 +261,8 @@ io.on('connection', (socket) => {
                 elevation: "0 ft",
                 conditions: 0,
                 locked: false,
-                rotation: 0
+                rotation: 0,
+                preset: data.preset
             }))
 
             io.to(sessionInfo.id.toString()).emit('create-token', data, tokenId)
@@ -309,7 +310,8 @@ io.on('connection', (socket) => {
                 elevation: data.elevation,
                 conditions: data.conditions,
                 locked: data.locked,
-                rotation: data.rotation
+                rotation: data.rotation,
+                preset: data.preset
             }), image)
 
             data.image = newImage
@@ -725,7 +727,8 @@ io.on('connection', (socket) => {
                 flickerAmount: data.flickerAmount,
                 pulseInterval: data.pulseInterval,
                 pulseAmount: data.pulseAmount,
-                image: new ObjectId()
+                image: new ObjectId(),
+                preset: data.preset
             }), image)
             callback(true, result)
         } catch (e) {
