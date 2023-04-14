@@ -4,7 +4,7 @@ const { ObjectId } = require('mongodb')
 const socket = require('socket.io')
 
 const networking = require('./modules/networking')
-const { blueprintModel, sceneModel, sessionModel, userModel, tokenModel, noteModel, journalModel } = require('./schemas')
+const { blueprintModel, sceneModel, sessionModel, userModel, tokenModel, noteModel, journalModel, presetModel } = require('./schemas')
 const account = require('./modules/account')
 const scene = require('./modules/scene')
 const blueprint = require('./modules/blueprint')
@@ -12,6 +12,7 @@ const session = require('./modules/session')
 const token = require('./modules/token')
 const notes = require('./modules/notes')
 const journals = require('./modules/journals')
+const presets = require('./modules/presets')
 
 const server = createServer()
 const port = 3000
@@ -185,7 +186,8 @@ io.on('connection', (socket) => {
                 synced: data.state.synced,
                 scene: data.state.scene,
                 users: data.users,
-                background: data.background
+                background: data.background,
+                lightingPresets: data.lightingPresets
             }
             callback(true, sessionInfo)
         } catch (e) {
@@ -472,6 +474,50 @@ io.on('connection', (socket) => {
             callback(false, e.message)
         }
     })
+    socket.on('create-preset', async (json, callback) => {
+        try {
+            const data = JSON.parse(json)
+
+            const id = await presets.create(sessionInfo.id, new presetModel(data))
+            io.to(sessionInfo.id.toString()).emit('create-preset', id, json)
+            callback(true)
+        } catch (e) {
+            console.error(e)
+            callback(false, e.message)
+        }
+    })
+    socket.on('modify-preset', async (id, json, callback) => {
+        try {
+            const data = JSON.parse(json)
+
+            await presets.modify(ObjectId(id), new presetModel(data))
+            io.to(sessionInfo.id.toString()).emit('modify-preset', id, json)
+            callback(true)
+        } catch (e) {
+            console.error(e)
+            callback(false, e.message)
+        }
+    })
+    socket.on('remove-preset', async (id, callback) => {
+        try {
+            await presets.remove(sessionInfo.id, ObjectId(id))
+            io.to(sessionInfo.id.toString()).emit('remove-preset', id)
+            callback(true)
+        } catch (e) {
+            console.error(e)
+            callback(false, e.message)
+        }
+    })
+
+    socket.on('load-preset', async (id, callback) => {
+        try {
+            const data = await presets.load(ObjectId(id))
+            callback(true, data)
+        } catch (e) {
+            console.error(e)
+            callback(false, e.message)
+        }
+    })
     //#endregion
 
     //#region Tools
@@ -535,7 +581,7 @@ io.on('connection', (socket) => {
         try {
             const data = JSON.parse(json)
 
-            const upload = await scene.create(sessionInfo.id, path, new sceneModel({
+            const id = await scene.create(sessionInfo.id, path, new sceneModel({
                 data: {
                     image: new ObjectId(),
                     name: data.data.name,
@@ -547,7 +593,7 @@ io.on('connection', (socket) => {
                 tokens: data.tokens,
                 initiative: data.initiative
             }), image)
-            callback(true, scene)
+            callback(true, id)
         } catch (e) {
             console.error(e)
             callback(false, e.message)
@@ -575,6 +621,16 @@ io.on('connection', (socket) => {
                 tokens: data.tokens,
                 initiative: data.initiative
             }))
+            callback(true)
+            io.to(sessionInfo.id.toString()).emit('set-scene', sessionInfo.scene)
+        } catch (e) {
+            console.error(e)
+            callback(false, e.message)
+        }
+    })
+    socket.on('rename-scene', async (id, name, callback) => {
+        try {
+            await scene.rename(ObjectId(id), name)
             callback(true)
         } catch (e) {
             console.error(e)

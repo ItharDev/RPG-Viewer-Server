@@ -29,6 +29,7 @@ const blueprintModel = model('blueprints', new Schema({
     flickerAmount: Number,
     pulseInterval: Number,
     pulseAmount: Number,
+    preset: String,
     image: ObjectId,
 }))
 
@@ -60,6 +61,7 @@ const tokenModel = model('tokens', new Schema({
     flickerAmount: Number,
     pulseInterval: Number,
     pulseAmount: Number,
+    preset: String,
     image: ObjectId,
     position: {
         x: Number,
@@ -144,6 +146,7 @@ const sceneModel = model('scenes', new Schema({
         pulseInterval: Number,
         pulseAmount: Number,
         effect: Number,
+        preset: String,
         color: {
             r: Number,
             g: Number,
@@ -165,7 +168,8 @@ const sessionModel = model('sessions', new Schema({
     blueprints: Array,
     scenes: Array,
     journals: Array,
-    background: ObjectId
+    background: ObjectId,
+    lightingPresets: Array
 }))
 
 const userModel = model('users', new Schema({
@@ -204,6 +208,23 @@ const journalModel = model('journals', new Schema({
     }),
 }))
 
+const presetModel = model('presets', new Schema({
+    radius: Number,
+    name: String,
+    color: {
+        r: Number,
+        g: Number,
+        b: Number,
+        a: Number
+    },
+    intensity: Number,
+    flickerFrequency: Number,
+    flickerAmount: Number,
+    pulseInterval: Number,
+    pulseAmount: Number,
+    effect: Number
+}))
+
 module.exports = {
     blueprintModel,
     tokenModel,
@@ -212,5 +233,6 @@ module.exports = {
     userModel,
     fileModel,
     noteModel,
-    journalModel
+    journalModel,
+    presetModel
 }

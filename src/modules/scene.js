@@ -57,7 +57,7 @@ module.exports = {
                     if (targetFolder) await sessionModel.findByIdAndUpdate(sessionId, { $addToSet: { [`scenes.${targetFolder.path}.contents`]: scene._id } }).exec()
                     else await sessionModel.findByIdAndUpdate(sessionId, { $addToSet: { [`scenes`]: scene._id } }).exec()
 
-                    resolve(scene)
+                    resolve(scene._id)
                 }
                 else reject('Failed to create scene')
             } else reject('Failed to create scene')
@@ -86,9 +86,15 @@ module.exports = {
     modify: async function (sessionId, sceneId, data) {
         await prepareConnection()
 
-        const document = await sessionModel.findById(sessionId).exec()
         const update = await sceneModel.findByIdAndUpdate(sceneId, { $set: { data: data.data, grid: data.grid, fogOfWar: data.fogOfWar, walls: data.walls } }).exec()
         if (!update) throw new Error('Failed to modify scene')
+    },
+
+    rename: async function (sceneId, name) {
+        await prepareConnection()
+
+        const update = await sceneModel.findByIdAndUpdate(sceneId, { $set: { 'data.name': name } }).exec()
+        if (!update) throw new Error('Failed to rename scene')
     },
 
     move: async function (sessionId, sceneId, oldPath, newPath) {
