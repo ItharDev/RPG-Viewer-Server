@@ -4,7 +4,8 @@
   "description": "RPG Viewer's official backend server",
   "main": "server.js",
   "scripts": {
-    "start": "set DEBUG=*,-socket.io-parser,-engine:socket,-engine:ws,-socket.io:socket, node ./src/server.js && node ./src/server.js"
+    "start": "set DEBUG=*,-socket.io-parser,-engine:socket,-engine:ws,-socket.io:socket, node ./src/server.js && node ./src/server.js",
+    "dev": "set DEBUG=*,-socket.io-parser,-engine:socket,-engine:ws,-socket.io:socket, node ./dev/server.js && node ./dev/server.js"
   },
   "author": "Ithar",
   "license": "ISC",

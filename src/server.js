@@ -104,7 +104,7 @@ io.on('connection', (socket) => {
             callback(false, e.message)
         }
     })
-    socket.on('sign-in', async (email, password, uid, callback) => {
+    socket.on('sign-in', async (uid, email, password, callback) => {
         try {
             const user = await account.signIn(email, password, uid)
             accountInfo = {
