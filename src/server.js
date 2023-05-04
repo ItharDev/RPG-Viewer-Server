@@ -129,6 +129,11 @@ io.on('connection', (socket) => {
 
     socket.on('validate-licence', async (licenceKey, callback) => {
         try {
+            if (licenceKey.length != 24)
+            {
+                callback(false, 'License key must be a string of 24 characters')
+                return
+            }
             const name = await account.validateLicence(ObjectId(licenceKey), accountInfo.uid)
             callback(true)
         } catch (e) {
