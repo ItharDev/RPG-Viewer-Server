@@ -404,7 +404,7 @@ io.on('connection', (socket) => {
     socket.on('set-scene', async (sceneId, callback) => {
         try {
             const scene = await session.set(sessionInfo.id, sceneId ? ObjectId(sceneId) : undefined)
-            io.to(sessionInfo.id.toString()).emit('set-scene', sceneId)
+            io.to(sessionInfo.id.toString()).emit('change-state', sessionInfo.synced, sceneId)
             callback(true)
         } catch (e) {
             console.error(e)
@@ -629,7 +629,7 @@ io.on('connection', (socket) => {
                 initiative: data.initiative
             }))
             callback(true)
-            io.to(sessionInfo.id.toString()).emit('set-scene', sessionInfo.scene)
+            io.to(sessionInfo.id.toString()).emit('change-state', sessionInfo.synced, sessionInfo.scene)
         } catch (e) {
             console.error(e)
             callback(false, e.message)
