@@ -1,8 +1,9 @@
+const { ObjectId } = require("mongodb")
 const { removeLicences } = require("../../modules/account")
 
 /**
  * Remove-licences packet listener
- * @param {{ uid: import("mongoose").ObjectId, username: string }} accountInfo Account information
+ * @param {{ uid: ObjectId, username: string }} accountInfo
  * @param {() => {}} callback
 */
 module.exports = async (accountInfo, callback) => {

@@ -1,20 +1,33 @@
-const session = require("../modules/session")
+const { ObjectId } = require("mongodb")
+const { setState } = require("../modules/session")
+const { Server } = require("socket.io")
 
 /**
  * Disconnect packet listener
- * @param {{ uid: import("mongoose").ObjectId, username: string }} accountInfo Account information
- * @param {{ id: import("mongoose").ObjectId | null, master: import("mongoose").ObjectId | null, isMaster: boolean | null, synced: boolean | null, scene: import("mongoose").ObjectId | null, users: Array | null, background: import("mongoose").ObjectId | null }} sessionInfo
- * @param {import("socket.io").Server} socketServer
+ * @param {{ uid: ObjectId, username: string }} accountInfo
+ * @param {{ id: ObjectId | null, master: ObjectId | null, isMaster: boolean | null, synced: boolean | null, scene: ObjectId | null, users: Array | null, background: ObjectId | null }} sessionInfo
+ * @param {Server} socketServer
  */
 module.exports = async (accountInfo, sessionInfo, socketServer) => {
     console.debug(`[ ${accountInfo.username} (${accountInfo.uid}) ]`, "Package: disconnect")
     try {
         if (!sessionInfo.id || !sessionInfo.isMaster) return
 
-        await session.sync(sessionInfo.id, false)
-        await session.set(sessionInfo.id, undefined)
-        socketServer.to(sessionInfo.id.toString()).emit("change-state", false, "")
-        console.log(`${accountInfo.username} (${accountInfo.uid}) disconnected.`)
+        const state = {
+            scene: undefined,
+            synced: false
+        }
+        await setState(sessionInfo.id, state)
+        socketServer.to(sessionInfo.id.toString()).emit("change-state", "", false)
+
+        sessionInfo.id = null
+        sessionInfo.master = null
+        sessionInfo.isMaster = null
+        sessionInfo.synced = null
+        sessionInfo.scene = null
+        sessionInfo.users = null
+        sessionInfo.background = null
+
     } catch (error) {
         console.error("Failed to disconnect a session", error)
     }

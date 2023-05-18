@@ -9,16 +9,24 @@ const networking = require("./modules/networking")
 // Listeners (for packets)
 const disconnectListener = require("./listeners/disconnect")
 const downloadImage = require("./listeners/downloadImage")
+
 const getUser = require("./listeners/account/getUser")
 const register = require("./listeners/account/register")
 const signIn = require("./listeners/account/signIn")
 const signOut = require("./listeners/account/signOut")
+
 const validateLicense = require("./listeners/license/validateLicence")
 const loadLicences = require("./listeners/license/loadLicences")
 const removeLicences = require("./listeners/license/removeLicences")
+
 const createSession = require("./listeners/session/createSession")
 const joinSession = require("./listeners/session/joinSession")
 const leaveSession = require("./listeners/session/leaveSession")
+const setState = require("./listeners/session/setState")
+
+const createWall = require("./listeners/walls/createWall")
+const modifyWall = require("./listeners/walls/modifyWall")
+const removeWall = require("./listeners/walls/removeWall")
 
 // Get environment variables
 require("dotenv").config()
@@ -63,15 +71,23 @@ socketServer.on("connection", (socket) => {
     socket.on("disconnect", disconnectListener(accountInfo, sessionInfo, socketServer))
     socket.on("download-image", (imageId, callback) => downloadImage(accountInfo, imageId, callback))
     socket.on("get-user", (uid, callback) => getUser(accountInfo, uid, callback))
+    
     socket.on("register", (email, name, password, callback) => register(accountInfo, email, name, password, callback))
-    socket.on("sign-in", (email, password, uid, callback) => signIn(accountInfo, email, password, uid, callback))
+    socket.on("sign-in", (email, password, uid, callback) => signIn(accountInfo, email, password, ObjectId(uid), callback))
     socket.on("sign-out", (callback) => signOut(accountInfo, callback))
+    
     socket.on("validate-licence", (licence, callback) => validateLicense(accountInfo, licence, callback))
     socket.on("load-licences", (callback) => loadLicences(accountInfo, callback))
     socket.on("remove-licences", (callback) => removeLicences(accountInfo, callback))
+    
     socket.on("create-session", (name, buffer, callback) => createSession(accountInfo, name, buffer, callback))
     socket.on("join-session", (sessionId, callback) => joinSession(accountInfo, sessionInfo, socket, sessionId, callback))
     socket.on("leave-session", (callback) => leaveSession(accountInfo, sessionInfo, socket, socketServer, callback))
+    socket.on("set-state", (scene, synced, callback) => setState(accountInfo, sessionInfo.id, scene, synced, socketServer, callback))
+
+    socket.on("create-wall", (data, callback) => createWall(accountInfo, sessionInfo.scene, JSON.parse(data), socketServer, callback))
+    socket.on("modify-wall", (data, callback) => modifyWall(accountInfo, sessionInfo.scene, JSON.parse(data), socketServer, callback))
+    socket.on("remove-wall", (wallId, callback) => modifyWall(accountInfo, sessionInfo.scene, wallId, socketServer, callback))
 })
 
 // Start everything

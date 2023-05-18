@@ -41,8 +41,9 @@ module.exports = {
         await prepareConnection()
 
         const account = await userModel.findById(uid).exec()
-        if (account) return account
-        else throw new Error("Failed to load user data")
+        if (!account) throw new Error("Failed to load user data")
+
+        return account
     },
 
     /**
@@ -62,8 +63,9 @@ module.exports = {
         if (duplicate) throw new Error("User with this email already exists")
 
         const result = await userModel.create(userData)
-        if (result) return result._id.toString()
-        else throw new Error("Failed to register user")
+        if (!result) throw new Error("Failed to register user")
+
+        return result._id.toString()
     },
 
     /**
@@ -78,17 +80,18 @@ module.exports = {
 
         if (uid) {
             const user = await userModel.findById(uid).exec()
-            if (user) return user
-            else throw new Error("Invalid or unknown user id")
-        } else {
-            const user = await userModel.findOne({ email: email }).exec()
-            if (user) {
-                const match = await bcrypt.compare(password, user.password)
-                if (match) return user
-                else throw new Error("Invalid password")
-            }
-            else throw new Error("Invalid email address")
+            if (!user) throw new Error("Invalid or unknown user id")
+
+            return user
         }
+
+        const user = await userModel.findOne({ email: email }).exec()
+        if (!user) throw new Error("Invalid email address")
+
+        const match = await bcrypt.compare(password, user.password)
+        if (!match) throw new Error("Invalid password")
+
+        return user
     },
 
     /**
@@ -101,12 +104,13 @@ module.exports = {
         await prepareConnection()
 
         const session = await sessionModel.findById(key).exec()
-        if (session) {
-            if (!session.master.equals(uid)) await sessionModel.findByIdAndUpdate(key, { $addToSet: { users: uid } }).exec()
-            const result = await userModel.findByIdAndUpdate(uid, { $addToSet: { licences: key } }).exec()
-            if (result) return session.name
-            else throw new Error("Failed to update licence directory")
-        } else throw new Error("Invalid or unknown key")
+        if (!session) throw new Error("Invalid or unknown key")
+
+        if (!session.master.equals(uid)) await sessionModel.findByIdAndUpdate(key, { $addToSet: { users: uid } }).exec()
+        const result = await userModel.findByIdAndUpdate(uid, { $addToSet: { licences: key } }).exec()
+        if (!result) throw new Error("Failed to update licence directory")
+
+        return session.name
     },
 
     /**
@@ -118,15 +122,16 @@ module.exports = {
         await prepareConnection()
 
         const user = await userModel.findById(uid).exec()
-        if (user) {
-            let licences = []
-            for (const key of user.licences) {
-                const session = await sessionModel.findById(key)
-                if (session) licences.push({ id: key, name: session.name })
-                else userModel.findByIdAndUpdate(uid, { $pull: { licences: key } })
-            }
-            return licences
-        } else throw new Error("User not found")
+        if (!user) throw new Error("User not found")
+
+        let licences = []
+        for (const key of user.licences) {
+            const session = await sessionModel.findById(key)
+            if (session) licences.push({ id: key, name: session.name })
+            else await userModel.findByIdAndUpdate(uid, { $pull: { licences: key } }).exec()
+        }
+
+        return licences
     },
 
     /**
@@ -138,17 +143,17 @@ module.exports = {
         await prepareConnection()
 
         const user = await userModel.findById(uid).exec()
-        if (user) {
-            let licencesToRemove = []
-            for (const element of user.licences) {
-                const session = await sessionModel.findById(element)
-                if (!session.master.equals(uid)) {
-                    licencesToRemove.push(element)
-                }
-            }
+        if (!user) throw new Error("User not found")
 
-            const update = await userModel.findByIdAndUpdate(uid, { $pullAll: { licences: licencesToRemove } }).exec()
-            if (!update) throw new Error("Failed to remove licences")
-        } else throw new Error("User not found")
+        let licencesToRemove = []
+        for (const element of user.licences) {
+            const session = await sessionModel.findById(element).exec()
+            if (session.master.equals(uid)) continue
+
+            licencesToRemove.push(element)
+        }
+
+        const update = await userModel.findByIdAndUpdate(uid, { $pullAll: { licences: licencesToRemove } }).exec()
+        if (!update) throw new Error("Failed to remove licences")
     }
 }

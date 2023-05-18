@@ -11,13 +11,14 @@ const { userModel } = require("../../schemas")
 module.exports = async (email, name, password, callback) => {
     console.debug("[ ??? (???) ]", "Package: register")
     try {
-        await register(new userModel({
+        const model = new userModel({
             email,
             name,
             password,
             licences: Array
-        }))
-        console.log(`Registered a new account ${name} (${email}).`)
+        })
+        
+        await register(model)
         callback(true)
     } catch (error) {
         console.error("Failed to register account", error)

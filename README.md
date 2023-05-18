@@ -41,10 +41,7 @@ RPG Viewer's official backend server
   - [ ] Rotation
   - [ ] Locking
   - [ ] Health
-- [x] State (Session)
-  - [ ] Play scene
-  - [ ] Change state
-  - [ ] Sync active scene
+- [x] State
 - [x] Walls
   - [ ] Create
   - [ ] Modify

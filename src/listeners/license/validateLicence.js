@@ -1,8 +1,9 @@
+const { ObjectId } = require("mongodb")
 const { validateLicence } = require("../../modules/account")
 
 /**
  * Validate-license packet listener
- * @param {{ uid: import("mongoose").ObjectId, username: string }} accountInfo Account information
+ * @param {{ uid: ObjectId, username: string }} accountInfo
  * @param {string} license
  * @param {() => {}} callback
 */

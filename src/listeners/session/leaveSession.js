@@ -1,25 +1,24 @@
-const session = require("../../modules/session")
-const { leave } = require("../../modules/session")
+const { Server, Socket } = require("socket.io")
+const { ObjectId } = require("mongodb")
 
 /**
  * leave-session packet listener
- * @param {{ uid: import("mongoose").ObjectId, username: string }} accountInfo Account information
- * @param {{ id: import("mongoose").ObjectId | null, master: import("mongoose").ObjectId | null, isMaster: boolean | null, synced: boolean | null, scene: import("mongoose").ObjectId | null, users: Array | null, background: import("mongoose").ObjectId | null }} sessionInfo
- * @param {import("socket.io").Socket} socket
- * @param {import("socket.io").Server} socketServer
+ * @param {{ uid: .ObjectId, username: string }} accountInfo
+ * @param {{ id: ObjectId | null, master: ObjectId | null, isMaster: boolean | null, synced: boolean | null, scene: ObjectId | null, users: Array | null, background: ObjectId | null }} sessionInfo
+ * @param {Socket} socket
+ * @param {Server} socketServer
  * @param {() => {}} callback
 */
 module.exports = async (accountInfo, sessionInfo, socket, socketServer, callback) => {
     console.debug(`[ ${accountInfo.username} (${accountInfo.uid}) ]`, "Package: leave-session")
     try {
-        await leave(socket, sessionInfo.id, accountInfo.username)
-        if (sessionInfo.master) {
-            await session.sync(sessionInfo.id, false)
-            await session.set(sessionInfo.id, undefined)
-            socketServer.to(sessionInfo.id.toString()).emit("change-state", false, "")
-        }
+        if (!socket.rooms.has(sessionInfo.id.toString())) throw new Error("Client not connected to any game session")
 
-        console.log(`The user ${accountInfo.username} (${accountInfo.uid}) left a session (${sessionInfo.id})`)
+        socket.to(sessionInfo.id.toString()).emit("user-disconnected", username)
+        socket.leave(sessionInfo.id.toString())
+        if (sessionInfo.isMaster) {
+            socketServer.to(sessionInfo.id.toString()).emit("change-state", "", false)
+        }
 
         sessionInfo.id = null
         sessionInfo.master = null

@@ -1,7 +1,8 @@
-const { sessionModel, sceneModel } = require("../schemas")
+const { sessionModel } = require("../schemas")
 const { connect } = require("mongoose")
 const account = require("./account")
 const networking = require("./networking")
+const { ObjectId } = require("mongodb")
 
 async function prepareConnection() {
     return new Promise((resolve, reject) => {
@@ -36,80 +37,42 @@ module.exports = {
         return new Promise(async (resolve, reject) => {
             await prepareConnection()
 
-            await networking.uploadFile(data.background, buffer).then(null, (rejected) => {
-                reject(rejected)
-            })
+            await networking.uploadFile(data.background, buffer).then(null, (rejected) => reject(rejected))
 
-            const insert = await sessionModel.create(data)
-            if (insert) {
-                const licence = await account.validateLicence(insert._id, master)
-                if (licence) resolve()
-                else reject("Failed to validate licence")
-            } else reject("Failed to create session")
+            const create = await sessionModel.create(data)
+            if (!create) reject("Failed to create session")
+
+            const licence = await account.validateLicence(create._id, master)
+            if (!licence) reject("Failed to validate licence")
+
+            resolve()
         })
     },
 
     /**
      * Join-session handler
      * @param {ObjectId} sessionId
-     * @param {import("socket.io").Socket} socket
-     * @param {string} username
      * @returns {Promise<sessionModel>}
     */
-    join: async function (sessionId, socket, username) {
+    join: async function (sessionId) {
         await prepareConnection()
 
         const session = await sessionModel.findById(sessionId).exec()
-        if (session) {
-            socket.join(sessionId.toString())
-            socket.to(sessionId.toString()).emit("user-connected", username)
-            return session
-        } else throw new Error("Session not found")
-    },
+        if (!session) throw new Error("Session not found")
 
-    /**
-     * Join-session handler
-     * @param {ObjectId} sessionId
-     * @param {import("socket.io").Socket} socket
-     * @param {string} username
-     * @returns {Promise<void>}
-    */
-    leave: async function (sessionId, socket, username) {
-        if (socket.rooms.has(sessionId.toString())) {
-            socket.to(sessionId.toString()).emit("user-disconnected", username)
-            socket.leave(sessionId.toString())
-        } else throw new Error("Client not connected to any game session")
+        return session
     },
 
     /**
      * Set-scene handler
      * @param {ObjectId} sessionId
-     * @param {import("socket.io").Socket} socket
-     * @param {string} username
-     * @returns {Promise<sceneModel>}
-    */
-    setScene: async function (sessionId, sceneId) {
-        await prepareConnection()
-
-        const scene = await sceneModel.findById(sceneId).exec()
-
-        if (scene || !sceneId) {
-            const session = await sessionModel.findByIdAndUpdate(sessionId, { $set: { "state.scene": sceneId } }).exec()
-            if (session) return scene
-            else throw new Error("Invalid session id")
-        } else throw new Error("Invalid scene id")
-    },
-
-    /**
-     * Sync-session handler
-     * @param {ObjectId} sessionId
-     * @param {boolean} synced
+     * @param {{scene: ObjectId | null, synced: boolean}} state
      * @returns {Promise<void>}
     */
-    sync: async function (sessionId, synced) {
+    setState: async function (sessionId, state) {
         await prepareConnection()
 
-        const update = await sessionModel.findByIdAndUpdate(sessionId, { $set: { "state.synced": synced } }).exec()
-        if (!update) throw new Error("Failed to update state")
+        const session = await sessionModel.findByIdAndUpdate(sessionId, { $set: { "state": state } }).exec()
+        if (!session) throw new Error("Invalid session id")
     }
 }

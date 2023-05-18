@@ -1,3 +1,5 @@
+const { ObjectId } = require("mongodb")
+
 io.on("connection", (socket) => {
     // #region Data
     let accountInfo = {
@@ -5,10 +7,10 @@ io.on("connection", (socket) => {
         username: String
     }
     let sessionInfo = {
-        id: undefined,
-        master: undefined,
-        synced: undefined,
-        scene: undefined
+        id: ObjectId,
+        master: ObjectId,
+        synced: Boolean,
+        scene: ObjectId
     }
     // #endregion
 

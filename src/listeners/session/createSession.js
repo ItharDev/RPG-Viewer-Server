@@ -4,7 +4,7 @@ const { sessionModel } = require("../../schemas")
 
 /**
  * Create-session packet listener
- * @param {{ uid: import("mongoose").ObjectId, username: string }} accountInfo Account information
+ * @param {{ uid: ObjectId, username: string }} accountInfo
  * @param {string} name
  * @param {Buffer} buffer
  * @param {() => {}} callback
@@ -12,18 +12,20 @@ const { sessionModel } = require("../../schemas")
 module.exports = async (accountInfo, name, buffer, callback) => {
     console.debug(`[ ${accountInfo.username} (${accountInfo.uid}) ]`, "Package: create-session")
     try {
-        await create(accountInfo.uid, new sessionModel({
+        const model = new sessionModel({
             name,
             master: accountInfo.uid,
             users: [],
             state: {
+                scene: undefined,
                 synced: false
             },
             blueprints: [],
             scenes: [],
             background: new ObjectId()
-        }), buffer)
-        console.log(`Session ${name} created by ${accountInfo.username} (${accountInfo.uid})`)
+        })
+        
+        await create(accountInfo.uid, model, buffer)
         callback(true)
     } catch (error) {
         console.error("Failed to create session", error)
