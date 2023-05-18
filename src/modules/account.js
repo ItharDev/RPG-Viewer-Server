@@ -79,6 +79,7 @@ module.exports = {
 
     validateLicence: async function (licenceKey, uid) {
         await prepareConnection()
+
         const session = await sessionModel.findById(licenceKey).exec()
         if (session) {
             if (!session.master.equals(uid)) await sessionModel.findByIdAndUpdate(licenceKey, { $addToSet: { users: uid } }).exec()

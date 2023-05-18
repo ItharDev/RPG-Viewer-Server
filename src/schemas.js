@@ -1,7 +1,7 @@
-const { ObjectId } = require('mongodb')
-const { model, Schema } = require('mongoose')
+const { ObjectId } = require("mongodb")
+const { model, Schema } = require("mongoose")
 
-const blueprintModel = model('blueprints', new Schema({
+const blueprintModel = model("blueprints", new Schema({
     name: String,
     type: Number,
     permissions: Array({
@@ -29,11 +29,10 @@ const blueprintModel = model('blueprints', new Schema({
     flickerAmount: Number,
     pulseInterval: Number,
     pulseAmount: Number,
-    preset: String,
-    image: ObjectId,
+    image: ObjectId
 }))
 
-const tokenModel = model('tokens', new Schema({
+const tokenModel = model("tokens", new Schema({
     name: String,
     type: Number,
     permissions: Array({
@@ -61,7 +60,6 @@ const tokenModel = model('tokens', new Schema({
     flickerAmount: Number,
     pulseInterval: Number,
     pulseAmount: Number,
-    preset: String,
     image: ObjectId,
     position: {
         x: Number,
@@ -75,7 +73,7 @@ const tokenModel = model('tokens', new Schema({
     rotation: Number
 }))
 
-const sceneModel = model('scenes', new Schema({
+const sceneModel = model("scenes", new Schema({
     data: {
         image: ObjectId,
         name: String,
@@ -117,7 +115,8 @@ const sceneModel = model('scenes', new Schema({
         wallId: ObjectId,
         points: Array({
             _id: false,
-            x: Number, y: Number
+            x: Number,
+            y: Number
         }),
         model: Number,
         open: Boolean,
@@ -146,18 +145,17 @@ const sceneModel = model('scenes', new Schema({
         pulseInterval: Number,
         pulseAmount: Number,
         effect: Number,
-        preset: String,
         color: {
             r: Number,
             g: Number,
             b: Number,
             a: Number
-        },
+        }
     }),
     notes: Array(ObjectId)
 }))
 
-const sessionModel = model('sessions', new Schema({
+const sessionModel = model("sessions", new Schema({
     name: String,
     master: ObjectId,
     users: Array(ObjectId),
@@ -168,11 +166,10 @@ const sessionModel = model('sessions', new Schema({
     blueprints: Array,
     scenes: Array,
     journals: Array,
-    background: ObjectId,
-    lightingPresets: Array
+    background: ObjectId
 }))
 
-const userModel = model('users', new Schema({
+const userModel = model("users", new Schema({
     email: String,
     name: String,
     password: String,
@@ -180,11 +177,11 @@ const userModel = model('users', new Schema({
     licences: Array(ObjectId)
 }))
 
-const fileModel = model('files', new Schema({
+const fileModel = model("files", new Schema({
     count: Number
 }))
 
-const noteModel = model('notes', new Schema({
+const noteModel = model("notes", new Schema({
     owner: ObjectId,
     header: String,
     text: String,
@@ -193,10 +190,10 @@ const noteModel = model('notes', new Schema({
     position: {
         x: Number,
         y: Number
-    },
+    }
 }))
 
-const journalModel = model('journals', new Schema({
+const journalModel = model("journals", new Schema({
     owner: ObjectId,
     header: String,
     text: String,
@@ -205,24 +202,7 @@ const journalModel = model('journals', new Schema({
         _id: false,
         user: ObjectId,
         isCollaborator: Boolean
-    }),
-}))
-
-const presetModel = model('presets', new Schema({
-    radius: Number,
-    name: String,
-    color: {
-        r: Number,
-        g: Number,
-        b: Number,
-        a: Number
-    },
-    intensity: Number,
-    flickerFrequency: Number,
-    flickerAmount: Number,
-    pulseInterval: Number,
-    pulseAmount: Number,
-    effect: Number
+    })
 }))
 
 module.exports = {
@@ -233,6 +213,5 @@ module.exports = {
     userModel,
     fileModel,
     noteModel,
-    journalModel,
-    presetModel
+    journalModel
 }

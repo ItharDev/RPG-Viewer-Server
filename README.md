@@ -4,6 +4,97 @@
 
 RPG Viewer's official backend server
 
-## Releases
+# TODO
+- Logging levels
+- Cleanup modules
+- Documentation
+- Docker configuration
+    - compose
+    - nvmrc
+- Fix schema names
 
-![Latest](https://img.shields.io/github/v/release/ItharDev/RPG-Viewer-Server?label=Latest)
+## Events
+- [x] Download image
+- [x] Disconnect
+- [x] Accounts
+  - [x] Fetch
+  - [x] Register
+  - [x] Sign in
+  - [x] Sign out
+- [x] Licences
+  - [x] Validate
+  - [x] Fetch
+  - [x] Remove
+- [x] Sessions
+  - [x] Create
+  - [x] Join
+  - [x] Leave
+- [x] Tokens
+  - [ ] Fetch (single & multiple)
+  - [ ] Create
+  - [ ] Move
+  - [ ] Modify
+  - [ ] Remove
+  - [ ] Visibility
+  - [ ] Elevation 
+  - [ ] Conditions
+  - [ ] Rotation
+  - [ ] Locking
+  - [ ] Health
+- [x] State (Session)
+  - [ ] Play scene
+  - [ ] Change state
+  - [ ] Sync active scene
+- [x] Walls
+  - [ ] Create
+  - [ ] Modify
+  - [ ] Remove
+  - [ ] Toggle door
+- [x] Lighting
+  - [ ] Create
+  - [ ] Modify
+  - [ ] Remove
+  - [ ] Config settings
+- [x] Presets
+  - [ ] Create
+  - [ ] Modify
+  - [ ] Remove
+  - [ ] Fetch (single & multiple)
+- [x] Ping
+  - [ ] Mark
+  - [ ] Start pointer
+  - [ ] Update pointer
+  - [ ] End pointer
+- [x] Initiative
+- [x] Scenes
+  - [ ] Fetch (single & multiple)
+  - [ ] Create (scene & folder)
+  - [ ] Rename (scene & folder)
+  - [ ] Remove (scene & folder)
+  - [ ] Move (scene & folder)
+- [x] Blueprints
+  - [ ] Fetch (single & multiple)
+  - [ ] Create (blueprint & folder)
+  - [ ] Modify blueprint
+  - [ ] Rename folder
+  - [ ] Remove (blueprint & folder)
+  - [ ] Move (blueprint & folder)
+  - [ ] Update permissions
+  - [ ] Refresh permissions
+- [x] Notes
+  - [ ] Fetch (single & multiple)
+  - [ ] Create
+  - [ ] Modify
+  - [ ] Remove
+  - [ ] Move
+  - [ ] Set as public / private
+  - [ ] Show to others
+- [x] Journals
+  - [ ] Fetch (single & multiple)
+  - [ ] Create (journal & folder)
+  - [ ] Modify journal
+  - [ ] Rename folder
+  - [ ] Remove (journal & folder)
+  - [ ] Move (journal & folder)
+  - [ ] Update collaborators
+  - [ ] Refresh collaborators
