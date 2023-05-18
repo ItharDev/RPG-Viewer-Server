@@ -15,8 +15,7 @@ module.exports = async (email, name, password, callback) => {
             email,
             name,
             password,
-            online: false,
-            licences: []
+            licences: Array
         }))
         console.log(`Registered a new account ${name} (${email}).`)
         callback(true)

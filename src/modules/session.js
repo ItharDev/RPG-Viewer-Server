@@ -1,14 +1,12 @@
-const { sessionModel, sceneModel, noteModel } = require('../schemas')
-const socket = require('socket.io')
-const { connect } = require('mongoose')
-const { ObjectId } = require('mongodb')
-const account = require('./account')
-const networking = require('./networking')
+const { sessionModel, sceneModel } = require("../schemas")
+const { connect } = require("mongoose")
+const account = require("./account")
+const networking = require("./networking")
 
 async function prepareConnection() {
     return new Promise((resolve, reject) => {
         if (global.databaseConnected !== true) {
-            connect('mongodb://127.0.0.1:27017/rpg-viewer').then((db) => {
+            connect("mongodb://127.0.0.1:27017/rpg-viewer").then((db) => {
                 global.databaseConnected = true
                 db.connection.once("error", (err) => {
                     console.error("Mongoose error:", err)
@@ -27,6 +25,13 @@ async function prepareConnection() {
 }
 
 module.exports = {
+    /**
+     * Create-session handler
+     * @param {ObjectId} master
+     * @param {sessionModel} data
+     * @param {Buffer} buffer
+     * @returns {Promise<void>}
+    */
     create: async function (master, data, buffer) {
         return new Promise(async (resolve, reject) => {
             await prepareConnection()
@@ -39,45 +44,72 @@ module.exports = {
             if (insert) {
                 const licence = await account.validateLicence(insert._id, master)
                 if (licence) resolve()
-                else reject('Failed to validate licence')
-            } else reject('Failed to create session')
+                else reject("Failed to validate licence")
+            } else reject("Failed to create session")
         })
     },
 
+    /**
+     * Join-session handler
+     * @param {ObjectId} sessionId
+     * @param {import("socket.io").Socket} socket
+     * @param {string} username
+     * @returns {Promise<sessionModel>}
+    */
     join: async function (sessionId, socket, username) {
         await prepareConnection()
 
         const session = await sessionModel.findById(sessionId).exec()
         if (session) {
             socket.join(sessionId.toString())
-            socket.to(sessionId.toString()).emit('user-connected', username)
+            socket.to(sessionId.toString()).emit("user-connected", username)
             return session
-        } else throw new Error('Session not found')
+        } else throw new Error("Session not found")
     },
 
-    leave: async function (socket, sessionId, username) {
+    /**
+     * Join-session handler
+     * @param {ObjectId} sessionId
+     * @param {import("socket.io").Socket} socket
+     * @param {string} username
+     * @returns {Promise<void>}
+    */
+    leave: async function (sessionId, socket, username) {
         if (socket.rooms.has(sessionId.toString())) {
-            socket.to(sessionId.toString()).emit('user-disconnected', username)
+            socket.to(sessionId.toString()).emit("user-disconnected", username)
             socket.leave(sessionId.toString())
-        } else throw new Error('Client not connected to any game session')
+        } else throw new Error("Client not connected to any game session")
     },
 
-    set: async function (sessionId, sceneId) {
+    /**
+     * Set-scene handler
+     * @param {ObjectId} sessionId
+     * @param {import("socket.io").Socket} socket
+     * @param {string} username
+     * @returns {Promise<sceneModel>}
+    */
+    setScene: async function (sessionId, sceneId) {
         await prepareConnection()
 
         const scene = await sceneModel.findById(sceneId).exec()
 
         if (scene || !sceneId) {
-            const session = await sessionModel.findByIdAndUpdate(sessionId, { $set: { 'state.scene': sceneId } }).exec()
+            const session = await sessionModel.findByIdAndUpdate(sessionId, { $set: { "state.scene": sceneId } }).exec()
             if (session) return scene
-            else throw new Error('Invalid session id')
-        } else throw new Error('Invalid scene id')
+            else throw new Error("Invalid session id")
+        } else throw new Error("Invalid scene id")
     },
 
-    sync: async function (sessionId, sync) {
+    /**
+     * Sync-session handler
+     * @param {ObjectId} sessionId
+     * @param {boolean} synced
+     * @returns {Promise<void>}
+    */
+    sync: async function (sessionId, synced) {
         await prepareConnection()
 
-        const update = await sessionModel.findByIdAndUpdate(sessionId, { $set: { 'state.synced': sync } }).exec()
-        if (!update) throw new Error('Failed to update sync state')
+        const update = await sessionModel.findByIdAndUpdate(sessionId, { $set: { "state.synced": synced } }).exec()
+        if (!update) throw new Error("Failed to update state")
     }
 }
