@@ -76,12 +76,12 @@ const tokenModel = model('tokens', new Schema({
 }))
 
 const sceneModel = model('scenes', new Schema({
-    data: {
+    info: {
         image: ObjectId,
         name: String,
         nightStrength: Number
     },
-    fogOfWar: {
+    darkness: {
         color: {
             r: Number,
             g: Number,
@@ -112,17 +112,7 @@ const sceneModel = model('scenes', new Schema({
         },
         snapToGrid: Boolean
     },
-    walls: Array({
-        _id: false,
-        wallId: ObjectId,
-        points: Array({
-            _id: false,
-            x: Number, y: Number
-        }),
-        model: Number,
-        open: Boolean,
-        locked: Boolean
-    }),
+    walls: Array,
     tokens: Array(ObjectId),
     initiatives: Array({
         _id: false,

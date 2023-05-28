@@ -104,7 +104,7 @@ io.on('connection', (socket) => {
             callback(false, e.message)
         }
     })
-    socket.on('sign-in', async (uid, email, password, callback) => {
+    socket.on('sign-in', async (email, password, uid, callback) => {
         try {
             const user = await account.signIn(email, password, uid)
             accountInfo = {
@@ -404,7 +404,7 @@ io.on('connection', (socket) => {
     socket.on('set-scene', async (sceneId, callback) => {
         try {
             const scene = await session.set(sessionInfo.id, sceneId ? ObjectId(sceneId) : undefined)
-            io.to(sessionInfo.id.toString()).emit('change-state', sessionInfo.synced, sceneId)
+            io.to(sessionInfo.id.toString()).emit('set-scene', sceneId)
             callback(true)
         } catch (e) {
             console.error(e)
@@ -589,12 +589,12 @@ io.on('connection', (socket) => {
             const data = JSON.parse(json)
 
             const id = await scene.create(sessionInfo.id, path, new sceneModel({
-                data: {
+                info: {
                     image: new ObjectId(),
-                    name: data.data.name,
-                    nightStrength: data.data.nightStrength
+                    name: data.info.name,
+                    nightStrength: data.info.nightStrength
                 },
-                fogOfWar: data.fogOfWar,
+                darkness: data.darkness,
                 grid: data.grid,
                 walls: data.walls,
                 tokens: data.tokens,
@@ -621,15 +621,15 @@ io.on('connection', (socket) => {
             const data = JSON.parse(json)
 
             await scene.modify(sessionInfo.id, ObjectId(id), new sceneModel({
-                data: data.data,
-                fogOfWar: data.fogOfWar,
+                info: data.info,
+                darkness: data.darkness,
                 grid: data.grid,
                 walls: data.walls,
                 tokens: data.tokens,
                 initiative: data.initiative
             }))
             callback(true)
-            io.to(sessionInfo.id.toString()).emit('change-state', sessionInfo.synced, sessionInfo.scene)
+            io.to(sessionInfo.id.toString()).emit('set-scene', sessionInfo.scene)
         } catch (e) {
             console.error(e)
             callback(false, e.message)
