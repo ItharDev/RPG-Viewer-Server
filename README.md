@@ -29,7 +29,7 @@ RPG Viewer's official backend server
   - [x] Create
   - [x] Join
   - [x] Leave
-- [x] Tokens
+- [ ] Tokens
   - [ ] Fetch (single & multiple)
   - [ ] Create
   - [ ] Move
@@ -43,33 +43,32 @@ RPG Viewer's official backend server
   - [ ] Health
 - [x] State
 - [x] Walls
-  - [ ] Create
-  - [ ] Modify
-  - [ ] Remove
-  - [ ] Toggle door
-- [x] Lighting
+  - [x] Create
+  - [x] Modify
+  - [x] Remove
+- [ ] Lighting
   - [ ] Create
   - [ ] Modify
   - [ ] Remove
   - [ ] Config settings
-- [x] Presets
+- [ ] Presets
   - [ ] Create
   - [ ] Modify
   - [ ] Remove
   - [ ] Fetch (single & multiple)
 - [x] Ping
-  - [ ] Mark
-  - [ ] Start pointer
-  - [ ] Update pointer
-  - [ ] End pointer
-- [x] Initiative
+  - [x] Ping
+  - [x] Start pointer
+  - [x] Update pointer
+  - [x] Stop pointer
+- [ ] Initiative
 - [x] Scenes
-  - [ ] Fetch (single & multiple)
-  - [ ] Create (scene & folder)
-  - [ ] Rename (scene & folder)
-  - [ ] Remove (scene & folder)
-  - [ ] Move (scene & folder)
-- [x] Blueprints
+  - [x] Fetch (single & multiple)
+  - [x] Create (scene & folder)
+  - [x] Rename (scene & folder)
+  - [x] Remove (scene & folder)
+  - [x] Move (scene & folder)
+- [ ] Blueprints
   - [ ] Fetch (single & multiple)
   - [ ] Create (blueprint & folder)
   - [ ] Modify blueprint
@@ -78,7 +77,7 @@ RPG Viewer's official backend server
   - [ ] Move (blueprint & folder)
   - [ ] Update permissions
   - [ ] Refresh permissions
-- [x] Notes
+- [ ] Notes
   - [ ] Fetch (single & multiple)
   - [ ] Create
   - [ ] Modify
@@ -86,7 +85,7 @@ RPG Viewer's official backend server
   - [ ] Move
   - [ ] Set as public / private
   - [ ] Show to others
-- [x] Journals
+- [ ] Journals
   - [ ] Fetch (single & multiple)
   - [ ] Create (journal & folder)
   - [ ] Modify journal

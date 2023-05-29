@@ -1,13 +1,13 @@
-const { sceneModel, sessionModel } = require('../schemas')
-const folder = require('./folder')
-const { ObjectId } = require('mongodb')
-const { connect } = require('mongoose')
-const networking = require('./networking')
+const { sceneModel, sessionModel } = require("../schemas")
+const { ObjectId } = require("mongodb")
+const { connect } = require("mongoose")
+const networking = require("./networking")
+const getFolder = require("./getFolder")
 
 async function prepareConnection() {
     return new Promise((resolve, reject) => {
         if (global.databaseConnected !== true) {
-            connect('mongodb://127.0.0.1:27017/rpg-viewer').then((db) => {
+            connect("mongodb://127.0.0.1:27017/rpg-viewer").then((db) => {
                 global.databaseConnected = true
                 db.connection.once("error", (err) => {
                     console.error("Mongoose error:", err)
@@ -26,237 +26,251 @@ async function prepareConnection() {
 }
 
 module.exports = {
+    /**
+     * Get-scene handler
+     * @param {ObjectId} sceneId
+     * @returns {Promise<sceneModel>}
+    */
     get: async function (sceneId) {
         await prepareConnection()
 
         const scene = await sceneModel.findById(sceneId).exec()
-        if (scene) return scene
-        else throw new Error('Failed to load scene data')
+        if (!scene) throw new Error("Invalid scene id")
+
+        return scene
     },
 
+    /**
+     * Get-all-scenes handler
+     * @param {ObjectId} sessionId
+     * @returns {Promise<Array>}
+    */
     getAll: async function (sessionId) {
         await prepareConnection()
 
         const session = await sessionModel.findById(sessionId).exec()
-        if (session) return session.scenes
-        else throw new Error('Invalid session id')
+        if (!session) throw new Error("Invalid session id")
+
+        return session.scenes
     },
 
-    create: async function (sessionId, path, data, image) {
+    /**
+     * Create-scene handler
+     * @param {ObjectId} sessionId
+     * @param {string} path
+     * @param {sceneModel} data
+     * @param {Buffer} buffer
+     * @returns {Promise<string>}
+    */
+    create: async function (sessionId, path, data, buffer) {
         return new Promise(async (resolve, reject) => {
             await prepareConnection()
 
-            await networking.uploadFile(data.data.image, image).then(null, (rejected) => {
+            await networking.uploadFile(data.info.image, buffer).then(null, (rejected) => {
                 reject(rejected)
             })
-            const document = await sessionModel.findById(sessionId).exec()
-            if (document) {
-                const scene = await sceneModel.create(data)
-                if (scene) {
-                    const targetFolder = await folder.get(document.scenes, path)
-                    if (targetFolder) await sessionModel.findByIdAndUpdate(sessionId, { $addToSet: { [`scenes.${targetFolder.path}.contents`]: scene._id } }).exec()
-                    else await sessionModel.findByIdAndUpdate(sessionId, { $addToSet: { [`scenes`]: scene._id } }).exec()
 
-                    resolve(scene)
-                }
-                else reject('Failed to create scene')
-            } else reject('Failed to create scene')
+            const session = await sessionModel.findById(sessionId).exec()
+            if (!session) reject("Invalid session id")
 
+            const scene = await sceneModel.create(data)
+            if (!scene) reject("Failed to create scene")
+
+            const targetFolder = await getFolder(session.scenes, path)
+            if (targetFolder) await sessionModel.findByIdAndUpdate(sessionId, { $addToSet: { [`scenes.folders.${targetFolder.path}.contents`]: scene._id } }).exec()
+            else await sessionModel.findByIdAndUpdate(sessionId, { $addToSet: { [`scenes.contents`]: scene._id } }).exec()
+
+            resolve(scene._id)
         })
     },
 
+    /**
+     * Remove-scene handler
+     * @param {ObjectId} sessionId 
+     * @param {string} path 
+     * @param {ObjectId} sceneId 
+     * @returns {Promise<boolean>}
+     */
     remove: async function (sessionId, path, sceneId) {
         await prepareConnection()
-        const document = await sessionModel.findById(sessionId).exec()
-        if (document) {
-            const targetFolder = await folder.get(document.scenes, path)
-            if (targetFolder) await sessionModel.findByIdAndUpdate(sessionId, { $pull: { [`scenes.${targetFolder.path}.contents`]: sceneId } }).exec()
-            else await sessionModel.findByIdAndUpdate(sessionId, { $pull: { [`scenes`]: sceneId } }).exec()
 
-            const scene = await sceneModel.findByIdAndDelete(sceneId).exec()
-            if (scene) {
-                await networking.modifyFile(scene.image)
-                if (!document.state.scene) return false
-                return document.state.scene.equals(sceneId)
-            }
-            else throw new Error('Failed to remove scene')
-        } else throw new Error('Failed to create scene')
+        const session = await sessionModel.findById(sessionId).exec()
+        if (!session) throw new Error("Invalid session id")
+
+        const targetFolder = await getFolder(session.scenes, path)
+        if (targetFolder) await sessionModel.findByIdAndUpdate(sessionId, { $pull: { [`scenes.folders.${targetFolder.path}.contents`]: sceneId } }).exec()
+        else await sessionModel.findByIdAndUpdate(sessionId, { $pull: { [`scenes.contents`]: sceneId } }).exec()
+
+        const scene = await sceneModel.findByIdAndDelete(sceneId).exec()
+        if (scene) throw new Error("Failed to remove scene")
+
+        await networking.modifyFile(scene.image)
+        if (!session.state.scene) return false
+        return session.state.scene.equals(sceneId)
     },
 
-    modify: async function (sessionId, sceneId, data) {
+    /**
+     * Rename-scene handler
+     * @param {ObjectId} sceneId 
+     * @param {string} name
+     * @returns {Promise<void>}
+     */
+    rename: async function (sceneId, name) {
         await prepareConnection()
 
-        const document = await sessionModel.findById(sessionId).exec()
-        const update = await sceneModel.findByIdAndUpdate(sceneId, { $set: { data: data.data, grid: data.grid, fogOfWar: data.fogOfWar, walls: data.walls } }).exec()
-        if (!update) throw new Error('Failed to modify scene')
+        const update = await sceneModel.findByIdAndUpdate(sceneId, { $set: { "info.name": name } }).exec()
+        if (!update) throw new Error("Failed to rename scene")
     },
 
+    /**
+     * Move-scene handler
+     * @param {ObjectId} sessionId 
+     * @param {ObjectId} sceneId 
+     * @param {string} oldPath 
+     * @param {string} newPath 
+     * @returns {Promise<void>}
+     */
     move: async function (sessionId, sceneId, oldPath, newPath) {
         await prepareConnection()
 
-        const document = await sessionModel.findById(sessionId).exec()
-        if (document) {
-            const oldFolder = await folder.get(document.scenes, oldPath)
+        const session = await sessionModel.findById(sessionId).exec()
+        if (!session) throw new Error("Invalid session id")
 
-            let pull
-            let push
+        const oldFolder = await getFolder(session.scenes, oldPath)
 
-            if (!oldPath) pull = await sessionModel.findByIdAndUpdate(sessionId, { $pull: { [`scenes`]: sceneId } }).exec()
-            else pull = await sessionModel.findByIdAndUpdate(sessionId, { $pull: { [`scenes.${oldFolder.path}.contents`]: sceneId } }).exec()
+        let pull
+        let push
 
-            if (pull) {
-                const newState = await sessionModel.findById(sessionId).exec()
-                const newFolder = await folder.get(newState.scenes, newPath)
+        if (!oldPath) pull = await sessionModel.findByIdAndUpdate(sessionId, { $pull: { [`scenes.contents`]: sceneId } }).exec()
+        else pull = await sessionModel.findByIdAndUpdate(sessionId, { $pull: { [`scenes.folders.${oldFolder.path}.contents`]: sceneId } }).exec()
+        if (!pull) throw new Error("Failed to pull the scene from old location")
 
-                if (!newPath) push = await sessionModel.findByIdAndUpdate(sessionId, { $addToSet: { [`scenes`]: sceneId } }).exec()
-                else push = await sessionModel.findByIdAndUpdate(sessionId, { $addToSet: { [`scenes.${newFolder.path}.contents`]: sceneId } }).exec()
+        const newState = await sessionModel.findById(sessionId).exec()
+        const newFolder = await getFolder(newState.scenes, newPath)
 
-                if (!push) throw new Error('Failed to move scene')
-            }
-            else throw new Error('Failed to move scene')
-        } else throw new Error('Failed to move scene')
+        if (!newPath) push = await sessionModel.findByIdAndUpdate(sessionId, { $addToSet: { [`scenes.contents`]: sceneId } }).exec()
+        else push = await sessionModel.findByIdAndUpdate(sessionId, { $addToSet: { [`scenes.${newFolder.path}.contents`]: sceneId } }).exec()
+
+        if (!push) throw new Error("Failed to push the scene to new location")
     },
 
+    /**
+     * Create-folder handler
+     * @param {ObjectId} sessionId 
+     * @param {string} path 
+     * @param {string} name 
+     * @returns {Promise<string>}
+     */
     createFolder: async function (sessionId, path, name) {
         await prepareConnection()
 
-        const document = await sessionModel.findById(sessionId).exec()
-        if (document) {
-            const struct = {
-                id: new ObjectId(),
-                name: name,
-                subFolders: [],
-                contents: []
-            }
+        const session = await sessionModel.findById(sessionId).exec()
+        if (!session) throw new Error("Invalid session id")
 
-            const targetFolder = await folder.get(document.scenes, path)
-            if (targetFolder) {
-                const update = await sessionModel.findByIdAndUpdate(sessionId, { $addToSet: { [`scenes.${targetFolder.path}.subFolders`]: struct } }).exec()
-                if (update) return struct.id
-                else throw new Error('Failed to create folder')
-            } else {
-                const update = await sessionModel.findByIdAndUpdate(sessionId, { $addToSet: { [`scenes`]: struct } }).exec()
-                if (update) return struct.id
-                else throw new Error('Failed to create folder')
-            }
-        } else throw new Error('Failed to create folder')
+        const id = new ObjectId().toString()
+        const data = {
+            name: name,
+            folders: [],
+            contents: []
+        }
+
+        const targetFolder = await getFolder(session.scenes, path)
+        if (targetFolder) {
+            const update = await sessionModel.findByIdAndUpdate(sessionId, { $set: { [`scenes.folders.${targetFolder.path}.folders.${id}`]: data } }).exec()
+            if (!update) throw new Error("Failed to create folder")
+
+            return id
+        } else {
+            const update = await sessionModel.findByIdAndUpdate(sessionId, { $set: { [`scenes.folders.${id}`]: data } }).exec()
+            if (!update) throw new Error("Failed to create folder")
+
+            return id
+        }
     },
 
+    /**
+     * Remove-folder handler
+     * @param {ObjectId} sessionId 
+     * @param {string} path 
+     * @returns {Promise<void>}
+     */
     removeFolder: async function (sessionId, path) {
         await prepareConnection()
 
-        const document = await sessionModel.findById(sessionId).exec()
-        if (document) {
-            const oldFolder = await folder.get(document.scenes, path)
-            for (let i = 0; i < oldFolder.contents.length; i++) {
-                const element = oldFolder.contents[i];
-                await this.remove(sessionId, path, element)
-            }
+        const session = await sessionModel.findById(sessionId).exec()
+        if (!session) throw new Error("Invalid session id")
 
-            let paths = path.split('/')
-            const folderId = paths.pop()
+        const oldFolder = await getFolder(session.scenes, path)
+        for (let i = 0; i < oldFolder.contents.length; i++) {
+            await this.remove(sessionId, path, oldFolder.contents[i])
+        }
 
-            const targetFolder = await folder.get(document.scenes, paths.join('/'))
-            if (targetFolder) {
-                const update = await sessionModel.findByIdAndUpdate(sessionId, { $pull: { [`scenes.${targetFolder.path}.subFolders`]: { id: ObjectId(folderId) } } }).exec()
-                if (!update) throw new Error('Failed to remove folder')
-            } else {
-                const update = await sessionModel.findByIdAndUpdate(sessionId, { $pull: { [`scenes`]: { id: ObjectId(folderId) } } }).exec()
-                if (!update) throw new Error('Failed to remove folder')
-            }
-        } else throw new Error('Failed to remove folder')
+        let paths = path.split("/")
+        const folderId = paths.pop()
+
+        const targetFolder = await get(session.scenes, paths.join("/"))
+        if (targetFolder) {
+            const update = await sessionModel.findByIdAndUpdate(sessionId, { $unset: { [`scenes.folders.${targetFolder.path}.folders.${folderId}`]: "" } }).exec()
+            if (!update) throw new Error("Failed to remove folder")
+        } else {
+            const update = await sessionModel.findByIdAndUpdate(sessionId, { $unset: { [`scenes.folders.${folderId}`]: "" } }).exec()
+            if (!update) throw new Error("Failed to remove folder")
+        }
     },
 
+    /**
+     * Rename-folder handler
+     * @param {ObjectId} sessionId
+     * @param {string} path
+     * @param {string} name
+     * @returns {Promise<void>}
+     */
     renameFolder: async function (sessionId, path, name) {
         await prepareConnection()
 
-        const document = await sessionModel.findById(sessionId).exec()
-        if (document) {
-            const targetFolder = await folder.get(document.scenes, path)
-            if (targetFolder) {
-                const update = await sessionModel.findByIdAndUpdate(sessionId, { $set: { [`scenes.${targetFolder.path}.name`]: name } }).exec()
-                if (!update) throw new Error('Failed to rename folder')
-            } else throw new Error('Failed to rename folder')
-        } else throw new Error('Failed to rename folder')
+        const session = await sessionModel.findById(sessionId).exec()
+        if (!session) throw new Error("Invalid session id")
+
+        const targetFolder = await getFolder(session.scenes, path)
+        if (!targetFolder) throw new Error("Target folder not found")
+
+        const update = await sessionModel.findByIdAndUpdate(sessionId, { $set: { [`scenes.folders.${targetFolder.path}.name`]: name } }).exec()
+        if (!update) throw new Error("Failed to rename folder")
     },
 
+    /**
+     * Move-folder handler
+     * @param {ObjectId} sessionId 
+     * @param {string} oldPath 
+     * @param {string} newPath 
+     * @returns {Promise<void>}
+     */
     moveFolder: async function (sessionId, oldPath, newPath) {
         await prepareConnection()
 
-        const document = await sessionModel.findById(sessionId).exec()
-        if (document) {
-            let oldPaths = oldPath.split('/')
-            const oldId = oldPaths.pop()
+        const session = await sessionModel.findById(sessionId).exec()
+        if (!session) throw new Error("Invalid session id")
 
-            let pull
-            let push
+        let oldPaths = oldPath.split("/")
+        const oldId = oldPaths.pop()
 
-            const oldFolder = await folder.get(document.scenes, oldPaths.join('/'))
-            if (oldFolder) pull = await sessionModel.findByIdAndUpdate(sessionId, { $pull: { [`scenes.${oldFolder.path}.subFolders`]: { id: ObjectId(oldId) } } }).exec()
-            else pull = await sessionModel.findByIdAndUpdate(sessionId, { $pull: { [`scenes`]: { id: ObjectId(oldId) } } }).exec()
+        let pull
+        let push
 
-            if (pull) {
-                const newState = await sessionModel.findById(sessionId).exec()
-                const newFolder = await folder.get(newState.scenes, newPath)
-                if (newFolder) {
-                    if (oldFolder) push = await sessionModel.findByIdAndUpdate(sessionId, { $addToSet: { [`scenes.${newFolder.path}.subFolders`]: oldFolder.subFolders.find(obj => obj.id == oldId) } }).exec()
-                    else push = await sessionModel.findByIdAndUpdate(sessionId, { $addToSet: { [`scenes.${newFolder.path}.subFolders`]: document.scenes.find(obj => obj.id == oldId) } }).exec()
-                } else {
-                    if (oldFolder) push = await sessionModel.findByIdAndUpdate(sessionId, { $addToSet: { [`scenes`]: oldFolder.subFolders.find(obj => obj.id == oldId) } }).exec()
-                    else push = await sessionModel.findByIdAndUpdate(sessionId, { $addToSet: { [`scenes`]: document.scenes.find(obj => obj.id == oldId) } }).exec()
-                }
-                if (push) return
-                else throw new Error('Failed to move folder')
-            }
-            else throw new Error('Failed to move folder')
-        } else throw new Error('Failed to move folder')
-    },
+        const oldFolder = await getFolder(session.scenes, oldPaths.join("/"))
+        if (oldFolder) pull = await sessionModel.findByIdAndUpdate(sessionId, { $unset: { [`scenes.folders.${oldFolder.path}.folders.${oldId}`]: "" } }).exec()
+        else pull = await sessionModel.findByIdAndUpdate(sessionId, { $unset: { [`scenes.folders.${oldId}`]: "" } }).exec()
+        if (!pull) throw new Error("Failed to pull the folder from old location")
 
-    toggleDoor: async function (sceneId, doorId, state) {
-        await prepareConnection()
-
-        const update = await sceneModel.findByIdAndUpdate(sceneId, { $set: { 'walls.$[element].open': state } }, { arrayFilters: [{ 'element.wallId': doorId }] }).exec()
-        if (!update) throw new Error('Failed to toggle door state')
-    },
-
-    modifyDoor: async function (sceneId, data) {
-        await prepareConnection()
-
-        const update = await sceneModel.findByIdAndUpdate(sceneId, { $set: { 'walls.$[element]': data } }, { arrayFilters: [{ 'element.wallId': data.wallId }] }).exec()
-        if (!update) throw new Error('Failed to update wall data')
-    },
-
-    createLight: async function (sceneId, data) {
-        await prepareConnection()
-
-        data.id = new ObjectId()
-        const update = await sceneModel.findByIdAndUpdate(sceneId, { $addToSet: { lights: data } }).exec()
-        if (update) return JSON.stringify(data)
-        else throw new Error('Failed to create light source')
-    },
-
-    modifyLight: async function (sceneId, data) {
-        await prepareConnection()
-
-        const update = await sceneModel.findByIdAndUpdate(sceneId, { $set: { 'lights.$[element]': data } }, { arrayFilters: [{ 'element.id': ObjectId(data.id) }] }).exec()
-        if (update) return JSON.stringify(data)
-        else throw new Error('Failed to update light source')
-    },
-
-    removeLight: async function (sceneId, lightId) {
-        await prepareConnection()
-
-        const update = await sceneModel.findByIdAndUpdate(sceneId, { $pull: { 'lights': { id: lightId } } }).exec()
-        if (!update) throw new Error('Failed to remove light source')
-    },
-
-    setInitiatives: async function (sceneId, data) {
-        await prepareConnection()
-
-        const scene = await sceneModel.findById(sceneId).exec()
-        if (scene) {
-            const update = await sceneModel.findByIdAndUpdate(sceneId, { $set: { initiatives: data } }).exec()
-            if (!update) throw new Error('Failed to update initiatives')
-        } else throw new Error('Scene not found')
+        const newState = await sessionModel.findById(sessionId).exec()
+        const newFolder = await getFolder(newState.scenes, newPath)
+        if (newFolder) {
+            if (oldFolder) push = await sessionModel.findByIdAndUpdate(sessionId, { $set: { [`scenes.folders.${newFolder.path}.folders.${oldId}`]: oldFolder.folders[oldId] } }).exec()
+            else push = await sessionModel.findByIdAndUpdate(sessionId, { $set: { [`scenes.folders.${newFolder.path}.folders.${oldId}`]: session.scenes.folders[oldId] } }).exec()
+        } else {
+            if (oldFolder) push = await sessionModel.findByIdAndUpdate(sessionId, { $set: { [`scenes.folders.${oldId}`]: oldFolder.folders[oldId] } }).exec()
+            else push = await sessionModel.findByIdAndUpdate(sessionId, { $set: { [`scenes.folders.${oldId}`]: session.scenes.folders[oldId] } }).exec()
+        }
+        if (!push) throw new Error("Failed to push the folder to new location")
     }
 }

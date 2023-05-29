@@ -1,4 +1,4 @@
-const { userModel, sessionModel } = require("../schemas")
+const { userModel, sessionModel, sceneModel } = require("../schemas")
 const { ObjectId } = require("mongodb")
 const { connect } = require("mongoose")
 const bcrypt = require("bcrypt")
@@ -31,11 +31,29 @@ function validateEmail(email) {
             /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
         )
 }
+
+function createFolder(folder) {
+    let folderStruct = {
+        name: folder.name,
+        folders: {},
+        contents: folder.contents
+    }
+
+    folder.subFolders.forEach(element => {
+        if (ObjectId.isValid(element)) return
+
+        const id = element.id
+        folderStruct.folders[id] = createFolder(element)
+    })
+
+    return folderStruct
+}
+
 module.exports = {
     /**
      * Get-user handler
      * @param {ObjectId} uid
-     * @returns {Promise<string>} user id
+     * @returns {Promise<string>}
     */
     get: async function (uid) {
         await prepareConnection()
@@ -49,7 +67,7 @@ module.exports = {
     /**
      * Register handler
      * @param {{email: string, name: string, password: string, licences: Array}} userData
-     * @returns {Promise<string>} user id
+     * @returns {Promise<string>}
     */
     register: async function (userData) {
         await prepareConnection()
@@ -70,12 +88,12 @@ module.exports = {
 
     /**
      * Sign-in handler
+     * @param {ObjectId | null} uid
      * @param {string | null} email
      * @param {string | null} password
-     * @param {ObjectId | null} uid
-     * @returns {Promise<userModel>} user data
+     * @returns {Promise<userModel>}
     */
-    signIn: async function (email, password, uid) {
+    signIn: async function (uid, email, password) {
         await prepareConnection()
 
         if (uid) {
@@ -98,7 +116,7 @@ module.exports = {
      * Validate-licence handler
      * @param {ObjectId} key
      * @param {ObjectId} uid
-     * @returns {Promise<string>} session name
+     * @returns {Promise<string>}
     */
     validateLicence: async function (key, uid) {
         await prepareConnection()
@@ -116,7 +134,7 @@ module.exports = {
     /**
      * Load-licences handler
      * @param {ObjectId} uid
-     * @returns {Promise<Array>} licences
+     * @returns {Promise<Array>}
     */
     loadLicences: async function (uid) {
         await prepareConnection()

@@ -31,6 +31,6 @@ module.exports = async (accountInfo, sessionInfo, socket, socketServer, callback
         callback(true)
     } catch (error) {
         console.error("Failed to leave session", error)
-        callback(error.message)
+        callback(false, error.message)
     }
 }

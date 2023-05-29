@@ -4,15 +4,15 @@ const { signIn } = require("../../modules/account")
 /**
  * Sign-in packet listener
  * @param {{ uid: ObjectId, username: string }} accountInfo
+ * @param {ObjectId} uid
  * @param {string} email
  * @param {string} password
- * @param {ObjectId} uid
  * @param {() => {}} callback
 */
-module.exports = async (accountInfo, email, password, uid, callback) => {
+module.exports = async (accountInfo, uid, email, password, callback) => {
     console.debug("[ ??? (???) ]", "Package: sign-in")
     try {
-        const user = await signIn(email, password, uid)
+        const user = await signIn(uid, email, password)
         accountInfo.uid = user._id
         accountInfo.username = user.name
         callback(true, accountInfo.username, accountInfo.uid.toString())

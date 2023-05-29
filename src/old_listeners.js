@@ -12,6 +12,7 @@ io.on("connection", (socket) => {
         synced: Boolean,
         scene: ObjectId
     }
+
     // #endregion
 
     // #region Misc

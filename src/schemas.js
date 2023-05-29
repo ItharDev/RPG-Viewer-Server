@@ -74,12 +74,11 @@ const tokenModel = model("tokens", new Schema({
 }))
 
 const sceneModel = model("scenes", new Schema({
-    data: {
+    info: {
         image: ObjectId,
         name: String,
-        nightStrength: Number
     },
-    fogOfWar: {
+    darkness: {
         color: {
             r: Number,
             g: Number,
@@ -89,7 +88,10 @@ const sceneModel = model("scenes", new Schema({
         enabled: Boolean,
         globalLighting: Boolean,
         translucency: Number,
-        nightVisionStrength: Number
+        nightVision: {
+            radius: Number,
+            strength: Number
+        }
     },
     grid: {
         cellSize: Number,
@@ -153,27 +155,26 @@ const sceneModel = model("scenes", new Schema({
         }
     }),
     notes: Array(ObjectId)
-}))
+}, {strict: false, strictQuery: false}))
 
 const sessionModel = model("sessions", new Schema({
     name: String,
     master: ObjectId,
     users: Array(ObjectId),
     state: {
-        synced: Boolean,
-        scene: ObjectId
+        scene: ObjectId,
+        synced: Boolean
     },
-    blueprints: Array,
-    scenes: Array,
-    journals: Array,
+    blueprints: {},
+    scenes: {},
+    journals: {},
     background: ObjectId
-}))
+}, {strict: false, strictQuery: false}))
 
 const userModel = model("users", new Schema({
     email: String,
     name: String,
     password: String,
-    online: Boolean,
     licences: Array(ObjectId)
 }))
 

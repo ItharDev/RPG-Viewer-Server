@@ -20,10 +20,10 @@ module.exports = async (accountInfo, sessionId, scene, synced, socketServer, cal
         }
 
         await setState(sessionId, state)
-        socketServer.to(sessionId.toString()).emit("change-state", state.scene, state.synced)
+        socketServer.to(sessionId.toString()).emit("set-state", state.scene, state.synced)
         callback(true)
     } catch (error) {
-        console.error("Failed to create session", error)
-        callback(error.message)
+        console.error("Failed to set state", error)
+        callback(false, error.message)
     }
 }

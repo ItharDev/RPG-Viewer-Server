@@ -24,11 +24,11 @@ module.exports = async (accountInfo, sessionInfo, socket, sessionId, callback) =
         sessionInfo.background = model.background
 
         socket.join(sessionId.toString())
-        socket.to(sessionId.toString()).emit("user-connected", username)
+        socket.to(sessionId.toString()).emit("user-connected", accountInfo.username)
 
         callback(true, sessionInfo)
     } catch (error) {
         console.error("Failed to join session", error)
-        callback(error.message)
+        callback(false, error.message)
     }
 }

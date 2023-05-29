@@ -24,11 +24,11 @@ module.exports = async (accountInfo, name, buffer, callback) => {
             scenes: [],
             background: new ObjectId()
         })
-        
+
         await create(accountInfo.uid, model, buffer)
         callback(true)
     } catch (error) {
         console.error("Failed to create session", error)
-        callback(error.message)
+        callback(false, error.message)
     }
 }
