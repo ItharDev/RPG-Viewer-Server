@@ -18,7 +18,7 @@ module.exports = {
             const model = new sceneModel(data)
 
             const id = await create(sessionId, path, model, buffer)
-            callback(true)
+            callback(true, id, data.info.image)
         } catch (error) {
             console.error("Failed to create scene", error)
             callback(false, error.message)

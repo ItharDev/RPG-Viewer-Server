@@ -5,7 +5,7 @@ const { Socket } = require("socket.io")
 /**
  * Join-session packet listener
  * @param {{ uid: ObjectId, username: string }} accountInfo
- * @param {{ id: ObjectId | null, master: ObjectId | null, isMaster: boolean | null, synced: boolean | null, scene: ObjectId | null, users: Array | null, background: ObjectId | null }} sessionInfo
+ * @param {{ id: ObjectId | null, master: ObjectId | null, isMaster: boolean | null, synced: boolean | null, scene: ObjectId | null, users: Array | null, presets: Array | null, background: ObjectId | null }} sessionInfo
  * @param {Socket} socket
  * @param {string} sessionId
  * @param {() => {}} callback
@@ -21,6 +21,7 @@ module.exports = async (accountInfo, sessionInfo, socket, sessionId, callback) =
         sessionInfo.synced = model.state.synced
         sessionInfo.scene = model.state.scene
         sessionInfo.users = model.users
+        sessionInfo.presets = model.presets
         sessionInfo.background = model.background
 
         socket.join(sessionId.toString())

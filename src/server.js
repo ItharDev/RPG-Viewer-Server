@@ -44,6 +44,11 @@ const renameBlueprintFolder = require("./listeners/blueprints/renameBlueprintFol
 const ping = require("./listeners/ping/ping")
 const pointer = require("./listeners/ping/pointer")
 
+const createLight = require("./listeners/lights/createLight")
+const getLight = require("./listeners/lights/getLight")
+const modifyLight = require("./listeners/lights/modifyLight")
+const removeLight = require("./listeners/lights/removeLight")
+
 // Get environment variables
 require("dotenv").config()
 
@@ -131,6 +136,14 @@ io.on("connection", (socket) => {
     socket.on("start-pointer", (location) => pointer.start(accountInfo, sessionInfo.id, location, io))
     socket.on("update-pointer", (location) => pointer.update(accountInfo, sessionInfo.id, location, io))
     socket.on("stop-pointer", () => pointer.stop(accountInfo, sessionInfo.id, io))
+
+    socket.on("get-light", (id, callback) => getLight(accountInfo, ObjectId(id), callback))
+    socket.on("create-preset", (data, callback) => createLight.preset(accountInfo, sessionInfo.id, JSON.parse(data), io, callback))
+    socket.on("create-light", (data, callback) => createLight.light(accountInfo, sessionInfo.scene, JSON.parse(data), io, callback))
+    socket.on("modify-preset", (id, data, callback) => modifyLight.preset(accountInfo, ObjectId(id), JSON.parse(data), io, callback))
+    socket.on("modify-light", (id, data, callback) => modifyLight.light(accountInfo, sessionInfo.scene, ObjectId(id), JSON.parse(data), io, callback))
+    socket.on("remove-preset", (id, callback) => removeLight.preset(accountInfo, sessionInfo.id, ObjectId(id), io, callback))
+    socket.on("remove-light", (id, callback) => removeLight.light(accountInfo, sessionInfo.scene, ObjectId(id), io, callback))
 })
 
 // Start everything

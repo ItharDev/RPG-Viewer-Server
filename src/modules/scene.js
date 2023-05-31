@@ -149,7 +149,7 @@ module.exports = {
         const newFolder = await getFolder(newState.scenes, newPath)
 
         if (!newPath) push = await sessionModel.findByIdAndUpdate(sessionId, { $addToSet: { [`scenes.contents`]: sceneId } }).exec()
-        else push = await sessionModel.findByIdAndUpdate(sessionId, { $addToSet: { [`scenes.${newFolder.path}.contents`]: sceneId } }).exec()
+        else push = await sessionModel.findByIdAndUpdate(sessionId, { $addToSet: { [`scenes.folders.${newFolder.path}.contents`]: sceneId } }).exec()
 
         if (!push) throw new Error("Failed to push the scene to new location")
     },
@@ -170,7 +170,7 @@ module.exports = {
         const id = new ObjectId().toString()
         const data = {
             name: name,
-            folders: [],
+            folders: {},
             contents: []
         }
 

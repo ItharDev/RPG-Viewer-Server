@@ -2,75 +2,81 @@ const { ObjectId } = require("mongodb")
 const { model, Schema } = require("mongoose")
 
 const blueprintModel = model("blueprints", new Schema({
-    name: String,
-    type: Number,
     permissions: Array({
         _id: false,
         user: ObjectId,
         permission: Number
     }),
+    visible: Array({
+        _id: false,
+        user: ObjectId,
+        visible: Boolean
+    }),
     dimensions: {
         x: Number,
         y: Number
     },
-    hasVision: Boolean,
-    nightVision: Boolean,
-    highlighted: Boolean,
-    lightRadius: Number,
-    lightEffect: Number,
-    lightColor: {
-        r: Number,
-        g: Number,
-        b: Number,
-        a: Number
-    },
-    lightIntensity: Number,
-    flickerFrequency: Number,
-    flickerAmount: Number,
-    pulseInterval: Number,
-    pulseAmount: Number,
+    name: String,
+    type: Number,
+    visionRadius: Number,
+    nightRadius: Number,
+    light: ObjectId,
     image: ObjectId
 }))
 
 const tokenModel = model("tokens", new Schema({
-    name: String,
-    type: Number,
     permissions: Array({
         _id: false,
         user: ObjectId,
         permission: Number
     }),
+    visible: Array({
+        _id: false,
+        user: ObjectId,
+        visible: Boolean
+    }),
     dimensions: {
         x: Number,
         y: Number
     },
-    hasVision: Boolean,
-    nightVision: Boolean,
-    highlighted: Boolean,
-    lightRadius: Number,
-    lightEffect: Number,
-    lightColor: {
-        r: Number,
-        g: Number,
-        b: Number,
-        a: Number
-    },
-    lightIntensity: Number,
-    flickerFrequency: Number,
-    flickerAmount: Number,
-    pulseInterval: Number,
-    pulseAmount: Number,
-    image: ObjectId,
     position: {
         x: Number,
         y: Number
     },
+    name: String,
+    type: Number,
+    visionRadius: Number,
+    nightRadius: Number,
+    light: ObjectId,
+    image: ObjectId,
     enabled: Boolean,
     health: Number,
     elevation: String,
     conditions: Number,
     locked: Boolean,
     rotation: Number
+}))
+
+const lightModel = model("lights", new Schema({
+    name: String,
+    radius: Number,
+    intensity: Number,
+    enabled: Boolean,
+    color: {
+        r: Number,
+        g: Number,
+        b: Number,
+        a: Number
+    },
+    position: {
+        x: Number,
+        y: Number
+    },
+    effect: {
+        type: { type: Number },
+        strength: Number,
+        frequency: Number
+    },
 }))
 
 const sceneModel = model("scenes", new Schema({
@@ -87,11 +93,7 @@ const sceneModel = model("scenes", new Schema({
         },
         enabled: Boolean,
         globalLighting: Boolean,
-        translucency: Number,
-        nightVision: {
-            radius: Number,
-            strength: Number
-        }
+        translucency: Number
     },
     grid: {
         cellSize: Number,
@@ -114,13 +116,13 @@ const sceneModel = model("scenes", new Schema({
     },
     walls: Array({
         _id: false,
-        wallId: ObjectId,
+        id: ObjectId,
         points: Array({
             _id: false,
             x: Number,
             y: Number
         }),
-        model: Number,
+        type: Number,
         open: Boolean,
         locked: Boolean
     }),
@@ -132,35 +134,15 @@ const sceneModel = model("scenes", new Schema({
         roll: String,
         visible: Boolean
     }),
-    lights: Array({
-        _id: false,
-        id: ObjectId,
-        radius: Number,
-        enabled: Boolean,
-        position: {
-            x: Number,
-            y: Number
-        },
-        intensity: Number,
-        flickerFrequency: Number,
-        flickerAmount: Number,
-        pulseInterval: Number,
-        pulseAmount: Number,
-        effect: Number,
-        color: {
-            r: Number,
-            g: Number,
-            b: Number,
-            a: Number
-        }
-    }),
+    lights: Array(ObjectId),
     notes: Array(ObjectId)
-}, {strict: false, strictQuery: false}))
+}))
 
 const sessionModel = model("sessions", new Schema({
     name: String,
     master: ObjectId,
     users: Array(ObjectId),
+    presets: Array(ObjectId),
     state: {
         scene: ObjectId,
         synced: Boolean
@@ -168,8 +150,9 @@ const sessionModel = model("sessions", new Schema({
     blueprints: {},
     scenes: {},
     journals: {},
-    background: ObjectId
-}, {strict: false, strictQuery: false}))
+    background: ObjectId,
+    nightVisionStrength: Number
+}))
 
 const userModel = model("users", new Schema({
     email: String,
@@ -214,5 +197,6 @@ module.exports = {
     userModel,
     fileModel,
     noteModel,
-    journalModel
+    journalModel,
+    lightModel
 }
