@@ -1,4 +1,4 @@
-const { blueprintModel, sessionModel } = require('../schemas')
+const { blueprintModel, sessionModel, lightModel } = require('../schemas')
 const { ObjectId } = require('mongodb')
 const { connect } = require('mongoose')
 const networking = require('./networking')
@@ -59,10 +59,11 @@ module.exports = {
      * @param {ObjectId} sessionId
      * @param {string} path
      * @param {blueprintModel} data
+     * @param {lightModel} lightData
      * @param {Buffer} buffer
      * @returns {Promise<string>}
     */
-    create: async function (sessionId, path, data, buffer) {
+    create: async function (sessionId, path, data, lightData, buffer) {
         return new Promise(async (resolve, reject) => {
             await prepareConnection()
 
@@ -79,6 +80,9 @@ module.exports = {
             const targetFolder = await getFolder(session.blueprints, path)
             if (targetFolder) await sessionModel.findByIdAndUpdate(sessionId, { $addToSet: { [`blueprints.folders.${targetFolder.path}.contents`]: blueprint._id } }).exec()
             else await sessionModel.findByIdAndUpdate(sessionId, { $addToSet: { [`blueprints.contents`]: blueprint._id } }).exec()
+
+            const light = await lightModel.create(lightData)
+            if (!light) reject("Failed to create lighting data")
 
             resolve(blueprint._id)
         })

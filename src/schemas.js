@@ -61,16 +61,11 @@ const lightModel = model("lights", new Schema({
     name: String,
     radius: Number,
     intensity: Number,
-    enabled: Boolean,
     color: {
         r: Number,
         g: Number,
         b: Number,
         a: Number
-    },
-    position: {
-        x: Number,
-        y: Number
     },
     effect: {
         type: { type: Number },
@@ -134,7 +129,16 @@ const sceneModel = model("scenes", new Schema({
         roll: String,
         visible: Boolean
     }),
-    lights: Array(ObjectId),
+    lights: {
+        _id: false,
+        id: String,
+        preset: String,
+        enabled: Boolean,
+        position: {
+            x: Number,
+            y: Number
+        }
+    },
     notes: Array(ObjectId)
 }))
 

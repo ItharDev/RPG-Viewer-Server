@@ -124,7 +124,7 @@ io.on("connection", (socket) => {
 
     socket.on("get-blueprint", (blueprintId, callback) => getBlueprint.single(accountInfo, ObjectId(blueprintId), callback))
     socket.on("get-blueprints", (callback) => getBlueprint.all(accountInfo, sessionInfo.id, callback))
-    socket.on("create-blueprint", (path, data, buffer, callback) => createBlueprint.blueprint(accountInfo, sessionInfo.id, path, JSON.parse(data), buffer, callback))
+    socket.on("create-blueprint", (path, tokenData, lightingData, buffer, callback) => createBlueprint.blueprint(accountInfo, sessionInfo.id, path, JSON.parse(tokenData), JSON.parse(lightingData), buffer, callback))
     socket.on("create-blueprint-folder", (path, name, callback) => createBlueprint.folder(accountInfo, sessionInfo.id, path, name, callback))
     socket.on("rename-blueprint-folder", (path, name, callback) => renameBlueprintFolder(accountInfo, sessionInfo.id, path, name, callback))
     socket.on("remove-blueprint", (path, blueprintId, callback) => removeBlueprint.blueprint(accountInfo, sessionInfo.id, path, ObjectId(blueprintId), callback))

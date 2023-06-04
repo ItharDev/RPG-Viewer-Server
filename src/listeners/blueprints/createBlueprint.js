@@ -1,6 +1,6 @@
 const { ObjectId } = require("mongodb")
 const { create, createFolder } = require("../../modules/blueprint")
-const { blueprintModel } = require("../../schemas")
+const { blueprintModel, lightModel } = require("../../schemas")
 
 module.exports = {
     /**
@@ -8,16 +8,20 @@ module.exports = {
      * @param {{ uid: ObjectId, username: string }} accountInfo
      * @param {ObjectId} sessionId
      * @param {string} path
-     * @param {{}} data
+     * @param {{}} tokenData
+     * @param {{}} lightingData
      * @param {() => {}} callback
     */
-    blueprint: async (accountInfo, sessionId, path, data, buffer, callback) => {
+    blueprint: async (accountInfo, sessionId, path, tokenData, lightingData, buffer, callback) => {
         console.debug(`[ ${accountInfo.username} (${accountInfo.uid}) ]`, "Package: create-blueprint")
         try {
-            data.info.image = new ObjectId()
-            const model = new blueprintModel(data)
+            tokenData.image = new ObjectId()
+            const model = new blueprintModel(tokenData)
+            const lighting = new lightModel(lightingData)
+            model.light = model._id
+            lighting._id = model._id
 
-            const id = await create(sessionId, path, model, buffer)
+            const id = await create(sessionId, path, model, lighting, buffer)
             callback(true)
         } catch (error) {
             console.error("Failed to create blueprint", error)

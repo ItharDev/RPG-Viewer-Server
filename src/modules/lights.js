@@ -1,4 +1,4 @@
-const { sceneModel, sessionModel, lightModel } = require("../schemas")
+const { sceneModel, sessionModel, lightModel, blueprintModel, tokenModel } = require("../schemas")
 const { ObjectId } = require("mongodb")
 const { connect } = require("mongoose")
 
@@ -93,17 +93,14 @@ module.exports = {
     /**
      * Remove-preset handler
      * @param {ObjectId} sessionId
-     * @param {ObjectId} lightId
+     * @param {ObjectId} presetId
      * @returns {Promise<string>}
     */
-    removePreset: async function (sessionId, lightId) {
+    removePreset: async function (sessionId, presetId) {
         await prepareConnection()
 
-        const update = sessionModel.findByIdAndUpdate(sessionId, { $pull: { presets: lightId } }).exec()
-        if (!update) reject("Invalid session id")
-
-        const light = await lightModel.findByIdAndRemove(lightId).exec()
-        if (!light) reject("Invalid light id")
+        const session = sessionModel.findByIdAndUpdate(sessionId, { $pull: { presets: presetId } }).exec()
+        if (!session) throw new Error("Invalid session id")
     },
 
     /**
