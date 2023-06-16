@@ -13,7 +13,7 @@ module.exports = {
     blueprint: async (accountInfo, sessionId, path, blueprintId, callback) => {
         console.debug(`[ ${accountInfo.username} (${accountInfo.uid}) ]`, "Package: remove-blueprint")
         try {
-            const requireUpdate = await remove(sessionId, path, blueprintId)
+            await remove(sessionId, path, blueprintId)
             callback(true)
         } catch (error) {
             console.error("Failed to remove blueprint", error)

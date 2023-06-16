@@ -129,16 +129,7 @@ const sceneModel = model("scenes", new Schema({
         roll: String,
         visible: Boolean
     }),
-    lights: {
-        _id: false,
-        id: String,
-        preset: String,
-        enabled: Boolean,
-        position: {
-            x: Number,
-            y: Number
-        }
-    },
+    lights: {},
     notes: Array(ObjectId)
 }))
 

@@ -101,6 +101,9 @@ module.exports = {
 
         const session = sessionModel.findByIdAndUpdate(sessionId, { $pull: { presets: presetId } }).exec()
         if (!session) throw new Error("Invalid session id")
+
+        const preset = lightModel.findByIdAndRemove(presetId).exec()
+        if (!preset) throw new Error("Failed to remove preset")
     },
 
     /**

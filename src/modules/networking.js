@@ -1,4 +1,4 @@
-const { MongoClient, ObjectId, GridFSBucket } = require('mongodb')
+const { MongoClient, GridFSBucket } = require('mongodb')
 const { fileModel } = require('../schemas')
 
 let networking = {}

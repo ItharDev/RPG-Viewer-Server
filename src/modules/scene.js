@@ -104,7 +104,7 @@ module.exports = {
         const scene = await sceneModel.findByIdAndDelete(sceneId).exec()
         if (scene) throw new Error("Failed to remove scene")
 
-        await networking.modifyFile(scene.image)
+        await networking.modifyFile(scene.image, -1)
         if (!session.state.scene) return false
         return session.state.scene.equals(sceneId)
     },

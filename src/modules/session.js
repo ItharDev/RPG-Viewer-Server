@@ -74,5 +74,29 @@ module.exports = {
 
         const session = await sessionModel.findByIdAndUpdate(sessionId, { $set: { "state": state } }).exec()
         if (!session) throw new Error("Invalid session id")
+    },
+
+    /**
+     * change-langing-page handler
+     * @param {ObjectId} sessionId
+     * @param {Buffer} buffer
+     * @returns {Promise<string>}
+    */
+    changeImage: async function (sessionId, buffer) {
+        return new Promise(async (resolve, reject) => {
+            await prepareConnection()
+            
+            const session = await sessionModel.findById(sessionId).exec()
+            if (!session) throw new Error("Session not found")
+
+            await networking.modifyFile(session.background, -1)
+            const id = new ObjectId()
+            await networking.uploadFile(id, buffer).then(null, (rejected) => reject(rejected))
+
+            const update = await sessionModel.findByIdAndUpdate(sessionId, { $set: { "background": id } }).exec()
+            if (!update) reject("Operation failed")
+
+            resolve(id)
+        })
     }
 }

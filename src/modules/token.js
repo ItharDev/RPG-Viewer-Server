@@ -27,24 +27,31 @@ async function prepareConnection() {
 module.exports = {
     get: async function (tokenId) {
         const token = await tokenModel.findById(tokenId).exec()
-        if (token) return token
-        else reject('Invalid token id')
+        if (!token) throw new Error('Invalid token id')
+        
+        return token
     },
 
     getAll: async function (sceneId) {
         const scene = await sceneModel.findById(sceneId).exec()
-        if (scene) {
-            let tokens = []
-            for (let i = 0; i < scene.tokens.length; i++) {
-                const element = scene.tokens[i];
-                const token = await tokenModel.findById(element).exec()
-                tokens.push(token)
-            }
+        if (!scene) throw new Error('Invalid scene id')
 
-            return tokens
-        } else throw new Error('Invalid scene id')
+        let tokens = []
+        for (let i = 0; i < scene.tokens.length; i++) {
+            const element = scene.tokens[i];
+            const token = await tokenModel.findById(element).exec()
+            tokens.push(token)
+        }
+
+        return tokens
     },
 
+    /**
+     * Create-token handler
+     * @param {ObjectId} sceneId
+     * @param {tokenModel} data
+     * @returns {Promise<string>}
+    */
     create: async function (sceneId, data) {
         return new Promise(async (resolve, reject) => {
             await prepareConnection()

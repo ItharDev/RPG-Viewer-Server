@@ -24,6 +24,7 @@ const joinSession = require("./listeners/session/joinSession")
 const leaveSession = require("./listeners/session/leaveSession")
 const setState = require("./listeners/session/setState")
 const updateState = require("./listeners/session/updateState")
+const changeImage = require("./listeners/session/changeImage")
 
 const createWall = require("./listeners/walls/createWall")
 const modifyWall = require("./listeners/walls/modifyWall")
@@ -36,6 +37,7 @@ const removeScene = require("./listeners/scenes/removeScene")
 const renameScene = require("./listeners/scenes/renameScene")
 
 const createBlueprint = require("./listeners/blueprints/createBlueprint")
+const modifyBlueprint = require("./listeners/blueprints/modifyBlueprint")
 const getBlueprint = require("./listeners/blueprints/getBlueprint")
 const moveBlueprint = require("./listeners/blueprints/moveBlueprint")
 const removeBlueprint = require("./listeners/blueprints/removeBlueprint")
@@ -49,14 +51,14 @@ const getLight = require("./listeners/lights/getLight")
 const modifyLight = require("./listeners/lights/modifyLight")
 const removeLight = require("./listeners/lights/removeLight")
 
+const getToken = require("./listeners/tokens/getToken")
+const createToken = require("./listeners/tokens/createToken")
+
 // Get environment variables
 require("dotenv").config()
 
 // Server configuration (use .env file)
 const port = process.env.PORT
-const socketPingInterval = process.env.SOCKET_PING_INTERVAL
-const socketPingTimeout = process.env.SOCKET_PING_TIMEOUT
-const socketMaxBufferSize = process.env.SOCKET_MAX_BUFFER_SIZE
 
 // Create the HTTP server
 const httpServer = createServer()
@@ -105,7 +107,11 @@ io.on("connection", (socket) => {
     socket.on("join-session", (sessionId, callback) => joinSession(accountInfo, sessionInfo, socket, sessionId, callback))
     socket.on("leave-session", (callback) => leaveSession(accountInfo, sessionInfo, socket, io, callback))
     socket.on("set-state", (scene, synced, callback) => setState(accountInfo, sessionInfo.id, scene, synced, io, callback))
-    socket.on("update-state", (scene, synced, callback) => updateState(accountInfo, sessionInfo, scene, synced, callback))
+    socket.on("set-scene", (scene, callback) => {
+        sessionInfo.scene = ObjectId(scene)
+        callback(true)
+    })
+    socket.on("change-landing-page", (buffer, callback) => changeImage(accountInfo, sessionInfo.id, buffer, io, callback))
 
     socket.on("create-wall", (data, callback) => createWall(accountInfo, sessionInfo.id, sessionInfo.scene, JSON.parse(data), io, callback))
     socket.on("modify-wall", (data, callback) => modifyWall(accountInfo, sessionInfo.id, sessionInfo.scene, JSON.parse(data), io, callback))
@@ -125,6 +131,7 @@ io.on("connection", (socket) => {
     socket.on("get-blueprint", (blueprintId, callback) => getBlueprint.single(accountInfo, ObjectId(blueprintId), callback))
     socket.on("get-blueprints", (callback) => getBlueprint.all(accountInfo, sessionInfo.id, callback))
     socket.on("create-blueprint", (path, tokenData, lightingData, buffer, callback) => createBlueprint.blueprint(accountInfo, sessionInfo.id, path, JSON.parse(tokenData), JSON.parse(lightingData), buffer, callback))
+    socket.on("modify-blueprint", (id, tokenData, lightingData, buffer, callback) => modifyBlueprint(accountInfo, id, JSON.parse(tokenData), JSON.parse(lightingData), buffer, callback))
     socket.on("create-blueprint-folder", (path, name, callback) => createBlueprint.folder(accountInfo, sessionInfo.id, path, name, callback))
     socket.on("rename-blueprint-folder", (path, name, callback) => renameBlueprintFolder(accountInfo, sessionInfo.id, path, name, callback))
     socket.on("remove-blueprint", (path, blueprintId, callback) => removeBlueprint.blueprint(accountInfo, sessionInfo.id, path, ObjectId(blueprintId), callback))
@@ -144,6 +151,10 @@ io.on("connection", (socket) => {
     socket.on("modify-light", (id, data, callback) => modifyLight.light(accountInfo, sessionInfo.scene, ObjectId(id), JSON.parse(data), io, callback))
     socket.on("remove-preset", (id, callback) => removeLight.preset(accountInfo, sessionInfo.id, ObjectId(id), io, callback))
     socket.on("remove-light", (id, callback) => removeLight.light(accountInfo, sessionInfo.scene, ObjectId(id), io, callback))
+
+    socket.on("get-token", (id, callback) => getToken.single(accountInfo, id, callback))
+    socket.on("get-tokens", (callback) => getToken.all(accountInfo, sessionInfo.scene, callback))
+    socket.on("create-token", (tokenData, callback) => createToken(accountInfo, sessionInfo.id, sessionInfo.scene, JSON.parse(tokenData), io, callback))
 })
 
 // Start everything

@@ -89,6 +89,41 @@ module.exports = {
     },
 
     /**
+     * Modify-blueprint handler
+     * @param {ObjectId} id
+     * @param {{}} data
+     * @param {{}} lightData
+     * @param {Buffer} buffer
+     * @returns {Promise<string>}
+    */
+    modify: async function (id, data, lightData, buffer) {
+        return new Promise(async (resolve, reject) => {
+            await prepareConnection()
+
+            if (buffer) {
+                await networking.modifyFile(data.image, -1).then(async (resolved) => {
+                    data.image = new ObjectId()
+                    await networking.uploadFile(data.image, buffer).then(null, (rejected) => {
+                        reject(rejected)
+                        return
+                    })
+                }, (rejected) => {
+                    reject(rejected)
+                    return
+                })
+            }
+
+            const blueprint = await blueprintModel.findOneAndReplace({ "_id": id }, data).exec()
+            if (!blueprint) reject("Failed to modify blueprint")
+
+            const light = await lightModel.findOneAndReplace({ "_id": id }, lightData).exec()
+            if (!light) reject("Failed to modify lighting data")
+
+            resolve(data.image.toString())
+        })
+    },
+
+    /**
      * Remove-blueprint handler
      * @param {ObjectId} sessionId 
      * @param {string} path 
@@ -106,9 +141,9 @@ module.exports = {
         else await sessionModel.findByIdAndUpdate(sessionId, { $pull: { [`blueprints.contents`]: blueprintId } }).exec()
 
         const blueprint = await blueprintModel.findByIdAndDelete(blueprintId).exec()
-        if (blueprint) throw new Error("Failed to remove blueprint")
+        if (!blueprint) throw new Error("Failed to remove blueprint")
 
-        await networking.modifyFile(blueprint.image)
+        await networking.modifyFile(blueprint.image, -1)
     },
 
     /**
