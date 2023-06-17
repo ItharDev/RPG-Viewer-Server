@@ -23,7 +23,6 @@ const createSession = require("./listeners/session/createSession")
 const joinSession = require("./listeners/session/joinSession")
 const leaveSession = require("./listeners/session/leaveSession")
 const setState = require("./listeners/session/setState")
-const updateState = require("./listeners/session/updateState")
 const changeImage = require("./listeners/session/changeImage")
 
 const createWall = require("./listeners/walls/createWall")
@@ -35,6 +34,7 @@ const getScene = require("./listeners/scenes/getScene")
 const moveScene = require("./listeners/scenes/moveScene")
 const removeScene = require("./listeners/scenes/removeScene")
 const renameScene = require("./listeners/scenes/renameScene")
+const modifyGrid = require("./listeners/scenes/modifyGrid")
 
 const createBlueprint = require("./listeners/blueprints/createBlueprint")
 const modifyBlueprint = require("./listeners/blueprints/modifyBlueprint")
@@ -53,6 +53,7 @@ const removeLight = require("./listeners/lights/removeLight")
 
 const getToken = require("./listeners/tokens/getToken")
 const createToken = require("./listeners/tokens/createToken")
+const moveToken = require("./listeners/tokens/moveToken")
 
 // Get environment variables
 require("dotenv").config()
@@ -116,6 +117,7 @@ io.on("connection", (socket) => {
     socket.on("create-wall", (data, callback) => createWall(accountInfo, sessionInfo.id, sessionInfo.scene, JSON.parse(data), io, callback))
     socket.on("modify-wall", (data, callback) => modifyWall(accountInfo, sessionInfo.id, sessionInfo.scene, JSON.parse(data), io, callback))
     socket.on("remove-wall", (wallId, callback) => removeWall(accountInfo, sessionInfo.id, sessionInfo.scene, wallId, io, callback))
+    socket.on("modify-grid", (data, callback) => modifyGrid(accountInfo, sessionInfo.id, sessionInfo.scene, JSON.parse(data), io, callback))
 
     socket.on("get-scene", (sceneId, callback) => getScene.single(accountInfo, ObjectId(sceneId), callback))
     socket.on("get-scenes", (callback) => getScene.all(accountInfo, sessionInfo.id, callback))
@@ -155,6 +157,7 @@ io.on("connection", (socket) => {
     socket.on("get-token", (id, callback) => getToken.single(accountInfo, id, callback))
     socket.on("get-tokens", (callback) => getToken.all(accountInfo, sessionInfo.scene, callback))
     socket.on("create-token", (tokenData, callback) => createToken(accountInfo, sessionInfo.id, sessionInfo.scene, JSON.parse(tokenData), io, callback))
+    socket.on("move-token", (data, callback) => moveToken(accountInfo, sessionInfo.id, JSON.parse(data), io, callback))
 })
 
 // Start everything

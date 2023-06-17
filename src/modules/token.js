@@ -28,7 +28,7 @@ module.exports = {
     get: async function (tokenId) {
         const token = await tokenModel.findById(tokenId).exec()
         if (!token) throw new Error('Invalid token id')
-        
+
         return token
     },
 
@@ -94,8 +94,7 @@ module.exports = {
         await prepareConnection()
 
         const update = await tokenModel.findByIdAndUpdate(tokenId, { $set: { 'position': position } }).exec()
-        if (update) return
-        else throw new Error('Failed to update token position')
+        if (!update) throw new Error('Failed to update token position')
     },
 
     modify: async function (tokenId, data, image) {
