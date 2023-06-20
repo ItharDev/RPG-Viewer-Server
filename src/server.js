@@ -11,6 +11,7 @@ const disconnectListener = require("./listeners/disconnect")
 const downloadImage = require("./listeners/downloadImage")
 
 const getUser = require("./listeners/account/getUser")
+const getUsers = require("./listeners/session/getUsers")
 const register = require("./listeners/account/register")
 const signIn = require("./listeners/account/signIn")
 const signOut = require("./listeners/account/signOut")
@@ -54,6 +55,8 @@ const removeLight = require("./listeners/lights/removeLight")
 const getToken = require("./listeners/tokens/getToken")
 const createToken = require("./listeners/tokens/createToken")
 const moveToken = require("./listeners/tokens/moveToken")
+const modifyToken = require("./listeners/tokens/modifyToken")
+const removeToken = require("./listeners/tokens/removeToken")
 
 // Get environment variables
 require("dotenv").config()
@@ -95,6 +98,7 @@ io.on("connection", (socket) => {
     socket.on("disconnect", () => disconnectListener(accountInfo, sessionInfo, io))
     socket.on("download-image", (imageId, callback) => downloadImage(accountInfo, imageId, callback))
     socket.on("get-user", (uid, callback) => getUser(accountInfo, uid, callback))
+    socket.on("get-users", (callback) => getUsers(accountInfo, sessionInfo.id, callback))
 
     socket.on("register", (email, name, password, callback) => register(accountInfo, email, name, password, callback))
     socket.on("sign-in", (uid, email, password, callback) => signIn(accountInfo, ObjectId.isValid(uid) ? ObjectId(uid) : undefined, email, password, callback))
@@ -154,10 +158,12 @@ io.on("connection", (socket) => {
     socket.on("remove-preset", (id, callback) => removeLight.preset(accountInfo, sessionInfo.id, ObjectId(id), io, callback))
     socket.on("remove-light", (id, callback) => removeLight.light(accountInfo, sessionInfo.scene, ObjectId(id), io, callback))
 
-    socket.on("get-token", (id, callback) => getToken.single(accountInfo, id, callback))
+    socket.on("get-token", (id, callback) => getToken.single(accountInfo, ObjectId(id), callback))
     socket.on("get-tokens", (callback) => getToken.all(accountInfo, sessionInfo.scene, callback))
-    socket.on("create-token", (tokenData, callback) => createToken(accountInfo, sessionInfo.id, sessionInfo.scene, JSON.parse(tokenData), io, callback))
+    socket.on("create-token", (tokenData, lightingData, callback) => createToken(accountInfo, sessionInfo.id, sessionInfo.scene, JSON.parse(tokenData), JSON.parse(lightingData), io, callback))
     socket.on("move-token", (data, callback) => moveToken(accountInfo, sessionInfo.id, JSON.parse(data), io, callback))
+    socket.on("modify-token", (id, tokenData, lightingData, buffer, callback) => modifyToken(accountInfo, sessionInfo.id, ObjectId(id), JSON.parse(tokenData), JSON.parse(lightingData), buffer, io, callback))
+    socket.on("remove-token", (id, callback) => removeToken(accountInfo, sessionInfo.id, sessionInfo.scene, ObjectId(id), io, callback))
 })
 
 // Start everything

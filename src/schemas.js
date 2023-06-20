@@ -5,7 +5,7 @@ const blueprintModel = model("blueprints", new Schema({
     permissions: Array({
         _id: false,
         user: ObjectId,
-        permission: Number
+        type: { type: Number },
     }),
     visible: Array({
         _id: false,
@@ -17,7 +17,7 @@ const blueprintModel = model("blueprints", new Schema({
         y: Number
     },
     name: String,
-    type: Number,
+    type: { type: Number },
     visionRadius: Number,
     nightRadius: Number,
     light: ObjectId,
@@ -28,7 +28,7 @@ const tokenModel = model("tokens", new Schema({
     permissions: Array({
         _id: false,
         user: ObjectId,
-        permission: Number
+        type: { type: Number },
     }),
     visible: Array({
         _id: false,
@@ -44,7 +44,7 @@ const tokenModel = model("tokens", new Schema({
         y: Number
     },
     name: String,
-    type: Number,
+    type: { type: Number },
     visionRadius: Number,
     nightRadius: Number,
     light: ObjectId,
@@ -117,7 +117,7 @@ const sceneModel = model("scenes", new Schema({
             x: Number,
             y: Number
         }),
-        type: Number,
+        type: { type: Number },
         open: Boolean,
         locked: Boolean
     }),

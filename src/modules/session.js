@@ -98,5 +98,19 @@ module.exports = {
 
             resolve(id)
         })
-    }
+    },
+
+    /**
+     * Get-users handler
+     * @param {ObjectId} sessionId
+     * @returns {Promise<Array<ObjectId>>}
+    */
+    getUsers: async function (sessionId) {
+        await prepareConnection()
+
+        const session = await sessionModel.findById(sessionId).exec()
+        if (!session) throw new Error("Session not found")
+
+        return session.users
+    },
 }

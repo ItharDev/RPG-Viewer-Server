@@ -16,7 +16,7 @@ module.exports = async (accountInfo, id, tokenData, lightingData, buffer, callba
         const image = await modify(id, tokenData, lightingData, buffer)
         callback(true, image)
     } catch (error) {
-        console.error("Failed to create blueprint", error)
+        console.error("Failed to modify blueprint", error)
         callback(false, error.message)
     }
 }

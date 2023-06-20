@@ -61,7 +61,7 @@ module.exports = {
         const account = await userModel.findById(uid).exec()
         if (!account) throw new Error("Failed to load user data")
 
-        return account
+        return account.name
     },
 
     /**
