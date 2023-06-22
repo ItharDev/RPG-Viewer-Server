@@ -120,7 +120,7 @@ io.on("connection", (socket) => {
 
     socket.on("create-wall", (data, callback) => createWall(accountInfo, sessionInfo.id, sessionInfo.scene, JSON.parse(data), io, callback))
     socket.on("modify-wall", (data, callback) => modifyWall(accountInfo, sessionInfo.id, sessionInfo.scene, JSON.parse(data), io, callback))
-    socket.on("remove-wall", (wallId, callback) => removeWall(accountInfo, sessionInfo.id, sessionInfo.scene, wallId, io, callback))
+    socket.on("remove-wall", (id, callback) => removeWall(accountInfo, sessionInfo.id, sessionInfo.scene, id, io, callback))
     socket.on("modify-grid", (data, callback) => modifyGrid(accountInfo, sessionInfo.id, sessionInfo.scene, JSON.parse(data), io, callback))
 
     socket.on("get-scene", (sceneId, callback) => getScene.single(accountInfo, ObjectId(sceneId), callback))

@@ -27,7 +27,7 @@ module.exports = {
     /**
      * Create-wall handler
      * @param {ObjectId} scene
-     * @param {{wallId: ObjectId, points: Array<{x: number, y: number}>, model: number, open: boolean, locked: boolean}} data
+     * @param {{id: ObjectId, points: Array<{x: number, y: number}>, type: number, open: boolean, locked: boolean}} data
      * @returns {Promise<void>}
     */
     create: async function (scene, data) {
@@ -40,26 +40,26 @@ module.exports = {
     /**
      * Modify-wall handler
      * @param {ObjectId} scene
-     * @param {{wallId: ObjectId, points: Array<{x: number, y: number}>, model: number, open: boolean, locked: boolean}} data
+     * @param {{id: ObjectId, points: Array<{x: number, y: number}>, type: number, open: boolean, locked: boolean}} data
      * @returns {Promise<void>}
     */
     modify: async function (scene, data) {
         await prepareConnection()
 
-        const update = await sceneModel.findByIdAndUpdate(scene, { $set: { "walls.$[element]": data } }, { arrayFilters: [{ 'element.wallId': data.wallId }] }).exec()
-        if (!create) reject("Failed to create wall")
+        const update = await sceneModel.findByIdAndUpdate(scene, { $set: { "walls.$[element]": data } }, { arrayFilters: [{ 'element.id': data.id }] }).exec()
+        if (!update) reject("Failed to modify wall")
     },
 
     /**
      * Remove-wall handler
      * @param {ObjectId} scene
-     * @param {ObjectId} wallId
+     * @param {ObjectId} id
      * @returns {Promise<void>}
     */
-    remove: async function (scene, wallId) {
+    remove: async function (scene, id) {
         await prepareConnection()
 
-        const update = await sceneModel.findByIdAndUpdate(scene, { $pull: { walls: { wallId: wallId } } }).exec()
+        const update = await sceneModel.findByIdAndUpdate(scene, { $pull: { walls: { id: id } } }).exec()
         if (!update) reject("Failed to remove wall")
     }
 }
