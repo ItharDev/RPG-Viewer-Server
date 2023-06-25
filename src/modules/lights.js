@@ -1,4 +1,4 @@
-const { sceneModel, sessionModel, lightModel, blueprintModel, tokenModel } = require("../schemas")
+const { sceneModel, sessionModel, lightModel } = require("../schemas")
 const { ObjectId } = require("mongodb")
 const { connect } = require("mongoose")
 
@@ -42,18 +42,18 @@ module.exports = {
      * Create-light handler
      * @param {ObjectId} sceneId
      * @param {lightModel} data
+     * @param {{}} info
      * @returns {Promise<string>}
     */
-    create: async function (sceneId, data) {
+    create: async function (sceneId, data, info) {
         await prepareConnection()
 
         const light = await lightModel.create(data)
-        if (!light) reject("Failed to create light")
+        if (!light) throw new Error("Failed to create light")
+        const update = sceneModel.findByIdAndUpdate(sceneId, { $set: { [`lights.${light.id}`]: info } }).exec()
+        if (!update) throw new Error("Invalid scene id")
 
-        const update = sceneModel.findByIdAndUpdate(sceneId, { $addToSet: { lights: light._id } }).exec()
-        if (!update) reject("Invalid scene id")
-
-        return light._id
+        return light.id
     },
 
     /**
@@ -66,10 +66,10 @@ module.exports = {
         await prepareConnection()
 
         const light = await lightModel.create(data)
-        if (!light) reject("Failed to create preset")
+        if (!light) throw new Error("Failed to create preset")
 
         const update = sessionModel.findByIdAndUpdate(sessionId, { $addToSet: { presets: light._id } }).exec()
-        if (!update) reject("Invalid session id")
+        if (!update) throw new Error("Invalid session id")
 
         return light._id
     },
@@ -84,10 +84,10 @@ module.exports = {
         await prepareConnection()
 
         const update = sceneModel.findByIdAndUpdate(sessionId, { $pull: { lights: lightId } }).exec()
-        if (!update) reject("Invalid scene id")
+        if (!update) throw new Error("Invalid scene id")
 
         const light = await lightModel.findByIdAndRemove(lightId).exec()
-        if (!light) reject("Invalid light id")
+        if (!light) throw new Error("Invalid light id")
     },
 
     /**
@@ -109,26 +109,26 @@ module.exports = {
     /**
      * Modify-light handler
      * @param {ObjectId} lightId
-     * @param {lightModel} data
+     * @param {{}} data
      * @returns {Promise<void>}
     */
     modify: async function (lightId, data) {
         await prepareConnection()
 
-        const light = await lightModel.findByIdAndUpdate(lightId, data).exec()
-        if (!light) reject("Failed to modify light")
+        const light = await lightModel.findOneAndReplace({ "_id": lightId }, data).exec()
+        if (!light) throw new Error("Failed to update light data")
     },
 
     /**
      * Modify-preset handler
      * @param {ObjectId} lightId
-     * @param {lightModel} data
+     * @param {{}} data
      * @returns {Promise<void>}
     */
     modifyPreset: async function (lightId, data) {
         await prepareConnection()
 
-        const light = await lightModel.findByIdAndUpdate(lightId, data).exec()
-        if (!light) reject("Failed to modify preset")
+        const light = await lightModel.findOneAndReplace({ "_id": lightId }, data).exec()
+        if (!light) throw new Error("Failed to modify preset")
     },
 }

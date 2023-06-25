@@ -8,19 +8,17 @@ module.exports = {
      * Modify-light packet listener
      * @param {{ uid: ObjectId, username: string }} accountInfo
      * @param {ObjectId} sceneId
+     * @param {ObjectId} sceneId
      * @param {ObjectId} lightId
-     * @param {{name: String, radius: Number, intensity: Number, enabled: Boolean, color: {}, position: {}, effect: {}}} data
+     * @param {{}} data
      * @param {Server} socketServer
      * @param {() => {}} callback
     */
-    light: async (accountInfo, sceneId, lightId, data, socketServer, callback) => {
+    light: async (accountInfo, sessionId, sceneId, lightId, data, socketServer, callback) => {
         console.debug(`[ ${accountInfo.username} (${accountInfo.uid}) ]`, "Package: modify-light")
         try {
-            const model = new lightModel(data)
-            model._id = lightId
-
-            await modify(sceneId, model)
-            socketServer.emit("modify-light", lightId, data)
+            await modify(lightId, data)
+            socketServer.to(sessionId.toString()).emit("modify-light", lightId, data)
             callback(true)
         } catch (error) {
             console.error("Failed to modify light", error)
@@ -31,20 +29,18 @@ module.exports = {
     /**
      * Modify-preset packet listener
      * @param {{ uid: ObjectId, username: string }} accountInfo
+     * @param {ObjectId} sessionId
      * @param {ObjectId} lightId
-     * @param {{name: String, radius: Number, intensity: Number, enabled: Boolean, color: {}, position: {}, effect: {}}} data
+     * @param {{}} data
      * @param {Server} socketServer
      * @param {() => {}} callback
     */
-    preset: async (accountInfo, lightId, data, socketServer, callback) => {
+    preset: async (accountInfo, sessionId, lightId, data, socketServer, callback) => {
         console.debug(`[ ${accountInfo.username} (${accountInfo.uid}) ]`, "Package: modify-preset")
         try {
-            const model = new lightModel(data)
-            model._id = lightId
-
-            await modifyPreset(lightId, model)
+            await modifyPreset(lightId, data)
             callback(true)
-            socketServer.emit("modify-preset", lightId, model)
+            socketServer.to(sessionId.toString()).emit("modify-preset", lightId, model)
         } catch (error) {
             console.error("Failed to modify preset", error)
             callback(false, error.message)

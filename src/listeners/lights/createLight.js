@@ -7,18 +7,21 @@ module.exports = {
     /**
      * Create-light packet listener
      * @param {{ uid: ObjectId, username: string }} accountInfo
+     * @param {ObjectId} sessionId
      * @param {ObjectId} sceneId
-     * @param {{name: String, radius: Number, intensity: Number, enabled: Boolean, color: {}, position: {}, effect: {}}} data
+     * @param {{}} data
+     * @param {{}} info
      * @param {Server} socketServer
      * @param {() => {}} callback
     */
-    light: async (accountInfo, sceneId, data, socketServer, callback) => {
+    light: async (accountInfo, sessionId, sceneId, data, info, socketServer, callback) => {
         console.debug(`[ ${accountInfo.username} (${accountInfo.uid}) ]`, "Package: create-light")
         try {
             const model = new lightModel(data)
+            if (!info.id) info.id = model._id
+            const id = await create(sceneId, model, info)
 
-            const id = await create(sceneId, model)
-            socketServer.emit("create-light", id, model)
+            socketServer.to(sessionId.toString()).emit("create-light", id, info)
             callback(true)
         } catch (error) {
             console.error("Failed to create light", error)

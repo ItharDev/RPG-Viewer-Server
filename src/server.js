@@ -152,11 +152,11 @@ io.on("connection", (socket) => {
 
     socket.on("get-light", (id, callback) => getLight(accountInfo, ObjectId(id), callback))
     socket.on("create-preset", (data, callback) => createLight.preset(accountInfo, sessionInfo.id, JSON.parse(data), io, callback))
-    socket.on("create-light", (data, callback) => createLight.light(accountInfo, sessionInfo.scene, JSON.parse(data), io, callback))
-    socket.on("modify-preset", (id, data, callback) => modifyLight.preset(accountInfo, ObjectId(id), JSON.parse(data), io, callback))
-    socket.on("modify-light", (id, data, callback) => modifyLight.light(accountInfo, sessionInfo.scene, ObjectId(id), JSON.parse(data), io, callback))
+    socket.on("create-light", (data, info, callback) => createLight.light(accountInfo, sessionInfo.id, sessionInfo.scene, JSON.parse(data), JSON.parse(info), io, callback))
+    socket.on("modify-preset", (id, data, callback) => modifyLight.preset(accountInfo, sessionInfo.id, ObjectId(id), JSON.parse(data), io, callback))
+    socket.on("modify-light", (id, data, callback) => modifyLight.light(accountInfo, sessionInfo.id, sessionInfo.scene, ObjectId(id), JSON.parse(data), io, callback))
     socket.on("remove-preset", (id, callback) => removeLight.preset(accountInfo, sessionInfo.id, ObjectId(id), io, callback))
-    socket.on("remove-light", (id, callback) => removeLight.light(accountInfo, sessionInfo.scene, ObjectId(id), io, callback))
+    socket.on("remove-light", (id, callback) => removeLight.light(accountInfo, sessionInfo.id, sessionInfo.scene, ObjectId(id), io, callback))
 
     socket.on("get-token", (id, callback) => getToken.single(accountInfo, ObjectId(id), callback))
     socket.on("get-tokens", (callback) => getToken.all(accountInfo, sessionInfo.scene, callback))

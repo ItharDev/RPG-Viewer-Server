@@ -17,7 +17,7 @@ module.exports = async (accountInfo, sessionId, scene, data, socketServer, callb
         data.id = new ObjectId()
         await create(scene, data)
         socketServer.to(sessionId.toString()).emit("create-wall", data)
-        callback(true)
+        callback(true, data.id  )
     } catch (error) {
         console.error("Failed to create wall", error)
         callback(false, error.message)
