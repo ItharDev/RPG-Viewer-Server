@@ -21,7 +21,7 @@ module.exports = {
             if (!info.id) info.id = model._id
             const id = await create(sceneId, model, info)
 
-            socketServer.to(sessionId.toString()).emit("create-light", id, info)
+            socketServer.to(sessionId.toString()).emit("create-light", id, info, data)
             callback(true)
         } catch (error) {
             console.error("Failed to create light", error)

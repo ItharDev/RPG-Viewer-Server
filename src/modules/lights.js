@@ -76,14 +76,14 @@ module.exports = {
 
     /**
      * Remove-light handler
-     * @param {ObjectId} sessionId
+     * @param {ObjectId} sceneId
      * @param {ObjectId} lightId
-     * @returns {Promise<string>}
+     * @returns {Promise<void>}
     */
     remove: async function (sceneId, lightId) {
         await prepareConnection()
 
-        const update = sceneModel.findByIdAndUpdate(sessionId, { $pull: { lights: lightId } }).exec()
+        const update = sceneModel.findByIdAndUpdate(sceneId, { $unset: { [`lights.${lightId.toString()}`]: "" } }).exec()
         if (!update) throw new Error("Invalid scene id")
 
         const light = await lightModel.findByIdAndRemove(lightId).exec()
@@ -101,22 +101,59 @@ module.exports = {
 
         const session = sessionModel.findByIdAndUpdate(sessionId, { $pull: { presets: presetId } }).exec()
         if (!session) throw new Error("Invalid session id")
-
-        const preset = lightModel.findByIdAndRemove(presetId).exec()
-        if (!preset) throw new Error("Failed to remove preset")
     },
 
     /**
      * Modify-light handler
+     * @param {ObjectId} sessionId
+     * @param {ObjectId} sceneId
+     * @param {ObjectId} lightId
+     * @param {{}} info
+     * @param {{}} data
+     * @returns {Promise<void>}
+    */
+    modify: async function (sessionId, sceneId, lightId, info, data) {
+        await prepareConnection()
+        const session = await sessionModel.findById(sessionId).exec()
+        if (!session) throw new Error("Invalid session id")
+
+        if (!session.presets.includes(info.id)) {
+            info.id = lightId
+        }
+
+        const light = await lightModel.findOneAndReplace({ "_id": lightId }, data).exec()
+        if (!light) throw new Error("Failed to update light data")
+
+        const scene = sceneModel.findByIdAndUpdate(sceneId, { $set: { [`lights.${lightId}`]: info } }).exec()
+        if (!scene) throw new Error("Invalid scene id")
+    },
+
+    /**
+     * Move-light handler
+     * @param {ObjectId} sceneId
      * @param {ObjectId} lightId
      * @param {{}} data
      * @returns {Promise<void>}
     */
-    modify: async function (lightId, data) {
+    move: async function (sceneId, lightId, data) {
         await prepareConnection()
 
-        const light = await lightModel.findOneAndReplace({ "_id": lightId }, data).exec()
-        if (!light) throw new Error("Failed to update light data")
+        const update = sceneModel.findByIdAndUpdate(sceneId, { $set: { [`lights.${lightId}`]: data } }).exec()
+        if (!update) throw new Error("Invalid scene id")
+    },
+
+    /**
+     * Toggle-light handler
+     * @param {ObjectId} sceneId
+     * @param {ObjectId} lightId
+     * @param {boolean} enabled
+     * @returns {Promise<void>}
+    */
+    toggle: async function (sceneId, lightId, enabled) {
+        await prepareConnection()
+
+        const update = sceneModel.findByIdAndUpdate(sceneId, { $set: { [`lights.${lightId}.enabled`]: enabled } }).exec()
+        if (!update) throw new Error("Invalid scene id")
     },
 
     /**

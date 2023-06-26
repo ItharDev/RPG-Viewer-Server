@@ -1,5 +1,5 @@
 const { ObjectId } = require('mongodb')
-const { tokenModel, sceneModel, lightModel } = require('../schemas')
+const { tokenModel, sceneModel, lightModel, sessionModel } = require('../schemas')
 const networking = require('./networking');
 const { connect } = require('mongoose');
 
@@ -124,13 +124,14 @@ module.exports = {
 
     /**
      * Modify-blueprint handler
+     * @param {ObjectId} sessionId
      * @param {ObjectId} id
      * @param {{}} data
      * @param {{}} lightData
      * @param {Buffer} buffer
      * @returns {Promise<string>}
     */
-    modify: async function (id, data, lightData, buffer) {
+    modify: async function (sessionId, id, data, lightData, buffer) {
         return new Promise(async (resolve, reject) => {
             await prepareConnection()
 
@@ -147,6 +148,13 @@ module.exports = {
                 })
             }
 
+            const session = await sessionModel.findById(sessionId).exec()
+            if (!session) throw new Error("Invalid session id")
+
+            if (!session.presets.includes(data.light)) {
+                data.light = id
+            }
+
             const token = await tokenModel.findOneAndReplace({ "_id": id }, data).exec()
             if (!token) reject("Failed to modify token")
 
@@ -157,12 +165,17 @@ module.exports = {
         })
     },
 
+    /**
+     * Update-visibility handler
+     * @param {ObjectId} id
+     * @param {boolean} state
+     * @returns {Promise<void>}
+    */
     setVisibility: async function (tokenId, state) {
         await prepareConnection()
 
         const update = await tokenModel.findByIdAndUpdate(tokenId, { $set: { enabled: state } }).exec()
-        if (update) return
-        else throw new Error('Failed to update visibility')
+        if (!update) throw new Error('Failed to update visibility')
     },
 
     setElevation: async function (tokenId, elevation) {
@@ -173,12 +186,18 @@ module.exports = {
         else throw new Error('Failed to update elevation')
     },
 
-    setConditions: async function (tokenId, conditions) {
+    /**
+     * Update-conditions handler
+     * @param {ObjectId} id
+     * @param {Number} conditions
+     * @returns {Promise<void>}
+    */
+    setConditions: async function (id, conditions) {
         await prepareConnection()
 
-        const update = await tokenModel.findByIdAndUpdate(tokenId, { $set: { conditions: conditions } }).exec()
+        const update = await tokenModel.findByIdAndUpdate(id, { $set: { conditions: conditions } }).exec()
         if (update) return
-        else throw new Error('Failed to update conditions')
+        else throw new Error('Invalid token id')
     },
 
     setRotation: async function (tokenId, rotation) {

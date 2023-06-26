@@ -57,6 +57,8 @@ const createToken = require("./listeners/tokens/createToken")
 const moveToken = require("./listeners/tokens/moveToken")
 const modifyToken = require("./listeners/tokens/modifyToken")
 const removeToken = require("./listeners/tokens/removeToken")
+const updateConditions = require("./listeners/tokens/updateConditions")
+const updateVisibility = require("./listeners/tokens/updateVisiblity")
 
 // Get environment variables
 require("dotenv").config()
@@ -151,12 +153,15 @@ io.on("connection", (socket) => {
     socket.on("stop-pointer", () => pointer.stop(accountInfo, sessionInfo.id, io))
 
     socket.on("get-light", (id, callback) => getLight(accountInfo, ObjectId(id), callback))
-    socket.on("create-preset", (data, callback) => createLight.preset(accountInfo, sessionInfo.id, JSON.parse(data), io, callback))
     socket.on("create-light", (data, info, callback) => createLight.light(accountInfo, sessionInfo.id, sessionInfo.scene, JSON.parse(data), JSON.parse(info), io, callback))
-    socket.on("modify-preset", (id, data, callback) => modifyLight.preset(accountInfo, sessionInfo.id, ObjectId(id), JSON.parse(data), io, callback))
-    socket.on("modify-light", (id, data, callback) => modifyLight.light(accountInfo, sessionInfo.id, sessionInfo.scene, ObjectId(id), JSON.parse(data), io, callback))
-    socket.on("remove-preset", (id, callback) => removeLight.preset(accountInfo, sessionInfo.id, ObjectId(id), io, callback))
+    socket.on("modify-light", (id, info, data, callback) => modifyLight.light(accountInfo, sessionInfo.id, sessionInfo.scene, ObjectId(id), JSON.parse(info), JSON.parse(data), io, callback))
+    socket.on("move-light", (id, data, callback) => modifyLight.move(accountInfo, sessionInfo.id, sessionInfo.scene, ObjectId(id), JSON.parse(data), io, callback))
+    socket.on("toggle-light", (id, enabled, callback) => modifyLight.toggle(accountInfo, sessionInfo.id, sessionInfo.scene, ObjectId(id), enabled, io, callback))
     socket.on("remove-light", (id, callback) => removeLight.light(accountInfo, sessionInfo.id, sessionInfo.scene, ObjectId(id), io, callback))
+
+    socket.on("create-preset", (data, callback) => createLight.preset(accountInfo, sessionInfo.id, JSON.parse(data), io, callback))
+    socket.on("modify-preset", (id, data, callback) => modifyLight.preset(accountInfo, sessionInfo.id, ObjectId(id), JSON.parse(data), io, callback))
+    socket.on("remove-preset", (id, callback) => removeLight.preset(accountInfo, sessionInfo.id, ObjectId(id), io, callback))
 
     socket.on("get-token", (id, callback) => getToken.single(accountInfo, ObjectId(id), callback))
     socket.on("get-tokens", (callback) => getToken.all(accountInfo, sessionInfo.scene, callback))
@@ -164,6 +169,8 @@ io.on("connection", (socket) => {
     socket.on("move-token", (data, callback) => moveToken(accountInfo, sessionInfo.id, JSON.parse(data), io, callback))
     socket.on("modify-token", (id, tokenData, lightingData, buffer, callback) => modifyToken(accountInfo, sessionInfo.id, ObjectId(id), JSON.parse(tokenData), JSON.parse(lightingData), buffer, io, callback))
     socket.on("remove-token", (id, callback) => removeToken(accountInfo, sessionInfo.id, sessionInfo.scene, ObjectId(id), io, callback))
+    socket.on("update-conditions", (id, conditions, callback) => updateConditions(accountInfo, sessionInfo.id, ObjectId(id), conditions, io, callback))
+    socket.on("update-visibility", (id, toggle, callback) => updateVisibility(accountInfo, sessionInfo.id, ObjectId(id), toggle, io, callback))
 })
 
 // Start everything
