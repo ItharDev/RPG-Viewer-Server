@@ -175,15 +175,20 @@ module.exports = {
         await prepareConnection()
 
         const update = await tokenModel.findByIdAndUpdate(tokenId, { $set: { enabled: state } }).exec()
-        if (!update) throw new Error('Failed to update visibility')
+        if (!update) throw new Error('Invalid token id')
     },
 
-    setElevation: async function (tokenId, elevation) {
+    /**
+     * Update-elevation handler
+     * @param {ObjectId} id
+     * @param {boolean} value
+     * @returns {Promise<void>}
+    */
+    setElevation: async function (id, value) {
         await prepareConnection()
 
-        const update = await tokenModel.findByIdAndUpdate(tokenId, { $set: { elevation: elevation } }).exec()
-        if (update) return
-        else throw new Error('Failed to update elevation')
+        const update = await tokenModel.findByIdAndUpdate(id, { $set: { elevation: value } }).exec()
+        if (!update) throw new Error('Invalid token id')
     },
 
     /**
@@ -196,8 +201,7 @@ module.exports = {
         await prepareConnection()
 
         const update = await tokenModel.findByIdAndUpdate(id, { $set: { conditions: conditions } }).exec()
-        if (update) return
-        else throw new Error('Invalid token id')
+        if (!update) throw new Error('Invalid token id')
     },
 
     setRotation: async function (tokenId, rotation) {
@@ -208,19 +212,29 @@ module.exports = {
         else throw new Error('Failed to update rotation')
     },
 
+    /**
+     * Lock-token handler
+     * @param {ObjectId} id
+     * @param {boolean} state
+     * @returns {Promise<void>}
+    */
     lock: async function (tokenId, state) {
         await prepareConnection()
 
         const update = await tokenModel.findByIdAndUpdate(tokenId, { $set: { locked: state } }).exec()
-        if (update) return
-        else throw new Error('Failed to toggle state')
+        if (!update) throw new Error('Invalid token id')
     },
 
-    setHealth: async function (tokenId, health) {
+    /**
+     * Update-health handler
+     * @param {ObjectId} id
+     * @param {boolean} state
+     * @returns {Promise<void>}
+    */
+    setHealth: async function (id, value) {
         await prepareConnection()
 
-        const update = await tokenModel.findByIdAndUpdate(tokenId, { $set: { health: health } }).exec()
-        if (update) return
-        else throw new Error('Failed to update health')
+        const update = await tokenModel.findByIdAndUpdate(id, { $set: { health: value } }).exec()
+        if (!update) throw new Error('Invalid token id')
     },
 }

@@ -90,13 +90,14 @@ module.exports = {
 
     /**
      * Modify-blueprint handler
+     * @param {ObjectId} sessionId
      * @param {ObjectId} id
      * @param {{}} data
      * @param {{}} lightData
      * @param {Buffer} buffer
      * @returns {Promise<string>}
     */
-    modify: async function (id, data, lightData, buffer) {
+    modify: async function (sessionId, id, data, lightData, buffer) {
         return new Promise(async (resolve, reject) => {
             await prepareConnection()
 
@@ -111,6 +112,13 @@ module.exports = {
                     reject(rejected)
                     return
                 })
+            }
+
+            const session = await sessionModel.findById(sessionId).exec()
+            if (!session) throw new Error("Invalid session id")
+
+            if (!session.presets.includes(data.light)) {
+                data.light = id
             }
 
             const blueprint = await blueprintModel.findOneAndReplace({ "_id": id }, data).exec()

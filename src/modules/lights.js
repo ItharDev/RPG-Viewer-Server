@@ -94,13 +94,16 @@ module.exports = {
      * Remove-preset handler
      * @param {ObjectId} sessionId
      * @param {ObjectId} presetId
-     * @returns {Promise<string>}
+     * @returns {Promise<lightModel>}
     */
     removePreset: async function (sessionId, presetId) {
         await prepareConnection()
-
+        
+        const preset = lightModel.findById(presetId).exec()
         const session = sessionModel.findByIdAndUpdate(sessionId, { $pull: { presets: presetId } }).exec()
         if (!session) throw new Error("Invalid session id")
+
+        return preset
     },
 
     /**

@@ -33,7 +33,7 @@ module.exports = {
      * Create-preset packet listener
      * @param {{ uid: ObjectId, username: string }} accountInfo
      * @param {ObjectId} sessionId
-     * @param {{name: String, radius: Number, intensity: Number, enabled: Boolean, color: {}, position: {}, effect: {}}} data
+     * @param {{name: String, radius: Number, enabled: Boolean, color: {}, position: {}, effect: {}}} data
      * @param {Server} socketServer
      * @param {() => {}} callback
     */

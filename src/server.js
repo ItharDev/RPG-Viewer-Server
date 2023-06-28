@@ -59,6 +59,9 @@ const modifyToken = require("./listeners/tokens/modifyToken")
 const removeToken = require("./listeners/tokens/removeToken")
 const updateConditions = require("./listeners/tokens/updateConditions")
 const updateVisibility = require("./listeners/tokens/updateVisiblity")
+const lockToken = require("./listeners/tokens/lockToken")
+const updateHealth = require("./listeners/tokens/updateHealth")
+const updateElevation = require("./listeners/tokens/updateElevation")
 
 // Get environment variables
 require("dotenv").config()
@@ -139,7 +142,7 @@ io.on("connection", (socket) => {
     socket.on("get-blueprint", (blueprintId, callback) => getBlueprint.single(accountInfo, ObjectId(blueprintId), callback))
     socket.on("get-blueprints", (callback) => getBlueprint.all(accountInfo, sessionInfo.id, callback))
     socket.on("create-blueprint", (path, tokenData, lightingData, buffer, callback) => createBlueprint.blueprint(accountInfo, sessionInfo.id, path, JSON.parse(tokenData), JSON.parse(lightingData), buffer, callback))
-    socket.on("modify-blueprint", (id, tokenData, lightingData, buffer, callback) => modifyBlueprint(accountInfo, id, JSON.parse(tokenData), JSON.parse(lightingData), buffer, callback))
+    socket.on("modify-blueprint", (id, tokenData, lightingData, buffer, callback) => modifyBlueprint(accountInfo, sessionInfo.id, id, JSON.parse(tokenData), JSON.parse(lightingData), buffer, callback))
     socket.on("create-blueprint-folder", (path, name, callback) => createBlueprint.folder(accountInfo, sessionInfo.id, path, name, callback))
     socket.on("rename-blueprint-folder", (path, name, callback) => renameBlueprintFolder(accountInfo, sessionInfo.id, path, name, callback))
     socket.on("remove-blueprint", (path, blueprintId, callback) => removeBlueprint.blueprint(accountInfo, sessionInfo.id, path, ObjectId(blueprintId), callback))
@@ -171,6 +174,9 @@ io.on("connection", (socket) => {
     socket.on("remove-token", (id, callback) => removeToken(accountInfo, sessionInfo.id, sessionInfo.scene, ObjectId(id), io, callback))
     socket.on("update-conditions", (id, conditions, callback) => updateConditions(accountInfo, sessionInfo.id, ObjectId(id), conditions, io, callback))
     socket.on("update-visibility", (id, toggle, callback) => updateVisibility(accountInfo, sessionInfo.id, ObjectId(id), toggle, io, callback))
+    socket.on("lock-token", (id, toggle, callback) => lockToken(accountInfo, sessionInfo.id, ObjectId(id), toggle, io, callback))
+    socket.on("update-health", (id, value, callback) => updateHealth(accountInfo, sessionInfo.id, ObjectId(id), value, io, callback))
+    socket.on("update-elevation", (id, value, callback) => updateElevation(accountInfo, sessionInfo.id, ObjectId(id), value, io, callback))
 })
 
 // Start everything

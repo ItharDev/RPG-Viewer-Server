@@ -51,7 +51,7 @@ const tokenModel = model("tokens", new Schema({
     image: ObjectId,
     enabled: Boolean,
     health: Number,
-    elevation: String,
+    elevation: Number,
     conditions: Number,
     locked: Boolean,
     rotation: Number
@@ -60,7 +60,6 @@ const tokenModel = model("tokens", new Schema({
 const lightModel = model("lights", new Schema({
     name: String,
     radius: Number,
-    intensity: Number,
     color: {
         r: Number,
         g: Number,

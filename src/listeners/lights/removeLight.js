@@ -35,9 +35,9 @@ module.exports = {
     preset: async (accountInfo, sessionId, lightId, socketServer, callback) => {
         console.debug(`[ ${accountInfo.username} (${accountInfo.uid}) ]`, "Package: remove-preset")
         try {
-            await removePreset(sessionId, lightId)
+            const data = await removePreset(sessionId, lightId)
             callback(true)
-            socketServer.to(sessionId.toString()).emit("remove-preset", lightId)
+            socketServer.to(sessionId.toString()).emit("remove-preset", lightId, data)
         } catch (error) {
             console.error("Failed to remove preset", error)
             callback(false, error.message)

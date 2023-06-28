@@ -83,7 +83,7 @@ module.exports = {
         try {
             await modifyPreset(lightId, data)
             callback(true)
-            socketServer.to(sessionId.toString()).emit("modify-preset", lightId, model)
+            socketServer.to(sessionId.toString()).emit("modify-preset", lightId, data)
         } catch (error) {
             console.error("Failed to modify preset", error)
             callback(false, error.message)
