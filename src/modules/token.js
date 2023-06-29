@@ -204,12 +204,17 @@ module.exports = {
         if (!update) throw new Error('Invalid token id')
     },
 
-    setRotation: async function (tokenId, rotation) {
+    /**
+     * Rotate-token handler
+     * @param {ObjectId} id
+     * @param {boolean} rotation
+     * @returns {Promise<void>}
+    */
+    setRotation: async function (id, rotation) {
         await prepareConnection()
 
-        const update = await tokenModel.findByIdAndUpdate(tokenId, { $set: { rotation: rotation } }).exec()
-        if (update) return
-        else throw new Error('Failed to update rotation')
+        const update = await tokenModel.findByIdAndUpdate(id, { $set: { rotation: rotation } }).exec()
+        if (!update) throw new Error('Invalid token id')
     },
 
     /**

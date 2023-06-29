@@ -136,6 +136,19 @@ module.exports = {
     },
 
     /**
+     * Modify-lighting handler
+     * @param {ObjectId} sceneId 
+     * @param {{}} data
+     * @returns {Promise<void>}
+     */
+    modifyLighting: async function (sceneId, data) {
+        await prepareConnection()
+
+        const update = await sceneModel.findByIdAndUpdate(sceneId, { $set: { "darkness": data } }).exec()
+        if (!update) throw new Error("Failed to update database")
+    },
+
+    /**
      * Move-scene handler
      * @param {ObjectId} sessionId 
      * @param {ObjectId} sceneId 

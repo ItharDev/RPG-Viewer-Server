@@ -87,7 +87,6 @@ const sceneModel = model("scenes", new Schema({
         },
         enabled: Boolean,
         globalLighting: Boolean,
-        translucency: Number
     },
     grid: {
         cellSize: Number,
@@ -125,7 +124,7 @@ const sceneModel = model("scenes", new Schema({
         _id: false,
         index: Number,
         name: String,
-        roll: String,
+        roll: Number,
         visible: Boolean
     }),
     lights: {},
