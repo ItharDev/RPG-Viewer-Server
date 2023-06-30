@@ -65,6 +65,11 @@ const lockToken = require("./listeners/tokens/lockToken")
 const updateHealth = require("./listeners/tokens/updateHealth")
 const updateElevation = require("./listeners/tokens/updateElevation")
 
+const createInitiative = require("./listeners/initiatives/createInitiative")
+const modifyInitiative = require("./listeners/initiatives/modifyInitiative")
+const removeInitiative = require("./listeners/initiatives/removeInitiative")
+const getInitiatives = require("./listeners/initiatives/getInitiatives")
+
 // Get environment variables
 require("dotenv").config()
 
@@ -168,6 +173,15 @@ io.on("connection", (socket) => {
     socket.on("create-preset", (data, callback) => createLight.preset(accountInfo, sessionInfo.id, JSON.parse(data), io, callback))
     socket.on("modify-preset", (id, data, callback) => modifyLight.preset(accountInfo, sessionInfo.id, ObjectId(id), JSON.parse(data), io, callback))
     socket.on("remove-preset", (id, callback) => removeLight.preset(accountInfo, sessionInfo.id, ObjectId(id), io, callback))
+
+    socket.on("get-initiatives", (callback) => getInitiatives(accountInfo, sessionInfo.scene, callback))
+    socket.on("create-initiative", (data, callback) => createInitiative(accountInfo, sessionInfo.id, sessionInfo.scene, JSON.parse(data), io, callback))
+    socket.on("modify-initiative", (id, data, callback) => modifyInitiative(accountInfo, sessionInfo.id, sessionInfo.scene, id, JSON.parse(data), io, callback))
+    socket.on("remove-initiative", (id, callback) => removeInitiative(accountInfo, sessionInfo.id, sessionInfo.scene, id, io, callback))
+    socket.on("sort-initiative", (callback) => {
+        io.to(sessionInfo.id.toString()).emit("sort-initiative")
+        callback(true)
+    })
 
     socket.on("get-token", (id, callback) => getToken.single(accountInfo, ObjectId(id), callback))
     socket.on("get-tokens", (callback) => getToken.all(accountInfo, sessionInfo.scene, callback))

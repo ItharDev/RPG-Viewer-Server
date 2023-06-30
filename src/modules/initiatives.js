@@ -25,41 +25,59 @@ async function prepareConnection() {
 
 module.exports = {
     /**
-     * Create-wall handler
+     * Get-initiatives handler
      * @param {ObjectId} scene
-     * @param {{id: ObjectId, points: Array<{x: number, y: number}>, type: number, open: boolean, locked: boolean}} data
-     * @returns {Promise<void>}
+     * @returns {Promise<{}>}
+    */
+    get: async function (scene) {
+        await prepareConnection()
+
+        const data = await sceneModel.findById(scene).exec()
+        if (!data) throw new Error("Invalid scene id")
+
+        return data.initiatives
+    },
+
+    /**
+     * Create-initiative handler
+     * @param {ObjectId} scene
+     * @param {{name: String, Roll: number, Visible: boolean}} data
+     * @returns {Promise<string>}
     */
     create: async function (scene, data) {
         await prepareConnection()
 
-        const create = await sceneModel.findByIdAndUpdate(scene, { $addToSet: { walls: data } }).exec()
-        if (!create) throw new Error("Failed to create wall")
+        const id = new ObjectId().toString()
+        const create = await sceneModel.findByIdAndUpdate(scene, { $set: { [`initiatives.${id}`]: data } }).exec()
+        if (!create) throw new Error("Invalid scene id")
+
+        return id
     },
 
     /**
-     * Modify-wall handler
+     * Modify-initiative handler
      * @param {ObjectId} scene
-     * @param {{id: ObjectId, points: Array<{x: number, y: number}>, type: number, open: boolean, locked: boolean}} data
+     * @param {string} id
+     * @param {{name: String, Roll: number, Visible: boolean}} data
      * @returns {Promise<void>}
     */
-    modify: async function (scene, data) {
+    modify: async function (scene, id, data) {
         await prepareConnection()
 
-        const update = await sceneModel.findByIdAndUpdate(scene, { $set: { "walls.$[element]": data } }, { arrayFilters: [{ 'element.id': data.id }] }).exec()
-        if (!update) throw new Error("Failed to modify wall")
+        const update = await sceneModel.findByIdAndUpdate(scene, { $set: { [`initiatives.${id}`]: data } }).exec()
+        if (!update) throw new Error("Invalid scene id")
     },
 
     /**
-     * Remove-wall handler
+     * Remove-initiative handler
      * @param {ObjectId} scene
-     * @param {ObjectId} id
+     * @param {string} id
      * @returns {Promise<void>}
     */
     remove: async function (scene, id) {
         await prepareConnection()
 
-        const update = await sceneModel.findByIdAndUpdate(scene, { $pull: { walls: { id: id } } }).exec()
-        if (!update) throw new Error("Failed to remove wall")
+        const update = await sceneModel.findByIdAndUpdate(scene, { $set: { [`initiatives.${id}`]: undefined } }).exec()
+        if (!update) throw new Error("Invalid scene id")
     }
 }

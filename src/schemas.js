@@ -120,13 +120,7 @@ const sceneModel = model("scenes", new Schema({
         locked: Boolean
     }),
     tokens: Array(ObjectId),
-    initiatives: Array({
-        _id: false,
-        index: Number,
-        name: String,
-        roll: Number,
-        visible: Boolean
-    }),
+    initiatives: {},
     lights: {},
     notes: Array(ObjectId)
 }))
