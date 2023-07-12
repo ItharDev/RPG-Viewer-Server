@@ -45,15 +45,23 @@ module.exports = {
         } else throw new Error('Invalid scene id')
     },
 
-    create: async function (sceneId, data) {
+    /**
+     * Create-note handler
+     * @param {ObjectId} sceneId
+     * @param {noteModel} data
+     * @param {{}} info
+     * @returns {Promise<string>}
+    */
+    create: async function (sceneId, data, info) {
         await prepareConnection()
 
         const note = await noteModel.create(data)
-        if (note) {
-            const update = await sceneModel.findByIdAndUpdate(sceneId, { $addToSet: { notes: note._id } }).exec()
-            if (update) return note._id
-            else throw new Error('Failed to update directory')
-        } else throw new Error('Failed to create note')
+        if (!note) throw new Error('Failed to create note')
+
+        const update = await sceneModel.findByIdAndUpdate(sceneId, { $set: { [`notes.${note.id}`]: info } }).exec()
+        if (!update) throw new Error('Failed to update directory')
+
+        return note.id
     },
 
     remove: async function (sceneId, noteId) {

@@ -122,7 +122,7 @@ const sceneModel = model("scenes", new Schema({
     tokens: Array(ObjectId),
     initiatives: {},
     lights: {},
-    notes: Array(ObjectId)
+    notes: {}
 }))
 
 const sessionModel = model("sessions", new Schema({
@@ -153,15 +153,9 @@ const fileModel = model("files", new Schema({
 }))
 
 const noteModel = model("notes", new Schema({
-    owner: ObjectId,
     header: String,
     text: String,
     image: ObjectId,
-    isPublic: Boolean,
-    position: {
-        x: Number,
-        y: Number
-    }
 }))
 
 const journalModel = model("journals", new Schema({
