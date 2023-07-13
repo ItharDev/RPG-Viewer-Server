@@ -11,14 +11,9 @@ const { Server } = require("socket.io")
 module.exports = async (accountInfo, sessionInfo, socketServer) => {
     console.debug(`[ ${accountInfo.username} (${accountInfo.uid}) ]`, "Package: disconnect")
     try {
-        if (!sessionInfo.id || !sessionInfo.isMaster) return
+        if (!sessionInfo.id) return
 
-        const state = {
-            scene: undefined,
-            synced: false
-        }
-        await setState(sessionInfo.id, state)
-        socketServer.to(sessionInfo.id.toString()).emit("change-state", "", false)
+        socketServer.to(sessionInfo.id.toString()).emit("user-disconnected", accountInfo.username)
 
         sessionInfo.id = null
         sessionInfo.master = null
@@ -28,6 +23,14 @@ module.exports = async (accountInfo, sessionInfo, socketServer) => {
         sessionInfo.users = null
         sessionInfo.background = null
 
+        if (sessionInfo.isMaster) {
+            const state = {
+                scene: undefined,
+                synced: false
+            }
+            await setState(sessionInfo.id, state)
+            socketServer.to(sessionInfo.id.toString()).emit("change-state", "", false)
+        }
     } catch (error) {
         console.error("Failed to disconnect a session", error)
     }

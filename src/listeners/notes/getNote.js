@@ -1,19 +1,19 @@
 const { ObjectId } = require("mongodb")
-const { get } = require("../../modules/lights")
+const { get } = require("../../modules/notes")
 
 /**
- * Get-light packet listener
+ * Get-note packet listener
  * @param {{ uid: ObjectId, username: string }} accountInfo
- * @param {ObjectId} lightId
+ * @param {ObjectId} noteId
  * @param {() => {}} callback
 */
-module.exports = async (accountInfo, lightId, callback) => {
-    console.debug(`[ ${accountInfo.username} (${accountInfo.uid}) ]`, "Package: get-light")
+module.exports = async (accountInfo, noteId, callback) => {
+    console.debug(`[ ${accountInfo.username} (${accountInfo.uid}) ]`, "Package: get-note")
     try {
-        const light = await get(lightId)
-        callback(true, light)
+        const note = await get(noteId)
+        callback(true, note)
     } catch (error) {
-        console.error("Failed to get light data", error)
+        console.error("Failed to get note data", error)
         callback(false, error.message)
     }
 }

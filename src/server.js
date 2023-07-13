@@ -70,6 +70,11 @@ const modifyInitiative = require("./listeners/initiatives/modifyInitiative")
 const removeInitiative = require("./listeners/initiatives/removeInitiative")
 const getInitiatives = require("./listeners/initiatives/getInitiatives")
 
+const createNote = require("./listeners/notes/createNote")
+const getNote = require("./listeners/notes/getNote")
+const modifyNote = require("./listeners/notes/modifyNote")
+const removeNote = require("./listeners/notes/removeNote")
+
 // Get environment variables
 require("dotenv").config()
 
@@ -93,17 +98,17 @@ io.use((socket, next) => {
 io.on("connection", (socket) => {
     // Stateful data
     let accountInfo = {
-        uid: ObjectId,
-        username: String
+        uid: ObjectId | null,
+        username: String | null
     }
     let sessionInfo = {
-        id: ObjectId,
-        master: ObjectId,
-        isMaster: Boolean,
-        synced: Boolean,
-        scene: ObjectId,
-        users: Array,
-        background: ObjectId
+        id: ObjectId | null,
+        master: ObjectId | null,
+        isMaster: Boolean | null,
+        synced: Boolean | null,
+        scene: ObjectId | null,
+        users: Array | null,
+        background: ObjectId | null
     }
 
     // Listener handling
@@ -149,7 +154,7 @@ io.on("connection", (socket) => {
     socket.on("get-blueprint", (blueprintId, callback) => getBlueprint.single(accountInfo, ObjectId(blueprintId), callback))
     socket.on("get-blueprints", (callback) => getBlueprint.all(accountInfo, sessionInfo.id, callback))
     socket.on("create-blueprint", (path, tokenData, lightingData, buffer, callback) => createBlueprint.blueprint(accountInfo, sessionInfo.id, path, JSON.parse(tokenData), JSON.parse(lightingData), buffer, callback))
-    socket.on("modify-blueprint", (id, tokenData, lightingData, buffer, callback) => modifyBlueprint(accountInfo, sessionInfo.id, id, JSON.parse(tokenData), JSON.parse(lightingData), buffer, callback))
+    socket.on("modify-blueprint", (id, tokenData, lightingData, buffer, callback) => modifyBlueprint(accountInfo, sessionInfo.id, ObjectId(id), JSON.parse(tokenData), JSON.parse(lightingData), buffer, callback))
     socket.on("create-blueprint-folder", (path, name, callback) => createBlueprint.folder(accountInfo, sessionInfo.id, path, name, callback))
     socket.on("rename-blueprint-folder", (path, name, callback) => renameBlueprintFolder(accountInfo, sessionInfo.id, path, name, callback))
     socket.on("remove-blueprint", (path, blueprintId, callback) => removeBlueprint.blueprint(accountInfo, sessionInfo.id, path, ObjectId(blueprintId), callback))
@@ -157,7 +162,7 @@ io.on("connection", (socket) => {
     socket.on("move-blueprint", (blueprintId, oldPath, newPath, callback) => moveBlueprint.blueprint(accountInfo, sessionInfo.id, ObjectId(blueprintId), oldPath, newPath, callback))
     socket.on("move-blueprint-folder", (oldPath, newPath, callback) => moveBlueprint.folder(accountInfo, sessionInfo.id, oldPath, newPath, callback))
 
-    socket.on("ping", (location) => ping(accountInfo, sessionInfo.id, location, io))
+    socket.on("ping", (location, strong) => ping(accountInfo, sessionInfo.id, location, strong, io))
     socket.on("start-pointer", (location) => pointer.start(accountInfo, sessionInfo.id, location, io))
     socket.on("update-pointer", (location) => pointer.update(accountInfo, sessionInfo.id, location, io))
     socket.on("stop-pointer", () => pointer.stop(accountInfo, sessionInfo.id, io))
@@ -180,6 +185,19 @@ io.on("connection", (socket) => {
     socket.on("remove-initiative", (id, callback) => removeInitiative(accountInfo, sessionInfo.id, sessionInfo.scene, id, io, callback))
     socket.on("sort-initiative", (callback) => {
         io.to(sessionInfo.id.toString()).emit("sort-initiative")
+        callback(true)
+    })
+
+    socket.on("get-note", (id, callback) => getNote(accountInfo, id, callback))
+    socket.on("create-note", (data, info, callback) => createNote(accountInfo, sessionInfo.id, sessionInfo.scene, JSON.parse(data), JSON.parse(info), io, callback))
+    socket.on("move-note", (id, data, callback) => modifyNote.move(accountInfo, sessionInfo.id, sessionInfo.scene, ObjectId(id), JSON.parse(data), io, callback))
+    socket.on("modify-note-text", (id, text, callback) => modifyNote.modifyText(accountInfo, sessionInfo.id, ObjectId(id), text, io, callback))
+    socket.on("modify-note-header", (id, header, callback) => modifyNote.modifyHeader(accountInfo, sessionInfo.id, ObjectId(id), header, io, callback))
+    socket.on("modify-note-image", (id, buffer, callback) => modifyNote.modifyImage(accountInfo, sessionInfo.id, ObjectId(id), buffer, io, callback))
+    socket.on("set-note-global", (id, isGlobal, callback) => modifyNote.setGlobal(accountInfo, sessionInfo.id, sessionInfo.scene, ObjectId(id), isGlobal, io, callback))
+    socket.on("remove-note", (id, callback) => removeNote(accountInfo, sessionInfo.id, sessionInfo.scene, ObjectId(id), io, callback))
+    socket.on("show-note", (id, callback) => {
+        io.to(sessionInfo.id.toString()).emit("show-note", id)
         callback(true)
     })
 

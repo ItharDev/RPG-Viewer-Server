@@ -1,14 +1,14 @@
-const { journalModel, sessionModel } = require('../schemas')
-const folder = require('./folder')
-const account = require('./account')
-const { ObjectId } = require('mongodb')
-const { connect } = require('mongoose')
-const networking = require('./networking')
+const { journalModel, sessionModel } = require("../schemas")
+const folder = require("./folder")
+const account = require("./account")
+const { ObjectId } = require("mongodb")
+const { connect } = require("mongoose")
+const networking = require("./networking")
 
 async function prepareConnection() {
     return new Promise((resolve, reject) => {
         if (global.databaseConnected !== true) {
-            connect('mongodb://127.0.0.1:27017/rpg-viewer').then((db) => {
+            connect("mongodb://127.0.0.1:27017/rpg-viewer").then((db) => {
                 global.databaseConnected = true
                 db.connection.once("error", (err) => {
                     console.error("Mongoose error:", err)
@@ -32,7 +32,7 @@ module.exports = {
 
         const journal = await journalModel.findById(journalId).exec()
         if (journal) return journal
-        else throw new Error('Failed to load journal page')
+        else throw new Error("Failed to load journal page")
     },
 
     getAll: async function (sessionId, userId) {
@@ -42,9 +42,9 @@ module.exports = {
         if (session) {
             const documents = session.journals.find(x => x.owner.toString() === userId.toString())
             if (documents) return documents.contents
-            else throw new Error('Invalid user id')
+            else throw new Error("Invalid user id")
         }
-        else throw new Error('Invalid session id')
+        else throw new Error("Invalid session id")
     },
 
     create: async function (sessionId, path, data) {
@@ -62,10 +62,10 @@ module.exports = {
 
                     return (journal)
                 }
-                else throw new Error('Invalid user id')
+                else throw new Error("Invalid user id")
             }
-            else throw new Error('Failed to create journal page')
-        } else throw new Error('Failed to create journal page')
+            else throw new Error("Failed to create journal page")
+        } else throw new Error("Failed to create journal page")
     },
 
     remove: async function (sessionId, path, userId, journalId) {
@@ -90,22 +90,22 @@ module.exports = {
                 }
                 if (journal.image) await networking.modifyFile(journal.image, -1)
             }
-            else throw new Error('Failed to remove journal page')
-        } else throw new Error('Failed to remove journal page')
+            else throw new Error("Failed to remove journal page")
+        } else throw new Error("Failed to remove journal page")
     },
 
     modifyText: async function (journalId, text) {
         await prepareConnection()
 
-        const update = await journalModel.findByIdAndUpdate(journalId, { $set: { 'text': text } }).exec()
-        if (!update) throw new Error('Failed to modify journal page')
+        const update = await journalModel.findByIdAndUpdate(journalId, { $set: { "text": text } }).exec()
+        if (!update) throw new Error("Failed to modify journal page")
     },
 
     modifyHeader: async function (journalId, text) {
         await prepareConnection()
 
-        const update = await journalModel.findByIdAndUpdate(journalId, { $set: { 'header': text } }).exec()
-        if (!update) throw new Error('Failed to modify journal page')
+        const update = await journalModel.findByIdAndUpdate(journalId, { $set: { "header": text } }).exec()
+        if (!update) throw new Error("Failed to modify journal page")
     },
 
     modifyImage: async function (journalId, buffer) {
@@ -121,7 +121,7 @@ module.exports = {
             if (buffer) {
                 await networking.uploadFile(id, buffer).then(async (resolved) => {
                     const update = await journalModel.findByIdAndUpdate(journalId, { $set: { image: id } }).exec()
-                    if (!update) reject('Failed to modify journal page')
+                    if (!update) reject("Failed to modify journal page")
                     resolve(id)
                 }, (rejected) => {
                     reject(rejected)
@@ -129,7 +129,7 @@ module.exports = {
             }
             else {
                 const update = await journalModel.findByIdAndUpdate(journalId, { $set: { image: id } }).exec()
-                if (!update) reject('Failed to modify journal page')
+                if (!update) reject("Failed to modify journal page")
                 resolve(id)
             }
         })
@@ -182,9 +182,9 @@ module.exports = {
                 }
             }
             const update = await journalModel.findByIdAndUpdate(journalId, { $set: { collaborators: collaborators } }).exec()
-            if (!update) throw new Error('Failed to update collaborators')
+            if (!update) throw new Error("Failed to update collaborators")
         }
-        else throw new Error('Invalid session id')
+        else throw new Error("Invalid session id")
     },
 
     move: async function (sessionId, journalId, oldPath, newPath) {
@@ -211,11 +211,11 @@ module.exports = {
                     if (!newPath) push = await sessionModel.findByIdAndUpdate(sessionId, { $addToSet: { [`journals.${newState.journals.indexOf(newDocuments)}.contents`]: journalId } }).exec()
                     else push = await sessionModel.findByIdAndUpdate(sessionId, { $addToSet: { [`journals.${newState.journals.indexOf(newDocuments)}.contents.${newFolder.path}.contents`]: journalId } }).exec()
 
-                    if (!push) throw new Error('Failed to move journal page')
+                    if (!push) throw new Error("Failed to move journal page")
                 }
-                else throw new Error('Failed to move journal page')
-            } else throw new Error('Invalid user id')
-        } else throw new Error('Failed to move journal page')
+                else throw new Error("Failed to move journal page")
+            } else throw new Error("Invalid user id")
+        } else throw new Error("Failed to move journal page")
     },
 
     createFolder: async function (sessionId, path, userId, name) {
@@ -236,14 +236,14 @@ module.exports = {
                 if (targetFolder) {
                     const update = await sessionModel.findByIdAndUpdate(sessionId, { $addToSet: { [`journals.${document.journals.indexOf(documents)}.contents.${targetFolder.path}.subFolders`]: struct } }).exec()
                     if (update) return struct.id
-                    else throw new Error('Failed to create folder')
+                    else throw new Error("Failed to create folder")
                 } else {
                     const update = await sessionModel.findByIdAndUpdate(sessionId, { $addToSet: { [`journals.${document.journals.indexOf(documents)}.contents`]: struct } }).exec()
                     if (update) return struct.id
-                    else throw new Error('Failed to create folder')
+                    else throw new Error("Failed to create folder")
                 }
-            } else throw new Error('Invalid user id')
-        } else throw new Error('Failed to create folder')
+            } else throw new Error("Invalid user id")
+        } else throw new Error("Failed to create folder")
     },
 
     removeFolder: async function (sessionId, path, userId) {
@@ -259,19 +259,19 @@ module.exports = {
                     await this.remove(sessionId, path, userId, element)
                 }
 
-                let paths = path.split('/')
+                let paths = path.split("/")
                 const folderId = paths.pop()
 
-                const targetFolder = await folder.get(documents.contents, paths.join('/'))
+                const targetFolder = await folder.get(documents.contents, paths.join("/"))
                 if (targetFolder) {
                     const update = await sessionModel.findByIdAndUpdate(sessionId, { $pull: { [`journals.${document.journals.indexOf(documents)}.contents.${targetFolder.path}.subFolders`]: { id: ObjectId(folderId) } } }).exec()
-                    if (!update) throw new Error('Failed to remove folder')
+                    if (!update) throw new Error("Failed to remove folder")
                 } else {
                     const update = await sessionModel.findByIdAndUpdate(sessionId, { $pull: { [`journals.${document.journals.indexOf(documents)}.contents`]: { id: ObjectId(folderId) } } }).exec()
-                    if (!update) throw new Error('Failed to remove folder')
+                    if (!update) throw new Error("Failed to remove folder")
                 }
-            } else throw new Error('Invalid user id')
-        } else throw new Error('Failed to remove folder')
+            } else throw new Error("Invalid user id")
+        } else throw new Error("Failed to remove folder")
     },
 
     renameFolder: async function (sessionId, path, userId, name) {
@@ -284,10 +284,10 @@ module.exports = {
                 const targetFolder = await folder.get(documents.contents, path)
                 if (targetFolder) {
                     const update = await sessionModel.findByIdAndUpdate(sessionId, { $set: { [`journals.${document.journals.indexOf(documents)}.contents.${targetFolder.path}.name`]: name } }).exec()
-                    if (!update) throw new Error('Failed to rename folder')
-                } else throw new Error('Failed to rename folder')
-            } else throw new Error('Invalid user id')
-        } else throw new Error('Failed to rename folder')
+                    if (!update) throw new Error("Failed to rename folder")
+                } else throw new Error("Failed to rename folder")
+            } else throw new Error("Invalid user id")
+        } else throw new Error("Failed to rename folder")
     },
 
     moveFolder: async function (sessionId, oldPath, newPath, userId) {
@@ -297,13 +297,13 @@ module.exports = {
         if (document) {
             const oldDocuments = document.journals.find(x => x.owner.toString() === data.owner.toString())
             if (oldDocuments) {
-                let oldPaths = oldPath.split('/')
+                let oldPaths = oldPath.split("/")
                 const oldId = oldPaths.pop()
 
                 let pull
                 let push
 
-                const oldFolder = await folder.get(oldDocuments.contents, oldPaths.join('/'))
+                const oldFolder = await folder.get(oldDocuments.contents, oldPaths.join("/"))
                 if (oldFolder) pull = await sessionModel.findByIdAndUpdate(sessionId, { $pull: { [`journals.${document.journals.indexOf(oldDocuments)}.contents.${oldFolder.path}.subFolders`]: { id: ObjectId(oldId) } } }).exec()
                 else pull = await sessionModel.findByIdAndUpdate(sessionId, { $pull: { [`journals.${document.journals.indexOf(oldDocuments)}.contents`]: { id: ObjectId(oldId) } } }).exec()
 
@@ -319,11 +319,11 @@ module.exports = {
                             if (oldFolder) push = await sessionModel.findByIdAndUpdate(sessionId, { $addToSet: { [`journals.${newState.journals.indexOf(newDocuments)}.contents`]: oldFolder.subFolders.find(obj => obj.id == oldId) } }).exec()
                             else push = await sessionModel.findByIdAndUpdate(sessionId, { $addToSet: { [`journals.${newState.journals.indexOf(newDocuments)}.contents`]: oldDocuments.contents.find(obj => obj.id == oldId) } }).exec()
                         }
-                        if (!push) throw new Error('Failed to move folder')
+                        if (!push) throw new Error("Failed to move folder")
                     }
                 }
-                else throw new Error('Failed to move folder')
-            } else throw new Error('Invalid user id')
-        } else throw new Error('Failed to move folder')
+                else throw new Error("Failed to move folder")
+            } else throw new Error("Invalid user id")
+        } else throw new Error("Failed to move folder")
     }
 }

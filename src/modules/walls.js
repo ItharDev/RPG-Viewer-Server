@@ -46,7 +46,7 @@ module.exports = {
     modify: async function (scene, data) {
         await prepareConnection()
 
-        const update = await sceneModel.findByIdAndUpdate(scene, { $set: { "walls.$[element]": data } }, { arrayFilters: [{ 'element.id': data.id }] }).exec()
+        const update = await sceneModel.findByIdAndUpdate(scene, { $set: { "walls.$[element]": data } }, { arrayFilters: [{ "element.id": data.id }] }).exec()
         if (!update) throw new Error("Failed to modify wall")
     },
 

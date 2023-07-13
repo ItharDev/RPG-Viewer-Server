@@ -18,7 +18,7 @@ module.exports = {
         console.debug(`[ ${accountInfo.username} (${accountInfo.uid}) ]`, "Package: create-light")
         try {
             const model = new lightModel(data)
-            if (!info.id) info.id = model._id
+            info.id = model.id
             const id = await create(sceneId, model, info)
 
             socketServer.to(sessionId.toString()).emit("create-light", id, info, data)

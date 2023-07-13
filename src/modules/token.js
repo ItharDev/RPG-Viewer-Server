@@ -1,12 +1,12 @@
-const { ObjectId } = require('mongodb')
-const { tokenModel, sceneModel, lightModel, sessionModel } = require('../schemas')
-const networking = require('./networking');
-const { connect } = require('mongoose');
+const { ObjectId } = require("mongodb")
+const { tokenModel, sceneModel, lightModel, sessionModel } = require("../schemas")
+const networking = require("./networking");
+const { connect } = require("mongoose");
 
 async function prepareConnection() {
     return new Promise((resolve, reject) => {
         if (global.databaseConnected !== true) {
-            connect('mongodb://127.0.0.1:27017/rpg-viewer').then((db) => {
+            connect("mongodb://127.0.0.1:27017/rpg-viewer").then((db) => {
                 global.databaseConnected = true
                 db.connection.once("error", (err) => {
                     console.error("Mongoose error:", err)
@@ -32,7 +32,7 @@ module.exports = {
     */
     get: async function (tokenId) {
         const token = await tokenModel.findById(tokenId).exec()
-        if (!token) throw new Error('Invalid token id')
+        if (!token) throw new Error("Invalid token id")
 
         return token
     },
@@ -44,7 +44,7 @@ module.exports = {
    */
     getAll: async function (sceneId) {
         const scene = await sceneModel.findById(sceneId).exec()
-        if (!scene) throw new Error('Invalid scene id')
+        if (!scene) throw new Error("Invalid scene id")
 
         let tokens = []
         for (let i = 0; i < scene.tokens.length; i++) {
@@ -79,8 +79,8 @@ module.exports = {
                         reject(rejected)
                     })
                 }
-                else reject('Failed to update directory')
-            } else reject('Failed to create token')
+                else reject("Failed to update directory")
+            } else reject("Failed to create token")
         })
     },
 
@@ -104,8 +104,8 @@ module.exports = {
                         reject(rejected)
                     })
                 }
-                else reject('Failed to update directory')
-            } else reject('Failed to remove token')
+                else reject("Failed to update directory")
+            } else reject("Failed to remove token")
         })
     },
 
@@ -118,8 +118,8 @@ module.exports = {
     move: async function (tokenId, position) {
         await prepareConnection()
 
-        const update = await tokenModel.findByIdAndUpdate(tokenId, { $set: { 'position': position } }).exec()
-        if (!update) throw new Error('Failed to update token position')
+        const update = await tokenModel.findByIdAndUpdate(tokenId, { $set: { "position": position } }).exec()
+        if (!update) throw new Error("Failed to update token position")
     },
 
     /**
@@ -175,7 +175,7 @@ module.exports = {
         await prepareConnection()
 
         const update = await tokenModel.findByIdAndUpdate(tokenId, { $set: { enabled: state } }).exec()
-        if (!update) throw new Error('Invalid token id')
+        if (!update) throw new Error("Invalid token id")
     },
 
     /**
@@ -188,7 +188,7 @@ module.exports = {
         await prepareConnection()
 
         const update = await tokenModel.findByIdAndUpdate(id, { $set: { elevation: value } }).exec()
-        if (!update) throw new Error('Invalid token id')
+        if (!update) throw new Error("Invalid token id")
     },
 
     /**
@@ -201,7 +201,7 @@ module.exports = {
         await prepareConnection()
 
         const update = await tokenModel.findByIdAndUpdate(id, { $set: { conditions: conditions } }).exec()
-        if (!update) throw new Error('Invalid token id')
+        if (!update) throw new Error("Invalid token id")
     },
 
     /**
@@ -214,7 +214,7 @@ module.exports = {
         await prepareConnection()
 
         const update = await tokenModel.findByIdAndUpdate(id, { $set: { rotation: rotation } }).exec()
-        if (!update) throw new Error('Invalid token id')
+        if (!update) throw new Error("Invalid token id")
     },
 
     /**
@@ -227,7 +227,7 @@ module.exports = {
         await prepareConnection()
 
         const update = await tokenModel.findByIdAndUpdate(tokenId, { $set: { locked: state } }).exec()
-        if (!update) throw new Error('Invalid token id')
+        if (!update) throw new Error("Invalid token id")
     },
 
     /**
@@ -240,6 +240,6 @@ module.exports = {
         await prepareConnection()
 
         const update = await tokenModel.findByIdAndUpdate(id, { $set: { health: value } }).exec()
-        if (!update) throw new Error('Invalid token id')
+        if (!update) throw new Error("Invalid token id")
     },
 }

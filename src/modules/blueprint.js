@@ -1,13 +1,13 @@
-const { blueprintModel, sessionModel, lightModel } = require('../schemas')
-const { ObjectId } = require('mongodb')
-const { connect } = require('mongoose')
-const networking = require('./networking')
+const { blueprintModel, sessionModel, lightModel } = require("../schemas")
+const { ObjectId } = require("mongodb")
+const { connect } = require("mongoose")
+const networking = require("./networking")
 const getFolder = require("./getFolder")
 
 async function prepareConnection() {
     return new Promise((resolve, reject) => {
         if (global.databaseConnected !== true) {
-            connect('mongodb://127.0.0.1:27017/rpg-viewer').then((db) => {
+            connect("mongodb://127.0.0.1:27017/rpg-viewer").then((db) => {
                 global.databaseConnected = true
                 db.connection.once("error", (err) => {
                     console.error("Mongoose error:", err)

@@ -1,92 +1,112 @@
 const { ObjectId } = require("mongodb")
-const { modify, modifyPreset, move, toggle } = require("../../modules/lights")
+const { move, modifyText, modifyImage, modifyHeader, setGlobal } = require("../../modules/notes")
 const { Server } = require("socket.io")
 
 module.exports = {
     /**
-     * Modify-light packet listener
-     * @param {{ uid: ObjectId, username: string }} accountInfo
-     * @param {ObjectId} sessionId
-     * @param {ObjectId} lightId
-     * @param {{}} info
-     * @param {{}} data
-     * @param {Server} socketServer
-     * @param {() => {}} callback
-    */
-    light: async (accountInfo, sessionId, sceneId, lightId, info, data, socketServer, callback) => {
-        console.debug(`[ ${accountInfo.username} (${accountInfo.uid}) ]`, "Package: modify-light")
-        try {
-            await modify(sessionId, sceneId, lightId, info, data)
-            socketServer.to(sessionId.toString()).emit("modify-light", lightId, info, data)
-            callback(true)
-        } catch (error) {
-            console.error("Failed to modify light", error)
-            callback(false, error.message)
-        }
-    },
-
-    /**
-     * Move-light packet listener
+     * Move-note packet listener
      * @param {{ uid: ObjectId, username: string }} accountInfo
      * @param {ObjectId} sessionId
      * @param {ObjectId} sceneId
-     * @param {ObjectId} lightId
+     * @param {ObjectId} noteId
      * @param {{}} data
      * @param {Server} socketServer
      * @param {() => {}} callback
     */
-    move: async (accountInfo, sessionId, sceneId, lightId, data, socketServer, callback) => {
-        console.debug(`[ ${accountInfo.username} (${accountInfo.uid}) ]`, "Package: move-light")
+    move: async (accountInfo, sessionId, sceneId, noteId, data, socketServer, callback) => {
+        console.debug(`[ ${accountInfo.username} (${accountInfo.uid}) ]`, "Package: move-note")
         try {
-            await move(sceneId, lightId, data)
-            socketServer.to(sessionId.toString()).emit("move-light", lightId, data)
+            await move(sceneId, noteId, data)
+            socketServer.to(sessionId.toString()).emit("move-note", noteId, data)
             callback(true)
         } catch (error) {
-            console.error("Failed to move light", error)
+            console.error("Failed to move note", error)
             callback(false, error.message)
         }
     },
 
     /**
-     * Toggle-light packet listener
+     * Modify-note-text packet listener
+     * @param {{ uid: ObjectId, username: string }} accountInfo
+     * @param {ObjectId} sessionId
+     * @param {ObjectId} noteId
+     * @param {string} text
+     * @param {Server} socketServer
+     * @param {() => {}} callback
+    */
+    modifyText: async (accountInfo, sessionId, noteId, text, socketServer, callback) => {
+        console.debug(`[ ${accountInfo.username} (${accountInfo.uid}) ]`, "Package: modify-note-text")
+        try {
+            await modifyText(noteId, text)
+            socketServer.to(sessionId.toString()).emit("modify-note-text", noteId, text, accountInfo.uid)
+            callback(true)
+        } catch (error) {
+            console.error("Failed to modify note text", error)
+            callback(false, error.message)
+        }
+    },
+
+    /**
+     * Modify-note-header packet listener
+     * @param {{ uid: ObjectId, username: string }} accountInfo
+     * @param {ObjectId} sessionId
+     * @param {ObjectId} noteId
+     * @param {string} header
+     * @param {Server} socketServer
+     * @param {() => {}} callback
+    */
+    modifyHeader: async (accountInfo, sessionId, noteId, header, socketServer, callback) => {
+        console.debug(`[ ${accountInfo.username} (${accountInfo.uid}) ]`, "Package: modify-note-header")
+        try {
+            await modifyHeader(noteId, header)
+            socketServer.to(sessionId.toString()).emit("modify-note-header", noteId, header, accountInfo.uid)
+            callback(true)
+        } catch (error) {
+            console.error("Failed to modify note header", error)
+            callback(false, error.message)
+        }
+    },
+
+    /**
+     * Modify-note-image packet listener
+     * @param {{ uid: ObjectId, username: string }} accountInfo
+     * @param {ObjectId} sessionId
+     * @param {ObjectId} noteId
+     * @param {Buffer} buffer
+     * @param {Server} socketServer
+     * @param {() => {}} callback
+    */
+    modifyImage: async (accountInfo, sessionId, noteId, buffer, socketServer, callback) => {
+        console.debug(`[ ${accountInfo.username} (${accountInfo.uid}) ]`, "Package: modify-note-image")
+        try {
+            const id = await modifyImage(noteId, buffer)
+            socketServer.to(sessionId.toString()).emit("modify-note-image", noteId, id)
+            callback(true)
+        } catch (error) {
+            console.error("Failed to modify note image", error)
+            callback(false, error.message)
+        }
+    },
+
+    /**
+     * Set-note-global packet listener
      * @param {{ uid: ObjectId, username: string }} accountInfo
      * @param {ObjectId} sessionId
      * @param {ObjectId} sceneId
-     * @param {ObjectId} lightId
-     * @param {boolean} enabled
+     * @param {ObjectId} noteId
+     * @param {boolean} isGlobal
      * @param {Server} socketServer
      * @param {() => {}} callback
     */
-    toggle: async (accountInfo, sessionId, sceneId, lightId, enabled, socketServer, callback) => {
-        console.debug(`[ ${accountInfo.username} (${accountInfo.uid}) ]`, "Package: toggle-light")
+    setGlobal: async (accountInfo, sessionId, sceneId, noteId, isGlobal, socketServer, callback) => {
+        console.debug(`[ ${accountInfo.username} (${accountInfo.uid}) ]`, "Package: set-note-global")
         try {
-            await toggle(sceneId, lightId, enabled)
-            socketServer.to(sessionId.toString()).emit("toggle-light", lightId, enabled)
+            await setGlobal(sceneId, noteId, isGlobal)
+            socketServer.to(sessionId.toString()).emit("set-note-global", noteId, isGlobal)
             callback(true)
         } catch (error) {
-            console.error("Failed to toggle light", error)
+            console.error("Failed to set note global", error)
             callback(false, error.message)
         }
     },
-
-    /**
-     * Modify-preset packet listener
-     * @param {{ uid: ObjectId, username: string }} accountInfo
-     * @param {ObjectId} sessionId
-     * @param {ObjectId} lightId
-     * @param {{}} data
-     * @param {Server} socketServer
-     * @param {() => {}} callback
-    */
-    preset: async (accountInfo, sessionId, lightId, data, socketServer, callback) => {
-        console.debug(`[ ${accountInfo.username} (${accountInfo.uid}) ]`, "Package: modify-preset")
-        try {
-            await modifyPreset(lightId, data)
-            callback(true)
-            socketServer.to(sessionId.toString()).emit("modify-preset", lightId, data)
-        } catch (error) {
-            console.error("Failed to modify preset", error)
-            callback(false, error.message)
-        }
-    }
 }

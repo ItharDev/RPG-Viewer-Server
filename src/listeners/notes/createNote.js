@@ -16,8 +16,9 @@ const { Server } = require("socket.io")
 module.exports = async (accountInfo, sessionId, sceneId, data, info, socketServer, callback) => {
     console.debug(`[ ${accountInfo.username} (${accountInfo.uid}) ]`, "Package: create-note")
     try {
+        data.image = undefined
         const model = new noteModel(data)
-        if (!info.id) info.id = model._id
+        info.id = model.id
         const id = await create(sceneId, model, info)
 
         socketServer.to(sessionId.toString()).emit("create-note", id, info, data)
