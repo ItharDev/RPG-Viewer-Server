@@ -41,13 +41,14 @@ module.exports = {
     /**
      * Create-initiative handler
      * @param {ObjectId} scene
-     * @param {{name: String, Roll: number, Visible: boolean}} data
+     * @param {{name: String, roll: number, visible: boolean}} data
      * @returns {Promise<string>}
     */
     create: async function (scene, data) {
         await prepareConnection()
 
         const id = new ObjectId().toString()
+        data.id = id
         const create = await sceneModel.findByIdAndUpdate(scene, { $set: { [`initiatives.${id}`]: data } }).exec()
         if (!create) throw new Error("Invalid scene id")
 
@@ -58,7 +59,7 @@ module.exports = {
      * Modify-initiative handler
      * @param {ObjectId} scene
      * @param {string} id
-     * @param {{name: String, Roll: number, Visible: boolean}} data
+     * @param {{name: String, roll: number, visible: boolean}} data
      * @returns {Promise<void>}
     */
     modify: async function (scene, id, data) {
@@ -78,6 +79,18 @@ module.exports = {
         await prepareConnection()
 
         const update = await sceneModel.findByIdAndUpdate(scene, { $set: { [`initiatives.${id}`]: undefined } }).exec()
+        if (!update) throw new Error("Invalid scene id")
+    },
+
+    /**
+     * reset-initiatives handler
+     * @param {ObjectId} scene
+     * @returns {Promise<void>}
+    */
+    reset: async function (scene) {
+        await prepareConnection()
+
+        const update = await sceneModel.findByIdAndUpdate(scene, { $set: { "initiatives": {} } }).exec()
         if (!update) throw new Error("Invalid scene id")
     }
 }

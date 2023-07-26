@@ -15,14 +15,6 @@ module.exports = async (accountInfo, sessionInfo, socketServer) => {
 
         socketServer.to(sessionInfo.id.toString()).emit("user-disconnected", accountInfo.username)
 
-        sessionInfo.id = null
-        sessionInfo.master = null
-        sessionInfo.isMaster = null
-        sessionInfo.synced = null
-        sessionInfo.scene = null
-        sessionInfo.users = null
-        sessionInfo.background = null
-
         if (sessionInfo.isMaster) {
             const state = {
                 scene: undefined,
@@ -31,6 +23,14 @@ module.exports = async (accountInfo, sessionInfo, socketServer) => {
             await setState(sessionInfo.id, state)
             socketServer.to(sessionInfo.id.toString()).emit("change-state", "", false)
         }
+
+        sessionInfo.id = null
+        sessionInfo.master = null
+        sessionInfo.isMaster = null
+        sessionInfo.synced = null
+        sessionInfo.scene = null
+        sessionInfo.users = null
+        sessionInfo.background = null
     } catch (error) {
         console.error("Failed to disconnect a session", error)
     }

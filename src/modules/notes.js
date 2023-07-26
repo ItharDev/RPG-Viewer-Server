@@ -1,7 +1,8 @@
-const { sceneModel, noteModel } = require("../schemas")
+const { sceneModel, noteModel, sessionModel, journalModel } = require("../schemas")
 const { ObjectId } = require("mongodb")
 const { connect } = require("mongoose")
 const networking = require("./networking")
+const getFolder = require("./getFolder")
 
 async function prepareConnection() {
     return new Promise((resolve, reject) => {
@@ -68,7 +69,7 @@ module.exports = {
 
             const update = sceneModel.findByIdAndUpdate(sceneId, { $unset: { [`notes.${noteId.toString()}`]: "" } }).exec()
             if (!update) reject("Failed to update directory")
-            
+
             const note = await noteModel.findByIdAndDelete(noteId).exec()
             if (!note) reject("Failed to remove note")
 
@@ -167,5 +168,35 @@ module.exports = {
 
         const update = sceneModel.findByIdAndUpdate(sceneId, { $set: { [`notes.${noteId}.global`]: isGlobal } }).exec()
         if (!update) throw new Error("Invalid scene id")
+    },
+
+    /**
+     * Save-note handler
+     * @param {ObjectId} sessionId
+     * @param {ObjectId} noteId
+     * @param {string} accountId
+     * @returns {Promise<string>}
+    */
+    saveNote: async function (sessionId, noteId, accountId) {
+        await prepareConnection()
+
+        const session = await sessionModel.findById(sessionId).exec()
+        if (!session) throw new Error("Invalid session id")
+
+        const originalNote = await noteModel.findById(noteId).exec()
+        if (!originalNote) throw new Error("Invalid note id")
+
+        const journalData = {
+            owner: ObjectId(accountId),
+            header: originalNote.header,
+            text: originalNote.text,
+            image: originalNote.image,
+            collaborators: []
+        }
+        const newJournal = await journalModel.create(journalData)
+
+        await sessionModel.findByIdAndUpdate(sessionId, { $addToSet: { [`journals.${accountId}.contents`]: newJournal._id } }).exec()
+
+        return newJournal.id
     },
 }

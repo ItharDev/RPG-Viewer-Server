@@ -43,7 +43,7 @@ module.exports = {
     /**
      * Get-all-blueprints handler
      * @param {ObjectId} sessionId
-     * @returns {Promise<Array>}
+     * @returns {Promise<{}>}
     */
     getAll: async function (sessionId) {
         await prepareConnection()
@@ -84,7 +84,7 @@ module.exports = {
             const light = await lightModel.create(lightData)
             if (!light) reject("Failed to create lighting data")
 
-            resolve(blueprint._id)
+            resolve(blueprint.id)
         })
     },
 
@@ -175,7 +175,7 @@ module.exports = {
 
         if (!oldPath) pull = await sessionModel.findByIdAndUpdate(sessionId, { $pull: { [`blueprints.contents`]: blueprintId } }).exec()
         else pull = await sessionModel.findByIdAndUpdate(sessionId, { $pull: { [`blueprints.folders.${oldFolder.path}.contents`]: blueprintId } }).exec()
-        if (!pull) throw new Error("Failed to pull the blueprint from old location")
+        if (!pull) throw new Error("Failed to pull blueprint from old location")
 
         const newState = await sessionModel.findById(sessionId).exec()
         const newFolder = await getFolder(newState.blueprints, newPath)
@@ -183,7 +183,7 @@ module.exports = {
         if (!newPath) push = await sessionModel.findByIdAndUpdate(sessionId, { $addToSet: { [`blueprints.contents`]: blueprintId } }).exec()
         else push = await sessionModel.findByIdAndUpdate(sessionId, { $addToSet: { [`blueprints.folders.${newFolder.path}.contents`]: blueprintId } }).exec()
 
-        if (!push) throw new Error("Failed to push the blueprint to new location")
+        if (!push) throw new Error("Failed to push blueprint to new location")
     },
 
     /**

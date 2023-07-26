@@ -32,23 +32,6 @@ function validateEmail(email) {
         )
 }
 
-function createFolder(folder) {
-    let folderStruct = {
-        name: folder.name,
-        folders: {},
-        contents: folder.contents
-    }
-
-    folder.subFolders.forEach(element => {
-        if (ObjectId.isValid(element)) return
-
-        const id = element.id
-        folderStruct.folders[id] = createFolder(element)
-    })
-
-    return folderStruct
-}
-
 module.exports = {
     /**
      * Get-user handler
@@ -124,7 +107,18 @@ module.exports = {
         const session = await sessionModel.findById(key).exec()
         if (!session) throw new Error("Invalid or unknown key")
 
-        if (!session.master.equals(uid)) await sessionModel.findByIdAndUpdate(key, { $addToSet: { users: uid } }).exec()
+        if (session.master.toString() !== uid.toString()) {
+            const folderStructure = {
+                shared: {
+                    name: "Shared",
+                    folders: {},
+                    contents: []
+                }
+            }
+            await sessionModel.findByIdAndUpdate(key, { $addToSet: { users: uid } }).exec()
+            await sessionModel.findByIdAndUpdate(key, { $set: { [`journals.${uid.toString()}`]: { name: uid.toString(), folders: folderStructure, contents: [] } } }).exec()
+        }
+
         const result = await userModel.findByIdAndUpdate(uid, { $addToSet: { licences: key } }).exec()
         if (!result) throw new Error("Failed to update licence directory")
 

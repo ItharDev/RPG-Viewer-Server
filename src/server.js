@@ -44,6 +44,14 @@ const moveBlueprint = require("./listeners/blueprints/moveBlueprint")
 const removeBlueprint = require("./listeners/blueprints/removeBlueprint")
 const renameBlueprintFolder = require("./listeners/blueprints/renameBlueprintFolder")
 
+const createJournal = require("./listeners/journals/createJournal")
+const modifyJournal = require("./listeners/journals/modifyJournal")
+const getJournal = require("./listeners/journals/getJournal")
+const moveJournal = require("./listeners/journals/moveJournal")
+const removeJournal = require("./listeners/journals/removeJournal")
+const saveJournal = require("./listeners/journals/saveJournal")
+const renameJournalFolder = require("./listeners/journals/renameJournalFolder")
+
 const ping = require("./listeners/ping/ping")
 const pointer = require("./listeners/ping/pointer")
 
@@ -68,12 +76,14 @@ const updateElevation = require("./listeners/tokens/updateElevation")
 const createInitiative = require("./listeners/initiatives/createInitiative")
 const modifyInitiative = require("./listeners/initiatives/modifyInitiative")
 const removeInitiative = require("./listeners/initiatives/removeInitiative")
+const resetInitiative = require("./listeners/initiatives/resetInitiatives")
 const getInitiatives = require("./listeners/initiatives/getInitiatives")
 
 const createNote = require("./listeners/notes/createNote")
 const getNote = require("./listeners/notes/getNote")
 const modifyNote = require("./listeners/notes/modifyNote")
 const removeNote = require("./listeners/notes/removeNote")
+const saveNote = require("./listeners/notes/saveNote")
 
 // Get environment variables
 require("dotenv").config()
@@ -162,6 +172,25 @@ io.on("connection", (socket) => {
     socket.on("move-blueprint", (blueprintId, oldPath, newPath, callback) => moveBlueprint.blueprint(accountInfo, sessionInfo.id, ObjectId(blueprintId), oldPath, newPath, callback))
     socket.on("move-blueprint-folder", (oldPath, newPath, callback) => moveBlueprint.folder(accountInfo, sessionInfo.id, oldPath, newPath, callback))
 
+    socket.on("get-journal", (journalId, callback) => getJournal.single(accountInfo, ObjectId(journalId), callback))
+    socket.on("get-journals", (callback) => getJournal.all(accountInfo, sessionInfo.id, callback))
+    socket.on("create-journal", (path, data, callback) => createJournal.journal(accountInfo, sessionInfo.id, path, JSON.parse(data), callback))
+    socket.on("share-journal", (id, data, callback) => modifyJournal.share(accountInfo, sessionInfo.id, id, JSON.parse(data), io, callback))
+    socket.on("modify-journal-text", (id, text, callback) => modifyJournal.modifyText(accountInfo, sessionInfo.id, ObjectId(id), text, io, callback))
+    socket.on("modify-journal-header", (id, header, callback) => modifyJournal.modifyHeader(accountInfo, sessionInfo.id, ObjectId(id), header, io, callback))
+    socket.on("modify-journal-image", (id, buffer, callback) => modifyJournal.modifyImage(accountInfo, sessionInfo.id, ObjectId(id), buffer, io, callback))
+    socket.on("create-journal-folder", (path, name, callback) => createJournal.folder(accountInfo, sessionInfo.id, path, name, callback))
+    socket.on("rename-journal-folder", (path, name, callback) => renameJournalFolder(accountInfo, sessionInfo.id, path, name, callback))
+    socket.on("remove-journal", (path, blueprintId, callback) => removeJournal.journal(accountInfo, sessionInfo.id, path, ObjectId(blueprintId), callback))
+    socket.on("remove-journal-folder", (path, callback) => removeJournal.folder(accountInfo, sessionInfo.id, path, callback))
+    socket.on("move-journal", (blueprintId, oldPath, newPath, callback) => moveJournal.journal(accountInfo, sessionInfo.id, ObjectId(blueprintId), oldPath, newPath, callback))
+    socket.on("move-journal-folder", (oldPath, newPath, callback) => moveJournal.folder(accountInfo, sessionInfo.id, oldPath, newPath, callback))
+    socket.on("save-journal", (id, callback) => saveJournal(accountInfo, sessionInfo.id, id, callback))
+    socket.on("show-journal", (id, callback) => {
+        io.to(sessionInfo.id.toString()).emit("show-journal", id)
+        callback(true)
+    })
+
     socket.on("ping", (location, strong) => ping(accountInfo, sessionInfo.id, location, strong, io))
     socket.on("start-pointer", (location) => pointer.start(accountInfo, sessionInfo.id, location, io))
     socket.on("update-pointer", (location) => pointer.update(accountInfo, sessionInfo.id, location, io))
@@ -183,6 +212,7 @@ io.on("connection", (socket) => {
     socket.on("create-initiative", (data, callback) => createInitiative(accountInfo, sessionInfo.id, sessionInfo.scene, JSON.parse(data), io, callback))
     socket.on("modify-initiative", (id, data, callback) => modifyInitiative(accountInfo, sessionInfo.id, sessionInfo.scene, id, JSON.parse(data), io, callback))
     socket.on("remove-initiative", (id, callback) => removeInitiative(accountInfo, sessionInfo.id, sessionInfo.scene, id, io, callback))
+    socket.on("reset-initiatives", (callback) => resetInitiative(accountInfo, sessionInfo.id, sessionInfo.scene, io, callback))
     socket.on("sort-initiative", (callback) => {
         io.to(sessionInfo.id.toString()).emit("sort-initiative")
         callback(true)
@@ -196,6 +226,7 @@ io.on("connection", (socket) => {
     socket.on("modify-note-image", (id, buffer, callback) => modifyNote.modifyImage(accountInfo, sessionInfo.id, ObjectId(id), buffer, io, callback))
     socket.on("set-note-global", (id, isGlobal, callback) => modifyNote.setGlobal(accountInfo, sessionInfo.id, sessionInfo.scene, ObjectId(id), isGlobal, io, callback))
     socket.on("remove-note", (id, callback) => removeNote(accountInfo, sessionInfo.id, sessionInfo.scene, ObjectId(id), io, callback))
+    socket.on("save-note", (id, callback) => saveNote(accountInfo, sessionInfo.id, id, callback))
     socket.on("show-note", (id, callback) => {
         io.to(sessionInfo.id.toString()).emit("show-note", id)
         callback(true)

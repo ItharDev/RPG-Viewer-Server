@@ -42,6 +42,15 @@ module.exports = {
             const create = await sessionModel.create(data)
             if (!create) reject("Failed to create session")
 
+            const folderStructure = {
+                shared: {
+                    name: "Shared",
+                    folders: {},
+                    contents: []
+                }
+            }
+            await sessionModel.findByIdAndUpdate(key, { $set: { [`journals.${master.toString()}`]: { name: master.toString(), folders: folderStructure, contents: [] } } }).exec()
+
             const licence = await account.validateLicence(create._id, master)
             if (!licence) reject("Failed to validate licence")
 
@@ -85,7 +94,7 @@ module.exports = {
     changeImage: async function (sessionId, buffer) {
         return new Promise(async (resolve, reject) => {
             await prepareConnection()
-            
+
             const session = await sessionModel.findById(sessionId).exec()
             if (!session) throw new Error("Session not found")
 
