@@ -16,13 +16,16 @@ const { Server } = require("socket.io")
 module.exports = async (accountInfo, sessionId, sceneId, tokenData, lightingData, socketServer, callback) => {
     console.debug(`[ ${accountInfo.username} (${accountInfo.uid}) ]`, "Package: create-token")
     try {
-        const model = new tokenModel(tokenData)
+        const id = new ObjectId()
         const lighting = new lightModel(lightingData)
-        lighting._id = model._id
-        if (!tokenData.light) tokenData.light = model._id
 
-        const id = await create(sceneId, model, lighting)
-        socketServer.to(sessionId.toString()).emit("create-token", id, tokenData)
+        if (!tokenData.light) tokenData.light = id
+        const model = new tokenModel(tokenData)
+        lighting._id = id
+        model._id = id
+
+        const tokenId = await create(sceneId, model, lighting)
+        socketServer.to(sessionId.toString()).emit("create-token", tokenId, tokenData)
 
         callback(true)
     } catch (error) {

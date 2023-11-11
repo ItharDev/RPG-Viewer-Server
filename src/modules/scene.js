@@ -7,7 +7,7 @@ const getFolder = require("./getFolder")
 async function prepareConnection() {
     return new Promise((resolve, reject) => {
         if (global.databaseConnected !== true) {
-            connect("mongodb://127.0.0.1:27017/rpg-viewer").then((db) => {
+            connect("mongodb://127.0.0.1:27017/rpg-viewer-dev").then((db) => {
                 global.databaseConnected = true
                 db.connection.once("error", (err) => {
                     console.error("Mongoose error:", err)
@@ -102,7 +102,7 @@ module.exports = {
         else await sessionModel.findByIdAndUpdate(sessionId, { $pull: { [`scenes.contents`]: sceneId } }).exec()
 
         const scene = await sceneModel.findByIdAndDelete(sceneId).exec()
-        if (scene) throw new Error("Failed to remove scene")
+        if (!scene) throw new Error("Failed to remove scene")
 
         await networking.modifyFile(scene.image, -1)
         if (!session.state.scene) return false
@@ -228,13 +228,13 @@ module.exports = {
 
         const oldFolder = await getFolder(session.scenes, path)
         for (let i = 0; i < oldFolder.contents.length; i++) {
-            await this.remove(sessionId, path, oldFolder.contents[i])
+            await module.exports.remove(sessionId, path, oldFolder.contents[i])
         }
 
         let paths = path.split("/")
         const folderId = paths.pop()
 
-        const targetFolder = await get(session.scenes, paths.join("/"))
+        const targetFolder = await getFolder(session.scenes, paths.join("/"))
         if (targetFolder) {
             const update = await sessionModel.findByIdAndUpdate(sessionId, { $unset: { [`scenes.folders.${targetFolder.path}.folders.${folderId}`]: "" } }).exec()
             if (!update) throw new Error("Failed to remove folder")

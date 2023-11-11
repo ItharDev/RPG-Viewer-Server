@@ -20,8 +20,14 @@ module.exports = async (accountInfo, name, buffer, callback) => {
                 scene: undefined,
                 synced: false
             },
-            blueprints: [],
-            scenes: [],
+            blueprints: {
+                folders: {},
+                contents: []
+            },
+            scenes: {
+                folders: {},
+                contents: []
+            },
             background: new ObjectId()
         })
 

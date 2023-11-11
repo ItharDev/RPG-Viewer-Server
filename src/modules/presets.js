@@ -5,7 +5,7 @@ const { connect } = require("mongoose")
 async function prepareConnection() {
     return new Promise((resolve, reject) => {
         if (global.databaseConnected !== true) {
-            connect("mongodb://127.0.0.1:27017/rpg-viewer").then((db) => {
+            connect("mongodb://127.0.0.1:27017/rpg-viewer-dev").then((db) => {
                 global.databaseConnected = true
                 db.connection.once("error", (err) => {
                     console.error("Mongoose error:", err)

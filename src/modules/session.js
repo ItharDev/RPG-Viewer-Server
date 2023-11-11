@@ -7,7 +7,7 @@ const { ObjectId } = require("mongodb")
 async function prepareConnection() {
     return new Promise((resolve, reject) => {
         if (global.databaseConnected !== true) {
-            connect("mongodb://127.0.0.1:27017/rpg-viewer").then((db) => {
+            connect("mongodb://127.0.0.1:27017/rpg-viewer-dev").then((db) => {
                 global.databaseConnected = true
                 db.connection.once("error", (err) => {
                     console.error("Mongoose error:", err)
@@ -49,7 +49,7 @@ module.exports = {
                     contents: []
                 }
             }
-            await sessionModel.findByIdAndUpdate(key, { $set: { [`journals.${master.toString()}`]: { name: master.toString(), folders: folderStructure, contents: [] } } }).exec()
+            await sessionModel.findByIdAndUpdate(create._id, { $set: { [`journals.${master.toString()}`]: { name: master.toString(), folders: folderStructure, contents: [] } } }).exec()
 
             const licence = await account.validateLicence(create._id, master)
             if (!licence) reject("Failed to validate licence")

@@ -21,7 +21,7 @@ module.exports = async (accountInfo, sessionInfo, socketServer) => {
                 synced: false
             }
             await setState(sessionInfo.id, state)
-            socketServer.to(sessionInfo.id.toString()).emit("change-state", "", false)
+            socketServer.to(sessionInfo.id.toString()).emit("set-state", "", false)
         }
 
         sessionInfo.id = null

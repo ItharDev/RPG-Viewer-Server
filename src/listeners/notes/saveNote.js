@@ -11,8 +11,8 @@ const { saveNote } = require("../../modules/notes")
 module.exports = async (accountInfo, sessionId, noteId, callback) => {
     console.debug(`[ ${accountInfo.username} (${accountInfo.uid}) ]`, "Package: save-note")
     try {
-        saveNote(sessionId, noteId, accountInfo.uid)
-        callback(true)
+        const id = await saveNote(sessionId, noteId, accountInfo.uid)
+        callback(true, id)
     } catch (error) {
         console.error("Failed to save note", error)
         callback(false, error.message)

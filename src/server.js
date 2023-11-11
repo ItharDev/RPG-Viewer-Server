@@ -127,7 +127,7 @@ io.on("connection", (socket) => {
     socket.on("get-user", (uid, callback) => getUser(accountInfo, uid, callback))
     socket.on("get-users", (callback) => getUsers(accountInfo, sessionInfo.id, callback))
 
-    socket.on("register", (email, name, password, callback) => register(accountInfo, email, name, password, callback))
+    socket.on("register", (email, name, password, callback) => register(email, name, password, callback))
     socket.on("sign-in", (uid, email, password, callback) => signIn(accountInfo, ObjectId.isValid(uid) ? ObjectId(uid) : undefined, email, password, callback))
     socket.on("sign-out", (callback) => signOut(accountInfo, callback))
 
@@ -140,7 +140,7 @@ io.on("connection", (socket) => {
     socket.on("leave-session", (callback) => leaveSession(accountInfo, sessionInfo, socket, io, callback))
     socket.on("set-state", (scene, synced, callback) => setState(accountInfo, sessionInfo.id, scene, synced, io, callback))
     socket.on("set-scene", (scene, callback) => {
-        sessionInfo.scene = ObjectId(scene)
+        if (scene) sessionInfo.scene = ObjectId(scene)
         callback(true)
     })
     socket.on("change-landing-page", (buffer, callback) => changeImage(accountInfo, sessionInfo.id, buffer, io, callback))

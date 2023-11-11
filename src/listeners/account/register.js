@@ -15,7 +15,7 @@ module.exports = async (email, name, password, callback) => {
             email,
             name,
             password,
-            licences: Array
+            licences: []
         })
         
         await register(model)

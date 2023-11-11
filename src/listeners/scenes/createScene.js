@@ -8,7 +8,7 @@ module.exports = {
      * @param {{ uid: ObjectId, username: string }} accountInfo
      * @param {ObjectId} sessionId
      * @param {string} path
-     * @param {{info: {}, darkness: {}, grid: {}, walls: Array<{}>, tokens: Array<ObjectId>, initiatives: Array<{}>, lights: Array<{}>, notes: Array<ObjectId>}} data
+     * @param {{info: {}, darkness: {}, grid: {}, walls: Array<{}>, tokens: Array<ObjectId>, initiatives: {}, lights: {}, notes: {}}} data
      * @param {() => {}} callback
     */
     scene: async (accountInfo, sessionId, path, data, buffer, callback) => {

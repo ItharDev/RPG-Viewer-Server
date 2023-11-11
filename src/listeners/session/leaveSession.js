@@ -17,7 +17,7 @@ module.exports = async (accountInfo, sessionInfo, socket, socketServer, callback
         socket.to(sessionInfo.id.toString()).emit("user-disconnected", username)
         socket.leave(sessionInfo.id.toString())
         if (sessionInfo.isMaster) {
-            socketServer.to(sessionInfo.id.toString()).emit("change-state", "", false)
+            socketServer.to(sessionInfo.id.toString()).emit("set-state", "", false)
         }
 
         sessionInfo.id = null
