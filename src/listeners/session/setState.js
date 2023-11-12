@@ -15,7 +15,7 @@ module.exports = async (accountInfo, sessionId, scene, synced, socketServer, cal
     console.debug(`[ ${accountInfo.username} (${accountInfo.uid}) ]`, "Package: set-state")
     try {
         const state = {
-            scene: scene ? scene : null,
+            scene: scene ? scene : "",
             synced: synced
         }
 
