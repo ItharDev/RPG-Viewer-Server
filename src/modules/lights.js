@@ -146,6 +146,20 @@ module.exports = {
     },
 
     /**
+     * Rotate-light handler
+     * @param {ObjectId} sceneId
+     * @param {ObjectId} lightId
+     * @param {{}} data
+     * @returns {Promise<void>}
+    */
+    rotate: async function (sceneId, lightId, data) {
+        await prepareConnection()
+
+        const update = sceneModel.findByIdAndUpdate(sceneId, { $set: { [`lights.${lightId}`]: data } }).exec()
+        if (!update) throw new Error("Invalid scene id")
+    },
+
+    /**
      * Toggle-light handler
      * @param {ObjectId} sceneId
      * @param {ObjectId} lightId

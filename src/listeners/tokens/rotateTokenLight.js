@@ -1,26 +1,26 @@
 const { ObjectId } = require("mongodb")
-const { setRotation } = require("../../modules/token")
+const { setLightRotation } = require("../../modules/token")
 const { Server } = require("socket.io")
 
 /**
- * Rotate-token packet listener
+ * Rotate-token-light packet listener
  * @param {{ uid: ObjectId, username: string }} accountInfo
  * @param {ObjectId} sessionId
  * @param {ObjectId} id
  * @param {Number} angle
- * @param {ObjectId} angle
+ * @param {ObjectId} user
  * @param {Server} socketServer
  * @param {() => {}} callback
 */
 module.exports = async (accountInfo, sessionId, id, angle, user, socketServer, callback) => {
-    console.debug(`[ ${accountInfo.username} (${accountInfo.uid}) ]`, "Package: rotate-token")
+    console.debug(`[ ${accountInfo.username} (${accountInfo.uid}) ]`, "Package: rotate-token-light")
     try {
-        await setRotation(id, angle)
-        socketServer.to(sessionId.toString()).emit("rotate-token", id, angle, user)
+        await setLightRotation(id, angle)
+        socketServer.to(sessionId.toString()).emit("rotate-token-light", id, angle, user)
 
         callback(true)
     } catch (error) {
-        console.error("Failed to rotate token", error)
+        console.error("Failed to rotate token light", error)
         callback(false, error.message)
     }
 }

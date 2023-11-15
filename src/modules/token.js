@@ -216,6 +216,19 @@ module.exports = {
         const update = await tokenModel.findByIdAndUpdate(id, { $set: { rotation: rotation } }).exec()
         if (!update) throw new Error("Invalid token id")
     },
+    
+    /**
+     * Rotate-token-light handler
+     * @param {ObjectId} id
+     * @param {boolean} rotation
+     * @returns {Promise<void>}
+    */
+    setLightRotation: async function (id, rotation) {
+        await prepareConnection()
+
+        const update = await tokenModel.findByIdAndUpdate(id, { $set: { lightRotation: rotation } }).exec()
+        if (!update) throw new Error("Invalid token id")
+    },
 
     /**
      * Lock-token handler

@@ -48,6 +48,28 @@ module.exports = {
     },
 
     /**
+     * Rotate-light packet listener
+     * @param {{ uid: ObjectId, username: string }} accountInfo
+     * @param {ObjectId} sessionId
+     * @param {ObjectId} sceneId
+     * @param {ObjectId} lightId
+     * @param {{}} data
+     * @param {Server} socketServer
+     * @param {() => {}} callback
+    */
+    rotate: async (accountInfo, sessionId, sceneId, lightId, data, socketServer, callback) => {
+        console.debug(`[ ${accountInfo.username} (${accountInfo.uid}) ]`, "Package: rotate-light")
+        try {
+            await rotate(sceneId, lightId, data)
+            socketServer.to(sessionId.toString()).emit("rotate-light", lightId, data)
+            callback(true)
+        } catch (error) {
+            console.error("Failed to rotate light", error)
+            callback(false, error.message)
+        }
+    },
+
+    /**
      * Toggle-light packet listener
      * @param {{ uid: ObjectId, username: string }} accountInfo
      * @param {ObjectId} sessionId

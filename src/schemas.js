@@ -54,12 +54,14 @@ const tokenModel = model("tokens", new Schema({
     elevation: Number,
     conditions: Number,
     locked: Boolean,
-    rotation: Number
+    rotation: Number,
+    lightRotation: Number
 }))
 
 const lightModel = model("lights", new Schema({
     name: String,
     radius: Number,
+    angle: Number,
     color: {
         r: Number,
         g: Number,
@@ -95,6 +97,10 @@ const sceneModel = model("scenes", new Schema({
             g: Number,
             b: Number,
             a: Number
+        },
+        unit: {
+            name: String,
+            scale: Number
         },
         dimensions: {
             x: Number,
