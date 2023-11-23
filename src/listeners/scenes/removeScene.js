@@ -8,12 +8,14 @@ module.exports = {
      * @param {ObjectId} sessionId
      * @param {string} path
      * @param {ObjectId} sceneId
+     * @param {Server} socketServer
      * @param {() => {}} callback
     */
-    scene: async (accountInfo, sessionId, path, sceneId, callback) => {
+    scene: async (accountInfo, sessionId, path, sceneId, socketServer, callback) => {
         console.debug(`[ ${accountInfo.username} (${accountInfo.uid}) ]`, "Package: remove-scene")
         try {
             const requireUpdate = await remove(sessionId, path, sceneId)
+            if (requireUpdate) socketServer.to(sessionId.toString()).emit("set-state", "", false)
             callback(true)
         } catch (error) {
             console.error("Failed to remove scene", error)
@@ -26,12 +28,14 @@ module.exports = {
      * @param {{ uid: ObjectId, username: string }} accountInfo
      * @param {ObjectId} sessionId
      * @param {string} path
+     * @param {Server} socketServer
      * @param {() => {}} callback
     */
-    folder: async (accountInfo, sessionId, path, callback) => {
+    folder: async (accountInfo, sessionId, path, socketServer, callback) => {
         console.debug(`[ ${accountInfo.username} (${accountInfo.uid}) ]`, "Package: remove-scene-folder")
         try {
-            await removeFolder(sessionId, path)
+            const requireUpdate = await removeFolder(sessionId, path)
+            if (requireUpdate) socketServer.to(sessionId.toString()).emit("set-state", "", false)
             callback(true)
         } catch (error) {
             console.error("Failed to remove folder", error)

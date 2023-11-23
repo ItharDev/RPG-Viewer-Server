@@ -157,8 +157,8 @@ io.on("connection", (socket) => {
     socket.on("create-scene-folder", (path, name, callback) => createScene.folder(accountInfo, sessionInfo.id, path, name, callback))
     socket.on("rename-scene", (sceneId, name, callback) => renameScene.scene(accountInfo, ObjectId(sceneId), name, callback))
     socket.on("rename-scene-folder", (path, name, callback) => renameScene.folder(accountInfo, sessionInfo.id, path, name, callback))
-    socket.on("remove-scene", (path, sceneId, callback) => removeScene.scene(accountInfo, sessionInfo.id, path, ObjectId(sceneId), callback))
-    socket.on("remove-scene-folder", (path, callback) => removeScene.folder(accountInfo, sessionInfo.id, path, callback))
+    socket.on("remove-scene", (path, sceneId, callback) => removeScene.scene(accountInfo, sessionInfo.id, path, ObjectId(sceneId), io, callback))
+    socket.on("remove-scene-folder", (path, callback) => removeScene.folder(accountInfo, sessionInfo.id, path, io, callback))
     socket.on("move-scene", (sceneId, oldPath, newPath, callback) => moveScene.scene(accountInfo, sessionInfo.id, ObjectId(sceneId), oldPath, newPath, callback))
     socket.on("move-scene-folder", (oldPath, newPath, callback) => moveScene.folder(accountInfo, sessionInfo.id, oldPath, newPath, callback))
 

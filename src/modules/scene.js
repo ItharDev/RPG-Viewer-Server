@@ -106,6 +106,8 @@ module.exports = {
 
         await networking.modifyFile(scene.image, -1)
         if (!session.state.scene) return false
+
+        await sessionModel.findByIdAndUpdate(sessionId, { $set: { state: { "scene": null, "synced": false } } }).exec()
         return session.state.scene.equals(sceneId)
     },
 
@@ -218,7 +220,7 @@ module.exports = {
      * Remove-folder handler
      * @param {ObjectId} sessionId 
      * @param {string} path 
-     * @returns {Promise<void>}
+     * @returns {Promise<boolean>}
      */
     removeFolder: async function (sessionId, path) {
         await prepareConnection()
@@ -227,8 +229,16 @@ module.exports = {
         if (!session) throw new Error("Invalid session id")
 
         const oldFolder = await getFolder(session.scenes, path)
+        let requireUpdate = false
         for (let i = 0; i < oldFolder.contents.length; i++) {
-            await module.exports.remove(sessionId, path, oldFolder.contents[i])
+            const currentDeleted = await module.exports.remove(sessionId, path, oldFolder.contents[i])
+            if (currentDeleted) requireUpdate = true
+        }
+
+        const folders = Object.keys(oldFolder.folders)
+        for (let i = 0; i < folders.length; i++) {
+            const currentDeleted = await module.exports.removeFolder(sessionId, path + "/" + folders[i])
+            if (currentDeleted) requireUpdate = true
         }
 
         let paths = path.split("/")
@@ -242,6 +252,8 @@ module.exports = {
             const update = await sessionModel.findByIdAndUpdate(sessionId, { $unset: { [`scenes.folders.${folderId}`]: "" } }).exec()
             if (!update) throw new Error("Failed to remove folder")
         }
+
+        return requireUpdate
     },
 
     /**
