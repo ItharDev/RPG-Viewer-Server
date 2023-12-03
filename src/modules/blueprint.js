@@ -124,7 +124,7 @@ module.exports = {
             const blueprint = await blueprintModel.findOneAndReplace({ "_id": id }, data).exec()
             if (!blueprint) reject("Failed to modify blueprint")
 
-            const light = await lightModel.findOneAndReplace({ "_id": id }, lightData).exec()
+            const light = await lightModel.findOneAndReplace({ "_id": id }, lightData, { upsert: true }).exec()
             if (!light) reject("Failed to modify lighting data")
 
             resolve(data.image.toString())

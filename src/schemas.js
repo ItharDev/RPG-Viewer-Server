@@ -60,19 +60,36 @@ const tokenModel = model("tokens", new Schema({
 
 const lightModel = model("lights", new Schema({
     name: String,
-    radius: Number,
-    angle: Number,
-    color: {
-        r: Number,
-        g: Number,
-        b: Number,
-        a: Number
+    primary: {
+        radius: Number,
+        angle: Number,
+        color: {
+            r: Number,
+            g: Number,
+            b: Number,
+            a: Number
+        },
+        effect: {
+            type: { type: Number },
+            strength: Number,
+            frequency: Number
+        }
     },
-    effect: {
-        type: { type: Number },
-        strength: Number,
-        frequency: Number
-    },
+    secondary: {
+        radius: Number,
+        angle: Number,
+        color: {
+            r: Number,
+            g: Number,
+            b: Number,
+            a: Number
+        },
+        effect: {
+            type: { type: Number },
+            strength: Number,
+            frequency: Number
+        }
+    }
 }))
 
 const sceneModel = model("scenes", new Schema({

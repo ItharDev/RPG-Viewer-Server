@@ -124,7 +124,7 @@ module.exports = {
             info.id = lightId
         }
 
-        const light = await lightModel.findOneAndReplace({ "_id": lightId }, data).exec()
+        const light = await lightModel.findOneAndReplace({ "_id": lightId }, data, { upsert: true }).exec()
         if (!light) throw new Error("Failed to update light data")
 
         const scene = sceneModel.findByIdAndUpdate(sceneId, { $set: { [`lights.${lightId}`]: info } }).exec()
@@ -182,7 +182,7 @@ module.exports = {
     modifyPreset: async function (lightId, data) {
         await prepareConnection()
 
-        const light = await lightModel.findOneAndReplace({ "_id": lightId }, data).exec()
+        const light = await lightModel.findOneAndReplace({ "_id": lightId }, data, { upsert: true }).exec()
         if (!light) throw new Error("Failed to modify preset")
     },
 }

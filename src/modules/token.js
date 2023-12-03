@@ -158,7 +158,7 @@ module.exports = {
             const token = await tokenModel.findOneAndReplace({ "_id": id }, data).exec()
             if (!token) reject("Failed to modify token")
 
-            const light = await lightModel.findOneAndReplace({ "_id": id }, lightData).exec()
+            const light = await lightModel.findOneAndReplace({ "_id": id }, lightData, { upsert: true }).exec()
             if (!light) reject("Failed to modify lighting data")
 
             resolve(data.image.toString())
@@ -216,7 +216,7 @@ module.exports = {
         const update = await tokenModel.findByIdAndUpdate(id, { $set: { rotation: rotation } }).exec()
         if (!update) throw new Error("Invalid token id")
     },
-    
+
     /**
      * Rotate-token-light handler
      * @param {ObjectId} id
