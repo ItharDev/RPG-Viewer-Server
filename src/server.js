@@ -24,7 +24,7 @@ const createSession = require("./listeners/session/createSession")
 const joinSession = require("./listeners/session/joinSession")
 const leaveSession = require("./listeners/session/leaveSession")
 const setState = require("./listeners/session/setState")
-const changeImage = require("./listeners/session/changeImage")
+const changeLandingPage = require("./listeners/session/changeImage")
 
 const createWall = require("./listeners/walls/createWall")
 const modifyWall = require("./listeners/walls/modifyWall")
@@ -56,6 +56,7 @@ const ping = require("./listeners/ping/ping")
 const pointer = require("./listeners/ping/pointer")
 
 const createLight = require("./listeners/lights/createLight")
+const pasteLight = require("./listeners/lights/pasteLight")
 const getLight = require("./listeners/lights/getLight")
 const modifyLight = require("./listeners/lights/modifyLight")
 const removeLight = require("./listeners/lights/removeLight")
@@ -85,6 +86,9 @@ const getNote = require("./listeners/notes/getNote")
 const modifyNote = require("./listeners/notes/modifyNote")
 const removeNote = require("./listeners/notes/removeNote")
 const saveNote = require("./listeners/notes/saveNote")
+const toggleTokenLight = require("./listeners/tokens/toggleTokenLight")
+
+const changeImage = require("./listeners/scenes/changeImage")
 
 // Get environment variables
 require("dotenv").config()
@@ -144,7 +148,7 @@ io.on("connection", (socket) => {
         if (scene) sessionInfo.scene = ObjectId(scene)
         callback(true)
     })
-    socket.on("change-landing-page", (buffer, callback) => changeImage(accountInfo, sessionInfo.id, buffer, io, callback))
+    socket.on("change-landing-page", (buffer, callback) => changeLandingPage(accountInfo, sessionInfo.id, buffer, io, callback))
 
     socket.on("create-wall", (data, callback) => createWall(accountInfo, sessionInfo.id, sessionInfo.scene, JSON.parse(data), io, callback))
     socket.on("modify-wall", (data, callback) => modifyWall(accountInfo, sessionInfo.id, sessionInfo.scene, JSON.parse(data), io, callback))
@@ -199,6 +203,7 @@ io.on("connection", (socket) => {
 
     socket.on("get-light", (id, callback) => getLight(accountInfo, ObjectId(id), callback))
     socket.on("create-light", (data, info, callback) => createLight.light(accountInfo, sessionInfo.id, sessionInfo.scene, JSON.parse(data), JSON.parse(info), io, callback))
+    socket.on("paste-light", (info, usePreset, callback) => pasteLight(accountInfo, sessionInfo.id, sessionInfo.scene, JSON.parse(info), usePreset, io, callback))
     socket.on("modify-light", (id, info, data, callback) => modifyLight.light(accountInfo, sessionInfo.id, sessionInfo.scene, ObjectId(id), JSON.parse(info), JSON.parse(data), io, callback))
     socket.on("move-light", (id, data, callback) => modifyLight.move(accountInfo, sessionInfo.id, sessionInfo.scene, ObjectId(id), JSON.parse(data), io, callback))
     socket.on("toggle-light", (id, enabled, callback) => modifyLight.toggle(accountInfo, sessionInfo.id, sessionInfo.scene, ObjectId(id), enabled, io, callback))
@@ -242,10 +247,14 @@ io.on("connection", (socket) => {
     socket.on("update-conditions", (id, conditions, callback) => updateConditions(accountInfo, sessionInfo.id, ObjectId(id), conditions, io, callback))
     socket.on("update-visibility", (id, toggle, callback) => updateVisibility(accountInfo, sessionInfo.id, ObjectId(id), toggle, io, callback))
     socket.on("lock-token", (id, toggle, callback) => lockToken(accountInfo, sessionInfo.id, ObjectId(id), toggle, io, callback))
+    socket.on("toggle-token-light", (id, toggle, callback) => toggleTokenLight(accountInfo, sessionInfo.id, ObjectId(id), toggle, io, callback))
     socket.on("rotate-token", (id, angle, user, callback) => rotateToken(accountInfo, sessionInfo.id, ObjectId(id), angle, user, io, callback))
     socket.on("rotate-token-light", (id, angle, user, callback) => rotateTokenLight(accountInfo, sessionInfo.id, ObjectId(id), angle, user, io, callback))
     socket.on("update-health", (id, value, callback) => updateHealth(accountInfo, sessionInfo.id, ObjectId(id), value, io, callback))
     socket.on("update-elevation", (id, value, callback) => updateElevation(accountInfo, sessionInfo.id, ObjectId(id), value, io, callback))
+
+    socket.on("change-scene-image", (buffer, callback) => changeImage(accountInfo, sessionInfo.id, sessionInfo.scene, buffer, io, callback))
+
 })
 
 // Start everything

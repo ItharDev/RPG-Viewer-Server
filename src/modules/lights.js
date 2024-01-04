@@ -57,6 +57,38 @@ module.exports = {
     },
 
     /**
+     * Paste-light handler
+     * @param {ObjectId} sceneId
+     * @param {{}} info
+     * @param {boolean} usePreset
+     * @returns {Promise<{id: string, data: {}, info: {}}>}
+    */
+    paste: async function (sceneId, info, usePreset) {
+        await prepareConnection()
+
+        const data = await lightModel.findById(ObjectId(info.id)).exec()
+        const light = new lightModel(data)
+        light._id = new ObjectId()
+
+        light.isNew = true
+        await light.save()
+
+        if (!usePreset) info.id = light._id
+
+        const update = sceneModel.findByIdAndUpdate(sceneId, { $set: { [`lights.${light.id}`]: info } }).exec()
+        if (!update) throw new Error("Invalid scene id")
+
+        const output = {
+            name: data.name,
+            primary: data.primary,
+            secondary: data.secondary,
+            id: info.id
+        }
+
+        return { id: light.id, data: output, info: info }
+    },
+
+    /**
      * Create-preset handler
      * @param {ObjectId} sessionId
      * @param {lightModel} data

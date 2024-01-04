@@ -20,6 +20,7 @@ module.exports = {
             const model = new lightModel(data)
             info.id = model.id
             const id = await create(sceneId, model, info)
+            data.id = id
 
             socketServer.to(sessionId.toString()).emit("create-light", id, info, data)
             callback(true)

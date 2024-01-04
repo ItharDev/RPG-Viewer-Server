@@ -207,7 +207,7 @@ module.exports = {
     /**
      * Rotate-token handler
      * @param {ObjectId} id
-     * @param {boolean} rotation
+     * @param {Number} rotation
      * @returns {Promise<void>}
     */
     setRotation: async function (id, rotation) {
@@ -220,13 +220,26 @@ module.exports = {
     /**
      * Rotate-token-light handler
      * @param {ObjectId} id
-     * @param {boolean} rotation
+     * @param {Number} rotation
      * @returns {Promise<void>}
     */
     setLightRotation: async function (id, rotation) {
         await prepareConnection()
 
         const update = await tokenModel.findByIdAndUpdate(id, { $set: { lightRotation: rotation } }).exec()
+        if (!update) throw new Error("Invalid token id")
+    },
+
+    /**
+     * Toggle-token-light handler
+     * @param {ObjectId} id
+     * @param {boolean} enabled
+     * @returns {Promise<void>}
+    */
+    toggleLight: async function (id, enabled) {
+        await prepareConnection()
+
+        const update = await tokenModel.findByIdAndUpdate(id, { $set: { lightEnabled: enabled } }).exec()
         if (!update) throw new Error("Invalid token id")
     },
 

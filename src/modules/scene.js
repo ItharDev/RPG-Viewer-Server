@@ -310,5 +310,29 @@ module.exports = {
             else push = await sessionModel.findByIdAndUpdate(sessionId, { $set: { [`scenes.folders.${oldId}`]: session.scenes.folders[oldId] } }).exec()
         }
         if (!push) throw new Error("Failed to push the folder to new location")
-    }
+    },
+
+    /**
+     * change-scene-image handler
+     * @param {ObjectId} sceneId
+     * @param {Buffer} buffer
+     * @returns {Promise<string>}
+    */
+    changeImage: async function (sceneId, buffer) {
+        return new Promise(async (resolve, reject) => {
+            await prepareConnection()
+
+            const scene = await sceneModel.findById(sceneId).exec()
+            if (!scene) throw new Error("Scene not found")
+
+            await networking.modifyFile(scene.info.image, -1)
+            const id = new ObjectId()
+            await networking.uploadFile(id, buffer).then(null, (rejected) => reject(rejected))
+
+            const update = await sceneModel.findByIdAndUpdate(sceneId, { $set: { "info.image": id } }).exec()
+            if (!update) reject("Operation failed")
+
+            resolve(id)
+        })
+    },
 }

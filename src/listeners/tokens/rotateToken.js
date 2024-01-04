@@ -8,7 +8,7 @@ const { Server } = require("socket.io")
  * @param {ObjectId} sessionId
  * @param {ObjectId} id
  * @param {Number} angle
- * @param {ObjectId} angle
+ * @param {ObjectId} user
  * @param {Server} socketServer
  * @param {() => {}} callback
 */

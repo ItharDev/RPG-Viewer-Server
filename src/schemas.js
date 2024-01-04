@@ -55,7 +55,8 @@ const tokenModel = model("tokens", new Schema({
     conditions: Number,
     locked: Boolean,
     rotation: Number,
-    lightRotation: Number
+    lightRotation: Number,
+    lightEnabled: Boolean
 }))
 
 const lightModel = model("lights", new Schema({
