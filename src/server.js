@@ -15,6 +15,7 @@ const getUsers = require("./listeners/session/getUsers")
 const register = require("./listeners/account/register")
 const signIn = require("./listeners/account/signIn")
 const signOut = require("./listeners/account/signOut")
+const changeName = require("./listeners/account/changeName")
 
 const validateLicense = require("./listeners/licence/validateLicence")
 const loadLicences = require("./listeners/licence/loadLicences")
@@ -135,6 +136,7 @@ io.on("connection", (socket) => {
     socket.on("register", (email, name, password, callback) => register(email, name, password, callback))
     socket.on("sign-in", (uid, email, password, callback) => signIn(accountInfo, ObjectId.isValid(uid) ? ObjectId(uid) : undefined, email, password, callback))
     socket.on("sign-out", (callback) => signOut(accountInfo, callback))
+    socket.on("change-name", (name, callback) => changeName(accountInfo, name, callback))
 
     socket.on("validate-licence", (licence, callback) => validateLicense(accountInfo, licence, callback))
     socket.on("load-licences", (callback) => loadLicences(accountInfo, callback))

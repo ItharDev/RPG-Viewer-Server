@@ -96,6 +96,19 @@ module.exports = {
     },
 
     /**
+     * Change-name handler
+     * @param {ObjectId | null} uid
+     * @param {string | null} name
+     * @returns {Promise<void>}
+    */
+    changeName: async function (uid, name) {
+        await prepareConnection()
+
+        const result = await userModel.findByIdAndUpdate(uid, { $set: { name: name } }).exec()
+        if (!result) throw new Error("Account not found")
+    },
+
+    /**
      * Validate-licence handler
      * @param {ObjectId} key
      * @param {ObjectId} uid
