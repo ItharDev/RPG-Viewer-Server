@@ -254,6 +254,10 @@ io.on("connection", (socket) => {
     socket.on("rotate-token-light", (id, angle, user, callback) => rotateTokenLight(accountInfo, sessionInfo.id, ObjectId(id), angle, user, io, callback))
     socket.on("update-health", (id, value, callback) => updateHealth(accountInfo, sessionInfo.id, ObjectId(id), value, io, callback))
     socket.on("update-elevation", (id, value, callback) => updateElevation(accountInfo, sessionInfo.id, ObjectId(id), value, io, callback))
+    socket.on("show-image", (id, uid, callback) => {
+        io.to(sessionInfo.id.toString()).emit("show-image", id, uid)
+        callback(true)
+    })
 
     socket.on("change-scene-image", (buffer, callback) => changeImage(accountInfo, sessionInfo.id, sessionInfo.scene, buffer, io, callback))
 
