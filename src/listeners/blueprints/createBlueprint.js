@@ -10,20 +10,21 @@ module.exports = {
      * @param {string} path
      * @param {{}} tokenData
      * @param {{}} lightingData
-     * @param {Buffer} buffer
+     * @param {Buffer} imageBuffer
+     * @param {Buffer} artBuffer
      * @param {() => {}} callback
     */
-    blueprint: async (accountInfo, sessionId, path, tokenData, lightingData, buffer, callback) => {
+    blueprint: async (accountInfo, sessionId, path, tokenData, lightingData, imageBuffer, artBuffer, callback) => {
         console.debug(`[ ${accountInfo.username} (${accountInfo.uid}) ]`, "Package: create-blueprint")
         try {
             tokenData.image = new ObjectId()
             const model = new blueprintModel(tokenData)
             const lighting = new lightModel(lightingData)
-            
+
             if (!model.light) model.light = model._id
             lighting._id = model._id
 
-            const id = await create(sessionId, path, model, lighting, buffer)
+            const id = await create(sessionId, path, model, lighting, imageBuffer, artBuffer)
             callback(true, id)
         } catch (error) {
             console.error("Failed to create blueprint", error)

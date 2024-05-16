@@ -101,7 +101,7 @@ module.exports = {
      * @param {{}} lightData
      * @param {Buffer} imageBuffer
      * @param {Buffer} artBuffer
-     * @returns {Promise<string>}
+     * @returns {Promise<{image: string, art: string}>}
     */
     modify: async function (sessionId, id, data, lightData, imageBuffer, artBuffer) {
         return new Promise(async (resolve, reject) => {

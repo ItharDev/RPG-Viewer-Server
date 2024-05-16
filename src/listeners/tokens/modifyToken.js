@@ -9,15 +9,17 @@ const { Server } = require("socket.io")
  * @param {ObjectId} id
  * @param {{}} tokenData
  * @param {{}} lightingData
- * @param {Buffer} buffer
+ * @param {Buffer} imageBuffer
+ * @param {Buffer} artBuffer
  * @param {Server} socketServer
  * @param {() => {}} callback
 */
-module.exports = async (accountInfo, sessionId, id, tokenData, lightingData, buffer, socketServer, callback) => {
+module.exports = async (accountInfo, sessionId, id, tokenData, lightingData, imageBuffer, artBuffer, socketServer, callback) => {
     console.debug(`[ ${accountInfo.username} (${accountInfo.uid}) ]`, "Package: modify-token")
     try {
-        const image = await modify(sessionId, id, tokenData, lightingData, buffer)
-        tokenData.image = image
+        const image = await modify(sessionId, id, tokenData, lightingData, imageBuffer, artBuffer)
+        tokenData.image = image.image
+        tokenData.art = image.art
         socketServer.to(sessionId.toString()).emit("modify-token", id, tokenData)
 
         callback(true)
