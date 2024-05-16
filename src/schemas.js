@@ -21,7 +21,8 @@ const blueprintModel = model("blueprints", new Schema({
     visionRadius: Number,
     nightRadius: Number,
     light: ObjectId,
-    image: ObjectId
+    image: ObjectId,
+    art: {}
 }))
 
 const tokenModel = model("tokens", new Schema({
@@ -49,6 +50,7 @@ const tokenModel = model("tokens", new Schema({
     nightRadius: Number,
     light: ObjectId,
     image: ObjectId,
+    art: {},
     enabled: Boolean,
     health: Number,
     elevation: Number,

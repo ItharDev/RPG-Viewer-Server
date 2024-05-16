@@ -73,8 +73,14 @@ module.exports = {
                 if (update) {
                     await networking.modifyFile(data.image, 1).then(async (resolved) => {
                         const light = await lightModel.create(lightData)
-                        if (!light) reject("Failed to create lighting data")
-                        resolve(token._id)
+                        if (!light) return reject("Failed to create lighting data")
+
+                        if (data.art) await networking.modifyFile(data.art, 1).then(async (resolved) => {
+                            resolve(token._id)
+                        }, (rejected) => {
+                            reject(rejected)
+                        })
+                        else resolve(token._id)
                     }, (rejected) => {
                         reject(rejected)
                     })
@@ -98,11 +104,14 @@ module.exports = {
             if (token) {
                 const update = await sceneModel.findByIdAndUpdate(sceneId, { $pull: { tokens: token._id } }).exec()
                 if (update) {
-                    await networking.modifyFile(token.image, -1).then((resolved) => {
-                        resolve()
-                    }, (rejected) => {
+                    await networking.modifyFile(token.image, -1).then(null, (rejected) => {
                         reject(rejected)
                     })
+                    if (token.art) await networking.modifyFile(token.art, -1).then(null, (rejected) => {
+                        reject(rejected)
+                    })
+
+                    resolve()
                 }
                 else reject("Failed to update directory")
             } else reject("Failed to remove token")
@@ -128,17 +137,31 @@ module.exports = {
      * @param {ObjectId} id
      * @param {{}} data
      * @param {{}} lightData
-     * @param {Buffer} buffer
+     * @param {Buffer} imageBuffer
+     * @param {Buffer} artBuffer
      * @returns {Promise<string>}
     */
-    modify: async function (sessionId, id, data, lightData, buffer) {
+    modify: async function (sessionId, id, data, lightData, imageBuffer, artBuffer) {
         return new Promise(async (resolve, reject) => {
             await prepareConnection()
 
-            if (buffer) {
+            if (imageBuffer) {
                 await networking.modifyFile(data.image, -1).then(async (resolved) => {
                     data.image = new ObjectId()
-                    await networking.uploadFile(data.image, buffer).then(null, (rejected) => {
+                    await networking.uploadFile(data.image, imageBuffer).then(null, (rejected) => {
+                        reject(rejected)
+                        return
+                    })
+                }, (rejected) => {
+                    reject(rejected)
+                    return
+                })
+            }
+
+            if (imageBuffer) {
+                await networking.modifyFile(data.art, -1).then(async (resolved) => {
+                    data.art = new ObjectId()
+                    await networking.uploadFile(data.art, artBuffer).then(null, (rejected) => {
                         reject(rejected)
                         return
                     })
@@ -161,7 +184,7 @@ module.exports = {
             const light = await lightModel.findOneAndReplace({ "_id": id }, lightData, { upsert: true }).exec()
             if (!light) reject("Failed to modify lighting data")
 
-            resolve(data.image.toString())
+            resolve({ image: data.image.toString(), art: data.art.toString() })
         })
     },
 

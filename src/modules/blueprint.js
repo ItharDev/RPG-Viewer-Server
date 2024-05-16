@@ -60,14 +60,19 @@ module.exports = {
      * @param {string} path
      * @param {blueprintModel} data
      * @param {lightModel} lightData
-     * @param {Buffer} buffer
+     * @param {Buffer} imageBuffer
+     * @param {Buffer} artBuffer
      * @returns {Promise<string>}
     */
-    create: async function (sessionId, path, data, lightData, buffer) {
+    create: async function (sessionId, path, data, lightData, imageBuffer, artBuffer) {
         return new Promise(async (resolve, reject) => {
             await prepareConnection()
 
-            await networking.uploadFile(data.image, buffer).then(null, (rejected) => {
+            await networking.uploadFile(data.image, imageBuffer).then(null, (rejected) => {
+                reject(rejected)
+            })
+
+            if (artBuffer) await networking.uploadFile(data.art, artBuffer).then(null, (rejected) => {
                 reject(rejected)
             })
 
@@ -94,17 +99,31 @@ module.exports = {
      * @param {ObjectId} id
      * @param {{}} data
      * @param {{}} lightData
-     * @param {Buffer} buffer
+     * @param {Buffer} imageBuffer
+     * @param {Buffer} artBuffer
      * @returns {Promise<string>}
     */
-    modify: async function (sessionId, id, data, lightData, buffer) {
+    modify: async function (sessionId, id, data, lightData, imageBuffer, artBuffer) {
         return new Promise(async (resolve, reject) => {
             await prepareConnection()
 
-            if (buffer) {
+            if (imageBuffer) {
                 await networking.modifyFile(data.image, -1).then(async (resolved) => {
                     data.image = new ObjectId()
-                    await networking.uploadFile(data.image, buffer).then(null, (rejected) => {
+                    await networking.uploadFile(data.image, imageBuffer).then(null, (rejected) => {
+                        reject(rejected)
+                        return
+                    })
+                }, (rejected) => {
+                    reject(rejected)
+                    return
+                })
+            }
+
+            if (artBuffer) {
+                await networking.modifyFile(data.art, -1).then(async (resolved) => {
+                    data.art = new ObjectId()
+                    await networking.uploadFile(data.art, artBuffer).then(null, (rejected) => {
                         reject(rejected)
                         return
                     })
@@ -127,7 +146,7 @@ module.exports = {
             const light = await lightModel.findOneAndReplace({ "_id": id }, lightData, { upsert: true }).exec()
             if (!light) reject("Failed to modify lighting data")
 
-            resolve(data.image.toString())
+            resolve({ image: data.image.toString(), art: data.art.toString() })
         })
     },
 
@@ -152,6 +171,7 @@ module.exports = {
         if (!blueprint) throw new Error("Failed to remove blueprint")
 
         await networking.modifyFile(blueprint.image, -1)
+        if (blueprint.art) await networking.modifyFile(blueprint.art, -1)
     },
 
     /**
