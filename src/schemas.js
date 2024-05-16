@@ -107,6 +107,7 @@ const sceneModel = model("scenes", new Schema({
         },
         enabled: Boolean,
         globalLighting: Boolean,
+        visionRange: Number
     },
     grid: {
         cellSize: Number,
