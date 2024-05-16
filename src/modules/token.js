@@ -158,7 +158,7 @@ module.exports = {
                 })
             }
 
-            if (imageBuffer) {
+            if (artBuffer) {
                 await networking.modifyFile(data.art, -1).then(async (resolved) => {
                     data.art = new ObjectId()
                     await networking.uploadFile(data.art, artBuffer).then(null, (rejected) => {
