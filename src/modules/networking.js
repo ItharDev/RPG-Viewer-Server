@@ -61,6 +61,7 @@ networking.downloadFile = (id) => {
 
 networking.modifyFile = (id, increment) => {
     return new Promise(async (resolve, reject) => {
+        if (!id) return resolve()
         const file = await fileModel.findById(id).exec()
         if (file) {
             if (file.count < 2 && increment < 0) {
