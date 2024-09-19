@@ -18,6 +18,7 @@ module.exports = {
         console.debug(`[ ${accountInfo.username} (${accountInfo.uid}) ]`, "Package: create-blueprint")
         try {
             tokenData.image = new ObjectId()
+            tokenData.art = artBuffer ? new ObjectId() : null
             const model = new blueprintModel(tokenData)
             const lighting = new lightModel(lightingData)
 
