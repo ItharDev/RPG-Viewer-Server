@@ -22,7 +22,7 @@ const blueprintModel = model("blueprints", new Schema({
     nightRadius: Number,
     light: ObjectId,
     image: ObjectId,
-    art: ObjectId
+    art: {}
 }))
 
 const tokenModel = model("tokens", new Schema({
@@ -50,7 +50,7 @@ const tokenModel = model("tokens", new Schema({
     nightRadius: Number,
     light: ObjectId,
     image: ObjectId,
-    art: ObjectId,
+    art: {},
     enabled: Boolean,
     health: Number,
     elevation: Number,

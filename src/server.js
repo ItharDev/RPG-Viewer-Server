@@ -96,13 +96,13 @@ require("dotenv").config()
 
 // Server configuration (use .env file)
 const port = process.env.PORT
+const interval = process.env.PING_INTERVAL
+const timeout = process.env.PING_TIMEOUT
+const maxBuffer = process.env.MAX_BUFFER
 
-// Create the HTTP server
 const httpServer = createServer()
 const io = socketIo(httpServer, {
-    pingInterval: 10000,
-    pingTimeout: 120000,
-    maxHttpBufferSize: 1e8
+    maxHttpBufferSize: maxBuffer
 })
 
 // Socket server connection handling

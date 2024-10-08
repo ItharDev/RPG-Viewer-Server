@@ -88,7 +88,7 @@ module.exports = {
 
         const user = await userModel.findOne({ email: email }).exec()
         if (!user) throw new Error("Invalid email address")
-
+	
         const match = await bcrypt.compare(password, user.password)
         if (!match) throw new Error("Invalid password")
 

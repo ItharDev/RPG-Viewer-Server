@@ -67,7 +67,7 @@ networking.modifyFile = (id, increment) => {
             if (file.count < 2 && increment < 0) {
                 networking.deleteFile(id)
                 const remove = await fileModel.findByIdAndRemove(id).exec()
-            } else await fileModel.findOneAndUpdate(id, { $inc: { count: increment } }).exec()
+            } else await fileModel.findByIdAndUpdate(id, { $inc: { count: increment } }).exec()
             resolve()
         } else resolve()
     })
