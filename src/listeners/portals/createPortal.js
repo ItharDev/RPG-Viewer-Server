@@ -13,7 +13,7 @@ const { Server } = require("socket.io")
  * @param {() => {}} callback
 */
 module.exports = async (accountInfo, sessionId, scene, position, radius, socketServer, callback) => {
-    console.debug(`[ ${accountInfo.username} (${accountInfo.uid}) ]`, "Package: create-wall")
+    console.debug(`[ ${accountInfo.username} (${accountInfo.uid}) ]`, "Package: create-portal")
     try {
         const data = await create(scene, position, radius)
         socketServer.to(sessionId.toString()).emit("create-portal", data)
