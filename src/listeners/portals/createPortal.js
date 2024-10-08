@@ -16,8 +16,8 @@ module.exports = async (accountInfo, sessionId, scene, position, radius, socketS
     console.debug(`[ ${accountInfo.username} (${accountInfo.uid}) ]`, "Package: create-portal")
     try {
         const data = await create(scene, JSON.parse(position), radius)
-        socketServer.to(sessionId.toString()).emit("create-portal", data)
-        callback(true, data.id)
+        socketServer.to(sessionId.toString()).emit("create-portal", data.id, data)
+        callback(true)
     } catch (error) {
         console.error("Failed to create portal", error)
         callback(false, error.message)
