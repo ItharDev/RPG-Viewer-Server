@@ -8,14 +8,14 @@ const { Server } = require("socket.io")
  * @param {ObjectId} sessionId
  * @param {ObjectId} scene
  * @param {ObjectId} id
- * @param {{x: number, y: number}} position
+ * @param {string} position
  * @param {Server} socketServer
  * @param {() => {}} callback
 */
 module.exports = async (accountInfo, sessionId, scene, id, position, socketServer, callback) => {
     console.debug(`[ ${accountInfo.username} (${accountInfo.uid}) ]`, "Package: move-portal")
     try {
-        await move(scene, id, position)
+        await move(scene, id, JSON.parse(position))
         socketServer.to(sessionId.toString()).emit("move-portal", id, position)
         callback(true)
     } catch (error) {
