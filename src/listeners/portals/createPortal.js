@@ -7,7 +7,7 @@ const { Server } = require("socket.io")
  * @param {{ uid: ObjectId, username: string }} accountInfo
  * @param {ObjectId} sessionId
  * @param {ObjectId} scene
- * @param {{x: number, y: number}} position
+ * @param {string} position
  * @param {number} radius
  * @param {Server} socketServer
  * @param {() => {}} callback
@@ -15,7 +15,7 @@ const { Server } = require("socket.io")
 module.exports = async (accountInfo, sessionId, scene, position, radius, socketServer, callback) => {
     console.debug(`[ ${accountInfo.username} (${accountInfo.uid}) ]`, "Package: create-portal")
     try {
-        const data = await create(scene, position, radius)
+        const data = await create(scene, JSON.parse(position), radius)
         socketServer.to(sessionId.toString()).emit("create-portal", data)
         callback(true, data.id)
     } catch (error) {
