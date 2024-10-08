@@ -146,6 +146,18 @@ const sceneModel = model("scenes", new Schema({
         open: Boolean,
         locked: Boolean
     }),
+    portals: Array({
+        _id: false,
+        id: ObjectId,
+        position: {
+            x: Number,
+            y: Number
+        },
+        link: ObjectId,
+        radius: Number,
+        continuous: Boolean,
+        active: Boolean
+    }),
     tokens: Array(ObjectId),
     initiatives: {},
     lights: {},
