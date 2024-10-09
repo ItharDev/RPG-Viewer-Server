@@ -123,7 +123,7 @@ module.exports = {
         if (!source) throw new Error("Source portal not found")
 
         const destination = sceneData.portals.find((portal) => portal.id.equals(source.link))
-        if (!destination) throw new Error("Destination portal not found")
+        if (!destination) return source.position
 
         move(tokenId, destination.position, true)
 
