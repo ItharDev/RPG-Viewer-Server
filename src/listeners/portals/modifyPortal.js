@@ -16,7 +16,7 @@ module.exports = async (accountInfo, sessionId, scene, id, data, socketServer, c
     console.debug(`[ ${accountInfo.username} (${accountInfo.uid}) ]`, "Package: modify-portal")
     try {
         data.id = id
-        await modify(scene, id, data)
+        await modify(scene, id, JSON.parse(data))
         socketServer.to(sessionId.toString()).emit("modify-portal", id, data)
         callback(true)
     } catch (error) {
