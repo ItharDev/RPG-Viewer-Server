@@ -1,6 +1,7 @@
-const { sceneModel } = require("../schemas")
+const { sceneModel, tokenModel } = require("../schemas")
 const { connect } = require("mongoose")
 const { ObjectId } = require("mongodb")
+const { move } = require("./token")
 
 async function prepareConnection() {
     return new Promise((resolve, reject) => {
@@ -48,6 +49,13 @@ module.exports = {
         return data
     },
 
+    modify: async function (scene, id, data) {
+        await prepareConnection()
+
+        const update = await sceneModel.findByIdAndUpdate(scene, { $set: { "portals.$[element]": data } }, { arrayFilters: [{ "element.id": id }] }).exec()
+        if (!update) throw new Error("Portal not found")
+    },
+
     /**
      * Move-portal handler
      * @param {ObjectId} scene 
@@ -72,33 +80,6 @@ module.exports = {
         const update = await sceneModel.findByIdAndUpdate(scene, { $set: { "portals.$[element].link": destination } }, { arrayFilters: [{ "element.id": source }] }).exec()
         if (!update) throw new Error("Source or destination portal not found")
     },
-
-    /**
-     * Set-portal-radius handler
-     * @param {ObjectId} scene 
-     * @param {ObjectId} id 
-     * @param {number} radius 
-     */
-    setRadius: async function (scene, id, radius) {
-        await prepareConnection()
-
-        const update = await sceneModel.findByIdAndUpdate(scene, { $set: { "portals.$[element].radius": radius } }, { arrayFilters: [{ "element.id": id }] }).exec()
-        if (!update) throw new Error("Portal not found")
-    },
-
-    /**
-     * Set-portal-continuous handler
-     * @param {ObjectId} scene 
-     * @param {ObjectId} id 
-     * @param {boolean} continuous 
-     */
-    setContinuous: async function (scene, id, continuous) {
-        await prepareConnection()
-
-        const update = await sceneModel.findByIdAndUpdate(scene, { $set: { "portals.$[element].continuous": continuous } }, { arrayFilters: [{ "element.id": id }] }).exec()
-        if (!update) throw new Error("Portal not found")
-    },
-
     /**
      * Remove-portal handler
      * @param {ObjectId} scene 
@@ -122,5 +103,28 @@ module.exports = {
 
         const update = await sceneModel.findByIdAndUpdate(scene, { $set: { "portals.$[element].active": state } }, { arrayFilters: [{ "element.id": id }] }).exec()
         if (!update) throw new Error("Portal not found")
+    },
+    
+    /**
+     * Enter-portal handler
+     * @param {ObjectId} scene 
+     * @param {ObjectId} tokenId 
+     * @param {ObjectId} portalId 
+     */
+    enter: async function (scene, tokenId, portalId) {
+        await prepareConnection()
+
+        const sceneData = await sceneModel.findById(scene).exec()
+        if (!sceneData) throw new Error("Scene not found")
+        
+        const source = sceneData.portals.find((portal) => portal.id.equals(portalId))
+        if (!source) throw new Error("Source portal not found")
+        
+        const destination = sceneData.portals.find((portal) => portal.id.equals(source.link))
+        if (!destination) throw new Error("Destination portal not found")
+        
+        move(tokenId, destination.position, true)
+        
+        return destination.position
     }
 }

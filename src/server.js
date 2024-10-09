@@ -32,12 +32,11 @@ const modifyWall = require("./listeners/walls/modifyWall")
 const removeWall = require("./listeners/walls/removeWall")
 
 const createPortal = require("./listeners/portals/createPortal")
-const setRadius = require("./listeners/portals/setRadius")
+const modifyPortal = require("./listeners/portals/modifyPortal")
 const linkPortal = require("./listeners/portals/linkPortal")
 const activatePortal = require("./listeners/portals/activatePortal")
 const removePortal = require("./listeners/portals/removePortal")
 const movePortal = require("./listeners/portals/movePortal")
-const setContinuous = require("./listeners/portals/setContinuous")
 
 const createScene = require("./listeners/scenes/createScene")
 const getScene = require("./listeners/scenes/getScene")
@@ -166,12 +165,11 @@ io.on("connection", (socket) => {
     socket.on("modify-grid", (data, callback) => modifyGrid(accountInfo, sessionInfo.id, sessionInfo.scene, JSON.parse(data), io, callback))
 
     socket.on("create-portal", (position, radius, callback) => createPortal(accountInfo, sessionInfo.id, sessionInfo.scene, position, radius, io, callback))
-    socket.on("set-radius", (id, radius, callback) => setRadius(accountInfo, sessionInfo.id, sessionInfo.scene, id, radius, io, callback))
+    socket.on("modify-portal", (id, data, callback) => modifyPortal(accountInfo, sessionInfo.id, sessionInfo.scene, id, data, io, callback))
     socket.on("link-portal", (id, link, callback) => linkPortal(accountInfo, sessionInfo.id, sessionInfo.scene, id, link, io, callback))
     socket.on("activate-portal", (id, active, callback) => activatePortal(accountInfo, sessionInfo.id, sessionInfo.scene, id, active, io, callback))
     socket.on("remove-portal", (id, callback) => removePortal(accountInfo, sessionInfo.id, sessionInfo.scene, id, io, callback))
     socket.on("move-portal", (id, position, callback) => movePortal(accountInfo, sessionInfo.id, sessionInfo.scene, id, position, io, callback))
-    socket.on("set-continuous", (id, continuous, callback) => setContinuous(accountInfo, sessionInfo.id, sessionInfo.scene, id, continuous, io, callback))
     
     socket.on("get-scene", (sceneId, callback) => getScene.single(accountInfo, ObjectId(sceneId), callback))
     socket.on("get-scenes", (callback) => getScene.all(accountInfo, sessionInfo.id, callback))

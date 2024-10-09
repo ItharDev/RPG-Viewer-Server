@@ -58,7 +58,8 @@ const tokenModel = model("tokens", new Schema({
     locked: Boolean,
     rotation: Number,
     lightRotation: Number,
-    lightEnabled: Boolean
+    lightEnabled: Boolean,
+    teleportProtection: Boolean,
 }))
 
 const lightModel = model("lights", new Schema({

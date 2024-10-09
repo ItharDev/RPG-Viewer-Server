@@ -122,12 +122,13 @@ module.exports = {
      * Move-token handler
      * @param {ObjectId} tokenId
      * @param {{x: Number, y: Number}} position
+     * @param {boolean} isTeleport
      * @returns {Promise<void>}
     */
-    move: async function (tokenId, position) {
+    move: async function (tokenId, position, isTeleport) {
         await prepareConnection()
 
-        const update = await tokenModel.findByIdAndUpdate(tokenId, { $set: { "position": position } }).exec()
+        const update = await tokenModel.findByIdAndUpdate(tokenId, { $set: { "position": position, "teleportProtection": isTeleport } }).exec()
         if (!update) throw new Error("Failed to update token position")
     },
 
