@@ -37,6 +37,7 @@ const linkPortal = require("./listeners/portals/linkPortal")
 const activatePortal = require("./listeners/portals/activatePortal")
 const removePortal = require("./listeners/portals/removePortal")
 const movePortal = require("./listeners/portals/movePortal")
+const enterPortal = require("./listeners/portals/enterPortal")
 
 const createScene = require("./listeners/scenes/createScene")
 const getScene = require("./listeners/scenes/getScene")
@@ -170,6 +171,7 @@ io.on("connection", (socket) => {
     socket.on("activate-portal", (id, active, callback) => activatePortal(accountInfo, sessionInfo.id, sessionInfo.scene, id, active, io, callback))
     socket.on("remove-portal", (id, callback) => removePortal(accountInfo, sessionInfo.id, sessionInfo.scene, id, io, callback))
     socket.on("move-portal", (id, position, callback) => movePortal(accountInfo, sessionInfo.id, sessionInfo.scene, id, position, io, callback))
+    socket.on("enter-portal", (tokenId, portalId, callback) => enterPortal(accountInfo, sessionInfo.id, sessionInfo.scene, tokenId, portalId, io, callback))
     
     socket.on("get-scene", (sceneId, callback) => getScene.single(accountInfo, ObjectId(sceneId), callback))
     socket.on("get-scenes", (callback) => getScene.all(accountInfo, sessionInfo.id, callback))
