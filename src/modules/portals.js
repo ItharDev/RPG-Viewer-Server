@@ -45,7 +45,7 @@ module.exports = {
 
         const create = await sceneModel.findByIdAndUpdate(scene, { $addToSet: { portals: data } }).exec()
         if (!create) throw new Error("Portal not found")
-        
+
         return data
     },
 
@@ -58,13 +58,14 @@ module.exports = {
 
     /**
      * Move-portal handler
-     * @param {ObjectId} scene 
-     * @param {*} data 
+     * @param {ObjectId} scene
+     * @param {ObjectId} id
+     * @param {{x: number, y: number}} data 
      */
-    move: async function (scene, data) {
+    move: async function (scene, id, data) {
         await prepareConnection()
 
-        const update = await sceneModel.findByIdAndUpdate(scene, { $set: { "portals.$[element].position": data } }, { arrayFilters: [{ "element.id": data.id }] }).exec()
+        const update = await sceneModel.findByIdAndUpdate(scene, { $set: { "portals.$[element].position": data } }, { arrayFilters: [{ "element.id": id }] }).exec()
         if (!update) throw new Error("Portal not found")
     },
 
@@ -104,7 +105,7 @@ module.exports = {
         const update = await sceneModel.findByIdAndUpdate(scene, { $set: { "portals.$[element].active": state } }, { arrayFilters: [{ "element.id": id }] }).exec()
         if (!update) throw new Error("Portal not found")
     },
-    
+
     /**
      * Enter-portal handler
      * @param {ObjectId} scene 
@@ -116,15 +117,15 @@ module.exports = {
 
         const sceneData = await sceneModel.findById(scene).exec()
         if (!sceneData) throw new Error("Scene not found")
-        
+
         const source = sceneData.portals.find((portal) => portal.id.equals(portalId))
         if (!source) throw new Error("Source portal not found")
-        
+
         const destination = sceneData.portals.find((portal) => portal.id.equals(source.link))
         if (!destination) throw new Error("Destination portal not found")
-        
+
         move(tokenId, destination.position, true)
-        
+
         return destination.position
     }
 }
