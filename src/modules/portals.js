@@ -52,6 +52,7 @@ module.exports = {
     modify: async function (scene, id, data) {
         await prepareConnection()
 
+        if (!data.link) data.link = null
         const update = await sceneModel.findByIdAndUpdate(scene, { $set: { "portals.$[element]": data } }, { arrayFilters: [{ "element.id": id }] }).exec()
         if (!update) throw new Error("Portal not found")
     },
