@@ -1,12 +1,12 @@
-const { ObjectId } = require('mongodb')
-const { tokenModel, sceneModel } = require('../schemas')
-const networking = require('./networking');
-const { connect } = require('mongoose');
+const { ObjectId } = require("mongodb")
+const { tokenModel, sceneModel, lightModel, sessionModel } = require("../schemas")
+const networking = require("./networking");
+const { connect } = require("mongoose");
 
 async function prepareConnection() {
     return new Promise((resolve, reject) => {
         if (global.databaseConnected !== true) {
-            connect('mongodb://127.0.0.1:27017/rpg-viewer').then((db) => {
+            connect("mongodb://127.0.0.1:27017/rpg-viewer-dev").then((db) => {
                 global.databaseConnected = true
                 db.connection.once("error", (err) => {
                     console.error("Mongoose error:", err)
@@ -25,27 +25,45 @@ async function prepareConnection() {
 }
 
 module.exports = {
+    /**
+     * Get-token handler
+     * @param {ObjectId} tokenId
+     * @returns {Promise<tokenModel>}
+    */
     get: async function (tokenId) {
         const token = await tokenModel.findById(tokenId).exec()
-        if (token) return token
-        else reject('Invalid token id')
+        if (!token) throw new Error("Invalid token id")
+
+        return token
     },
 
+    /**
+    * Get-all-tokens handler
+    * @param {ObjectId} sceneId
+    * @returns {Promise<Array>}
+   */
     getAll: async function (sceneId) {
         const scene = await sceneModel.findById(sceneId).exec()
-        if (scene) {
-            let tokens = []
-            for (let i = 0; i < scene.tokens.length; i++) {
-                const element = scene.tokens[i];
-                const token = await tokenModel.findById(element).exec()
-                tokens.push(token)
-            }
+        if (!scene) throw new Error("Invalid scene id")
 
-            return tokens
-        } else throw new Error('Invalid scene id')
+        let tokens = []
+        for (let i = 0; i < scene.tokens.length; i++) {
+            const element = scene.tokens[i];
+            const token = await tokenModel.findById(element).exec()
+            tokens.push(token)
+        }
+
+        return tokens
     },
 
-    create: async function (sceneId, data) {
+    /**
+     * Create-token handler
+     * @param {ObjectId} sceneId
+     * @param {tokenModel} data
+     * @param {lightModel} lightData
+     * @returns {Promise<string>}
+    */
+    create: async function (sceneId, data, lightData) {
         return new Promise(async (resolve, reject) => {
             await prepareConnection()
 
@@ -53,17 +71,31 @@ module.exports = {
             if (token) {
                 const update = await sceneModel.findByIdAndUpdate(sceneId, { $addToSet: { tokens: token._id } }).exec()
                 if (update) {
-                    await networking.modifyFile(data.image, 1).then((resolved) => {
-                        resolve(token._id)
+                    await networking.modifyFile(data.image, 1).then(async (resolved) => {
+                        const light = await lightModel.create(lightData)
+                        if (!light) return reject("Failed to create lighting data")
+
+                        if (data.art) await networking.modifyFile(data.art, 1).then(async (resolved) => {
+                            resolve(token._id)
+                        }, (rejected) => {
+                            reject(rejected)
+                        })
+                        else resolve(token._id)
                     }, (rejected) => {
                         reject(rejected)
                     })
                 }
-                else reject('Failed to update directory')
-            } else reject('Failed to create token')
+                else reject("Failed to update directory")
+            } else reject("Failed to create token")
         })
     },
 
+    /**
+     * Remove-token handler
+     * @param {ObjectId} sceneId 
+     * @param {ObjectId} blueprintId 
+     * @returns {Promise<void>}
+     */
     remove: async function (sceneId, tokenId) {
         return new Promise(async (resolve, reject) => {
             await prepareConnection()
@@ -72,33 +104,52 @@ module.exports = {
             if (token) {
                 const update = await sceneModel.findByIdAndUpdate(sceneId, { $pull: { tokens: token._id } }).exec()
                 if (update) {
-                    await networking.modifyFile(token.image, -1).then((resolved) => {
-                        resolve()
-                    }, (rejected) => {
+                    await networking.modifyFile(token.image, -1).then(null, (rejected) => {
                         reject(rejected)
                     })
+                    if (token.art) await networking.modifyFile(token.art, -1).then(null, (rejected) => {
+                        reject(rejected)
+                    })
+
+                    resolve()
                 }
-                else reject('Failed to update directory')
-            } else reject('Failed to remove token')
+                else reject("Failed to update directory")
+            } else reject("Failed to remove token")
         })
     },
 
-    move: async function (tokenId, position) {
+    /**
+     * Move-token handler
+     * @param {ObjectId} tokenId
+     * @param {{x: Number, y: Number}} position
+     * @param {boolean} isTeleport
+     * @returns {Promise<void>}
+    */
+    move: async function (tokenId, position, isTeleport) {
         await prepareConnection()
 
-        const update = await tokenModel.findByIdAndUpdate(tokenId, { $set: { 'position': position } }).exec()
-        if (update) return
-        else throw new Error('Failed to update token position')
+        const update = await tokenModel.findByIdAndUpdate(tokenId, { $set: { "position": position, "teleportProtection": isTeleport } }).exec()
+        if (!update) throw new Error("Failed to update token position")
     },
 
-    modify: async function (tokenId, data, image) {
+    /**
+     * Modify-blueprint handler
+     * @param {ObjectId} sessionId
+     * @param {ObjectId} id
+     * @param {{}} data
+     * @param {{}} lightData
+     * @param {Buffer} imageBuffer
+     * @param {Buffer} artBuffer
+     * @returns {Promise<{image: string, art: string}>}
+    */
+    modify: async function (sessionId, id, data, lightData, imageBuffer, artBuffer) {
         return new Promise(async (resolve, reject) => {
             await prepareConnection()
 
-            if (image) {
+            if (imageBuffer) {
                 await networking.modifyFile(data.image, -1).then(async (resolved) => {
                     data.image = new ObjectId()
-                    await networking.uploadFile(data.image, image).then(null, (rejected) => {
+                    await networking.uploadFile(data.image, imageBuffer).then(null, (rejected) => {
                         reject(rejected)
                         return
                     })
@@ -108,58 +159,137 @@ module.exports = {
                 })
             }
 
-            data._id = tokenId
-            const replace = await tokenModel.replaceOne({ _id: tokenId }, data).exec()
-            if (replace) resolve(data.image)
-            else reject('Failed to modify token')
+            if (artBuffer) {
+                await networking.modifyFile(data.art, -1).then(async (resolved) => {
+                    data.art = new ObjectId()
+                    await networking.uploadFile(data.art, artBuffer).then(null, (rejected) => {
+                        reject(rejected)
+                        return
+                    })
+                }, (rejected) => {
+                    reject(rejected)
+                    return
+                })
+            }
+
+            const session = await sessionModel.findById(sessionId).exec()
+            if (!session) throw new Error("Invalid session id")
+
+            if (!session.presets.includes(data.light)) {
+                data.light = id
+            }
+
+            const token = await tokenModel.findOneAndReplace({ "_id": id }, data).exec()
+            if (!token) reject("Failed to modify token")
+
+            const light = await lightModel.findOneAndReplace({ "_id": id }, lightData, { upsert: true }).exec()
+            if (!light) reject("Failed to modify lighting data")
+
+            resolve({ image: data.image.toString(), art: data.art.toString() })
         })
     },
 
+    /**
+     * Update-visibility handler
+     * @param {ObjectId} id
+     * @param {boolean} state
+     * @returns {Promise<void>}
+    */
     setVisibility: async function (tokenId, state) {
         await prepareConnection()
 
         const update = await tokenModel.findByIdAndUpdate(tokenId, { $set: { enabled: state } }).exec()
-        if (update) return
-        else throw new Error('Failed to update visibility')
+        if (!update) throw new Error("Invalid token id")
     },
 
-    setElevation: async function (tokenId, elevation) {
+    /**
+     * Update-elevation handler
+     * @param {ObjectId} id
+     * @param {boolean} value
+     * @returns {Promise<void>}
+    */
+    setElevation: async function (id, value) {
         await prepareConnection()
 
-        const update = await tokenModel.findByIdAndUpdate(tokenId, { $set: { elevation: elevation } }).exec()
-        if (update) return
-        else throw new Error('Failed to update elevation')
+        const update = await tokenModel.findByIdAndUpdate(id, { $set: { elevation: value } }).exec()
+        if (!update) throw new Error("Invalid token id")
     },
 
-    setConditions: async function (tokenId, conditions) {
+    /**
+     * Update-conditions handler
+     * @param {ObjectId} id
+     * @param {Number} conditions
+     * @returns {Promise<void>}
+    */
+    setConditions: async function (id, conditions) {
         await prepareConnection()
 
-        const update = await tokenModel.findByIdAndUpdate(tokenId, { $set: { conditions: conditions } }).exec()
-        if (update) return
-        else throw new Error('Failed to update conditions')
+        const update = await tokenModel.findByIdAndUpdate(id, { $set: { conditions: conditions } }).exec()
+        if (!update) throw new Error("Invalid token id")
     },
 
-    setRotation: async function (tokenId, rotation) {
+    /**
+     * Rotate-token handler
+     * @param {ObjectId} id
+     * @param {Number} rotation
+     * @returns {Promise<void>}
+    */
+    setRotation: async function (id, rotation) {
         await prepareConnection()
 
-        const update = await tokenModel.findByIdAndUpdate(tokenId, { $set: { rotation: rotation } }).exec()
-        if (update) return
-        else throw new Error('Failed to update rotation')
+        const update = await tokenModel.findByIdAndUpdate(id, { $set: { rotation: rotation } }).exec()
+        if (!update) throw new Error("Invalid token id")
     },
 
+    /**
+     * Rotate-token-light handler
+     * @param {ObjectId} id
+     * @param {Number} rotation
+     * @returns {Promise<void>}
+    */
+    setLightRotation: async function (id, rotation) {
+        await prepareConnection()
+
+        const update = await tokenModel.findByIdAndUpdate(id, { $set: { lightRotation: rotation } }).exec()
+        if (!update) throw new Error("Invalid token id")
+    },
+
+    /**
+     * Toggle-token-light handler
+     * @param {ObjectId} id
+     * @param {boolean} enabled
+     * @returns {Promise<void>}
+    */
+    toggleLight: async function (id, enabled) {
+        await prepareConnection()
+
+        const update = await tokenModel.findByIdAndUpdate(id, { $set: { lightEnabled: enabled } }).exec()
+        if (!update) throw new Error("Invalid token id")
+    },
+
+    /**
+     * Lock-token handler
+     * @param {ObjectId} id
+     * @param {boolean} state
+     * @returns {Promise<void>}
+    */
     lock: async function (tokenId, state) {
         await prepareConnection()
 
         const update = await tokenModel.findByIdAndUpdate(tokenId, { $set: { locked: state } }).exec()
-        if (update) return
-        else throw new Error('Failed to toggle state')
+        if (!update) throw new Error("Invalid token id")
     },
 
-    setHealth: async function (tokenId, health) {
+    /**
+     * Update-health handler
+     * @param {ObjectId} id
+     * @param {boolean} state
+     * @returns {Promise<void>}
+    */
+    setHealth: async function (id, value) {
         await prepareConnection()
 
-        const update = await tokenModel.findByIdAndUpdate(tokenId, { $set: { health: health } }).exec()
-        if (update) return
-        else throw new Error('Failed to update health')
+        const update = await tokenModel.findByIdAndUpdate(id, { $set: { health: value } }).exec()
+        if (!update) throw new Error("Invalid token id")
     },
 }

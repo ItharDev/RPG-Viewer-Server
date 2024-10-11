@@ -1,1111 +1,291 @@
-//#region Dependencies
-const { createServer } = require('http')
-const { ObjectId } = require('mongodb')
-const socket = require('socket.io')
+// Dependencies
+const { createServer } = require("http")
+const { ObjectId } = require("mongodb")
+const socketIo = require("socket.io")
 
-const networking = require('./modules/networking')
-const { blueprintModel, sceneModel, sessionModel, userModel, tokenModel, noteModel, journalModel, presetModel } = require('./schemas')
-const account = require('./modules/account')
-const scene = require('./modules/scene')
-const blueprint = require('./modules/blueprint')
-const session = require('./modules/session')
-const token = require('./modules/token')
-const notes = require('./modules/notes')
-const journals = require('./modules/journals')
-const presets = require('./modules/presets')
+// Modules
+const networking = require("./modules/networking")
 
-const server = createServer()
-const port = 3000
-const io = socket(server, {
-    pingInterval: 10000,
-    pingTimeout: 120000,
-    maxHttpBufferSize: 1e8
+// Listeners (for packets)
+const disconnectListener = require("./listeners/disconnect")
+const downloadImage = require("./listeners/downloadImage")
 
+const getUser = require("./listeners/account/getUser")
+const getUsers = require("./listeners/session/getUsers")
+const register = require("./listeners/account/register")
+const signIn = require("./listeners/account/signIn")
+const signOut = require("./listeners/account/signOut")
+const changeName = require("./listeners/account/changeName")
+
+const validateLicense = require("./listeners/licence/validateLicence")
+const loadLicences = require("./listeners/licence/loadLicences")
+const removeLicences = require("./listeners/licence/removeLicences")
+
+const createSession = require("./listeners/session/createSession")
+const joinSession = require("./listeners/session/joinSession")
+const leaveSession = require("./listeners/session/leaveSession")
+const setState = require("./listeners/session/setState")
+const changeLandingPage = require("./listeners/session/changeImage")
+
+const createWall = require("./listeners/walls/createWall")
+const modifyWall = require("./listeners/walls/modifyWall")
+const removeWall = require("./listeners/walls/removeWall")
+
+const createPortal = require("./listeners/portals/createPortal")
+const modifyPortal = require("./listeners/portals/modifyPortal")
+const linkPortal = require("./listeners/portals/linkPortal")
+const activatePortal = require("./listeners/portals/activatePortal")
+const removePortal = require("./listeners/portals/removePortal")
+const movePortal = require("./listeners/portals/movePortal")
+const enterPortal = require("./listeners/portals/enterPortal")
+
+const createScene = require("./listeners/scenes/createScene")
+const getScene = require("./listeners/scenes/getScene")
+const moveScene = require("./listeners/scenes/moveScene")
+const removeScene = require("./listeners/scenes/removeScene")
+const renameScene = require("./listeners/scenes/renameScene")
+const modifyGrid = require("./listeners/scenes/modifyGrid")
+
+const createBlueprint = require("./listeners/blueprints/createBlueprint")
+const modifyBlueprint = require("./listeners/blueprints/modifyBlueprint")
+const getBlueprint = require("./listeners/blueprints/getBlueprint")
+const moveBlueprint = require("./listeners/blueprints/moveBlueprint")
+const removeBlueprint = require("./listeners/blueprints/removeBlueprint")
+const renameBlueprintFolder = require("./listeners/blueprints/renameBlueprintFolder")
+
+const createJournal = require("./listeners/journals/createJournal")
+const modifyJournal = require("./listeners/journals/modifyJournal")
+const getJournal = require("./listeners/journals/getJournal")
+const moveJournal = require("./listeners/journals/moveJournal")
+const removeJournal = require("./listeners/journals/removeJournal")
+const saveJournal = require("./listeners/journals/saveJournal")
+const renameJournalFolder = require("./listeners/journals/renameJournalFolder")
+
+const ping = require("./listeners/ping/ping")
+const pointer = require("./listeners/ping/pointer")
+
+const createLight = require("./listeners/lights/createLight")
+const pasteLight = require("./listeners/lights/pasteLight")
+const getLight = require("./listeners/lights/getLight")
+const modifyLight = require("./listeners/lights/modifyLight")
+const removeLight = require("./listeners/lights/removeLight")
+const modifyLighting = require("./listeners/lights/modifyLighting")
+
+const getToken = require("./listeners/tokens/getToken")
+const createToken = require("./listeners/tokens/createToken")
+const moveToken = require("./listeners/tokens/moveToken")
+const modifyToken = require("./listeners/tokens/modifyToken")
+const removeToken = require("./listeners/tokens/removeToken")
+const rotateToken = require("./listeners/tokens/rotateToken")
+const rotateTokenLight = require("./listeners/tokens/rotateTokenLight")
+const updateConditions = require("./listeners/tokens/updateConditions")
+const updateVisibility = require("./listeners/tokens/updateVisiblity")
+const lockToken = require("./listeners/tokens/lockToken")
+const updateHealth = require("./listeners/tokens/updateHealth")
+const updateElevation = require("./listeners/tokens/updateElevation")
+
+const createInitiative = require("./listeners/initiatives/createInitiative")
+const modifyInitiative = require("./listeners/initiatives/modifyInitiative")
+const removeInitiative = require("./listeners/initiatives/removeInitiative")
+const resetInitiative = require("./listeners/initiatives/resetInitiatives")
+const getInitiatives = require("./listeners/initiatives/getInitiatives")
+
+const createNote = require("./listeners/notes/createNote")
+const getNote = require("./listeners/notes/getNote")
+const modifyNote = require("./listeners/notes/modifyNote")
+const removeNote = require("./listeners/notes/removeNote")
+const saveNote = require("./listeners/notes/saveNote")
+const toggleTokenLight = require("./listeners/tokens/toggleTokenLight")
+
+const changeImage = require("./listeners/scenes/changeImage")
+
+// Get environment variables
+require("dotenv").config()
+
+// Server configuration (use .env file)
+const port = process.env.PORT
+const interval = process.env.PING_INTERVAL
+const timeout = process.env.PING_TIMEOUT
+const maxBuffer = process.env.MAX_BUFFER
+
+const httpServer = createServer()
+const io = socketIo(httpServer, {
+    maxHttpBufferSize: maxBuffer
 })
+
+// Socket server connection handling
 io.use((socket, next) => {
-    if (socket.handshake.query.token === 'UNITY') next()
-    else next(new Error('Authentication error'));
+    if (socket.handshake.query.token === "UNITY") next()
+    else next(new Error("Authentication error"))
 })
 
-async function startDatabaseAndServer() {
-    networking.startDatabase()
-    server.listen(port, () => {
-    })
-}
-//#endregion
-
-io.on('connection', (socket) => {
-    //#region Data
+io.on("connection", (socket) => {
+    // Stateful data
     let accountInfo = {
-        uid: ObjectId,
-        username: String
+        uid: ObjectId | null,
+        username: String | null
     }
     let sessionInfo = {
-        id: undefined,
-        master: undefined,
-        synced: undefined,
-        scene: undefined
+        id: ObjectId | null,
+        master: ObjectId | null,
+        isMaster: Boolean | null,
+        synced: Boolean | null,
+        scene: ObjectId | null,
+        users: Array | null,
+        background: ObjectId | null
     }
-    //#endregion
 
-    //#region Misc
-    socket.on('disconnect', async () => {
-        try {
-            if (!sessionInfo) return;
-            if (sessionInfo.id && sessionInfo.master) {
-                await session.sync(sessionInfo.id, false)
-                await session.set(sessionInfo.id, undefined)
+    // Listener handling
+    socket.on("disconnect", () => disconnectListener(accountInfo, sessionInfo, io))
+    socket.on("download-image", (imageId, callback) => downloadImage(accountInfo, imageId, callback))
+    socket.on("get-user", (uid, callback) => getUser(accountInfo, uid, callback))
+    socket.on("get-users", (callback) => getUsers(accountInfo, sessionInfo.id, callback))
 
-                io.to(sessionInfo.id.toString()).emit('change-state', false, '')
-            }
+    socket.on("register", (email, name, password, callback) => register(email, name, password, callback))
+    socket.on("sign-in", (uid, email, password, callback) => signIn(accountInfo, ObjectId.isValid(uid) ? ObjectId(uid) : undefined, email, password, callback))
+    socket.on("sign-out", (callback) => signOut(accountInfo, callback))
+    socket.on("change-name", (name, callback) => changeName(accountInfo, name, callback))
 
-            sessionInfo = undefined
-        } catch (e) {
-            console.error(e.message)
-        }
-    })
-    socket.on('download-image', async (imageId, callback) => {
-        try {
-            await networking.downloadFile(ObjectId(imageId)).then((buffer) => {
-                callback(true, buffer)
-            }, (rejected) => {
-                callback(false, rejected)
-            })
-        } catch (e) {
-            console.error(e)
-            callback(false, e.message)
-        }
-    })
-    //#endregion
+    socket.on("validate-licence", (licence, callback) => validateLicense(accountInfo, licence, callback))
+    socket.on("load-licences", (callback) => loadLicences(accountInfo, callback))
+    socket.on("remove-licences", (callback) => removeLicences(accountInfo, callback))
 
-    //#region Accounts
-    socket.on('get-user', async (uid, callback) => {
-        try {
-            const acc = await account.get(ObjectId(uid))
-            callback(true, acc)
-        } catch (e) {
-            console.error(e)
-            callback(false, e.message)
-        }
+    socket.on("create-session", (name, buffer, callback) => createSession(accountInfo, name, buffer, callback))
+    socket.on("join-session", (sessionId, callback) => joinSession(accountInfo, sessionInfo, socket, sessionId, callback))
+    socket.on("leave-session", (callback) => leaveSession(accountInfo, sessionInfo, socket, io, callback))
+    socket.on("set-state", (scene, synced, callback) => setState(accountInfo, sessionInfo.id, scene, synced, io, callback))
+    socket.on("set-scene", (scene, callback) => {
+        if (scene) sessionInfo.scene = ObjectId(scene)
+        callback(true)
     })
-    socket.on('register', async (email, name, password, callback) => {
-        try {
-            await account.register(new userModel({
-                email: email,
-                name: name,
-                password: password,
-                online: false,
-                licences: []
-            }))
+    socket.on("change-landing-page", (buffer, callback) => changeLandingPage(accountInfo, sessionInfo.id, buffer, io, callback))
 
-            callback(true)
-        } catch (e) {
-            console.error(e)
-            callback(false, e.message)
-        }
-    })
-    socket.on('sign-in', async (email, password, uid, callback) => {
-        try {
-            const user = await account.signIn(email, password, uid)
-            accountInfo = {
-                uid: user._id,
-                username: user.name
-            }
-            callback(true, user.name, user._id.toString())
-        } catch (e) {
-            console.error(e)
-            callback(false, e.message)
-        }
-    })
-    socket.on('sign-out', async (callback) => {
-        try {
-            accountInfo = undefined
-            callback(true)
-        } catch (e) {
-            console.error(e)
-            callback(false, e.message)
-        }
-    })
+    socket.on("create-wall", (data, callback) => createWall(accountInfo, sessionInfo.id, sessionInfo.scene, JSON.parse(data), io, callback))
+    socket.on("modify-wall", (data, callback) => modifyWall(accountInfo, sessionInfo.id, sessionInfo.scene, JSON.parse(data), io, callback))
+    socket.on("remove-wall", (id, callback) => removeWall(accountInfo, sessionInfo.id, sessionInfo.scene, id, io, callback))
+    socket.on("modify-grid", (data, callback) => modifyGrid(accountInfo, sessionInfo.id, sessionInfo.scene, JSON.parse(data), io, callback))
 
-    socket.on('validate-licence', async (licenceKey, callback) => {
-        try {
-            if (licenceKey.length != 24)
-            {
-                callback(false, 'License key must be a string of 24 characters')
-                return
-            }
-            const name = await account.validateLicence(ObjectId(licenceKey), accountInfo.uid)
-            callback(true)
-        } catch (e) {
-            console.error(e)
-            callback(false, e.message)
-        }
-    })
-    socket.on('load-licences', async (callback) => {
-        try {
-            const licences = await account.loadLicences(accountInfo.uid)
-            callback(true, licences)
-        } catch (e) {
-            console.error(e)
-            callback(false, e.message)
-        }
-    })
-    socket.on('remove-licences', async (callback) => {
-        try {
-            await account.removeLicences(accountInfo.uid)
-            callback(true)
-        } catch (e) {
-            console.error(e)
-            callback(e.message)
-        }
-    })
-    //#endregion
+    socket.on("create-portal", (position, radius, callback) => createPortal(accountInfo, sessionInfo.id, sessionInfo.scene, position, radius, io, callback))
+    socket.on("modify-portal", (id, data, callback) => modifyPortal(accountInfo, sessionInfo.id, sessionInfo.scene, id, data, io, callback))
+    socket.on("link-portal", (id, link, callback) => linkPortal(accountInfo, sessionInfo.id, sessionInfo.scene, id, link, io, callback))
+    socket.on("activate-portal", (id, active, callback) => activatePortal(accountInfo, sessionInfo.id, sessionInfo.scene, id, active, io, callback))
+    socket.on("remove-portal", (id, callback) => removePortal(accountInfo, sessionInfo.id, sessionInfo.scene, id, io, callback))
+    socket.on("move-portal", (id, position, callback) => movePortal(accountInfo, sessionInfo.id, sessionInfo.scene, id, position, io, callback))
+    socket.on("enter-portal", (tokenId, portalId, callback) => enterPortal(accountInfo, sessionInfo.id, sessionInfo.scene, tokenId, portalId, io, callback))
+    
+    socket.on("get-scene", (sceneId, callback) => getScene.single(accountInfo, ObjectId(sceneId), callback))
+    socket.on("get-scenes", (callback) => getScene.all(accountInfo, sessionInfo.id, callback))
+    socket.on("create-scene", (path, data, buffer, callback) => createScene.scene(accountInfo, sessionInfo.id, path, JSON.parse(data), buffer, callback))
+    socket.on("create-scene-folder", (path, name, callback) => createScene.folder(accountInfo, sessionInfo.id, path, name, callback))
+    socket.on("rename-scene", (sceneId, name, callback) => renameScene.scene(accountInfo, ObjectId(sceneId), name, callback))
+    socket.on("rename-scene-folder", (path, name, callback) => renameScene.folder(accountInfo, sessionInfo.id, path, name, callback))
+    socket.on("remove-scene", (path, sceneId, callback) => removeScene.scene(accountInfo, sessionInfo.id, path, ObjectId(sceneId), io, callback))
+    socket.on("remove-scene-folder", (path, callback) => removeScene.folder(accountInfo, sessionInfo.id, path, io, callback))
+    socket.on("move-scene", (sceneId, oldPath, newPath, callback) => moveScene.scene(accountInfo, sessionInfo.id, ObjectId(sceneId), oldPath, newPath, callback))
+    socket.on("move-scene-folder", (oldPath, newPath, callback) => moveScene.folder(accountInfo, sessionInfo.id, oldPath, newPath, callback))
 
-    //#region Sessions
-    socket.on('create-session', async (name, buffer, callback) => {
-        try {
-            await session.create(accountInfo.uid, new sessionModel({
-                name: name,
-                master: accountInfo.uid,
-                users: [],
-                state: {
-                    synced: false
-                },
-                blueprints: [],
-                scenes: [],
-                background: new ObjectId()
-            }), buffer)
-            callback(true)
-        } catch (e) {
-            console.error(e)
-            callback(e.message)
-        }
-    })
-    socket.on('join-session', async (sessionId, callback) => {
-        try {
-            const data = await session.join(ObjectId(sessionId), socket, accountInfo.username)
-            sessionInfo = {
-                id: data._id,
-                master: data.master.equals(accountInfo.uid),
-                masterId: data.master,
-                synced: data.state.synced,
-                scene: data.state.scene,
-                users: data.users,
-                background: data.background,
-                lightingPresets: data.lightingPresets
-            }
-            callback(true, sessionInfo)
-        } catch (e) {
-            console.error(e)
-            callback(false, e.message)
-        }
-    })
-    socket.on('leave-session', async (callback) => {
-        try {
-            await session.leave(socket, sessionInfo.id, accountInfo.username)
-            if (sessionInfo.master) {
-                await session.sync(sessionInfo.id, false)
-                await session.set(sessionInfo.id, undefined)
-                io.to(sessionInfo.id.toString()).emit('change-state', false, '')
-            }
+    socket.on("get-blueprint", (blueprintId, callback) => getBlueprint.single(accountInfo, ObjectId(blueprintId), callback))
+    socket.on("get-blueprints", (callback) => getBlueprint.all(accountInfo, sessionInfo.id, callback))
+    socket.on("create-blueprint", (path, tokenData, lightingData, imageBuffer, artBuffer, callback) => createBlueprint.blueprint(accountInfo, sessionInfo.id, path, JSON.parse(tokenData), JSON.parse(lightingData), imageBuffer, artBuffer, callback))
+    socket.on("modify-blueprint", (id, tokenData, lightingData, imageBuffer, artBuffer, callback) => modifyBlueprint(accountInfo, sessionInfo.id, ObjectId(id), JSON.parse(tokenData), JSON.parse(lightingData), imageBuffer, artBuffer, callback))
+    socket.on("create-blueprint-folder", (path, name, callback) => createBlueprint.folder(accountInfo, sessionInfo.id, path, name, callback))
+    socket.on("rename-blueprint-folder", (path, name, callback) => renameBlueprintFolder(accountInfo, sessionInfo.id, path, name, callback))
+    socket.on("remove-blueprint", (path, blueprintId, callback) => removeBlueprint.blueprint(accountInfo, sessionInfo.id, path, ObjectId(blueprintId), callback))
+    socket.on("remove-blueprint-folder", (path, callback) => removeBlueprint.folder(accountInfo, sessionInfo.id, path, callback))
+    socket.on("move-blueprint", (blueprintId, oldPath, newPath, callback) => moveBlueprint.blueprint(accountInfo, sessionInfo.id, ObjectId(blueprintId), oldPath, newPath, callback))
+    socket.on("move-blueprint-folder", (oldPath, newPath, callback) => moveBlueprint.folder(accountInfo, sessionInfo.id, oldPath, newPath, callback))
 
-            sessionInfo = undefined
-            callback(true)
-        } catch (e) {
-            console.error(e)
-            callback(false, e.message)
-        }
-    })
-    //#endregion
-
-    //#region Tokens
-    socket.on('get-token', async (id, callback) => {
-        try {
-            const data = await token.get(ObjectId(id))
-            callback(true, data, data._id.toString())
-        } catch (e) {
-            console.error(e)
-            callback(false, e.message)
-        }
+    socket.on("get-journal", (journalId, callback) => getJournal.single(accountInfo, ObjectId(journalId), callback))
+    socket.on("get-journals", (callback) => getJournal.all(accountInfo, sessionInfo.id, callback))
+    socket.on("create-journal", (path, data, callback) => createJournal.journal(accountInfo, sessionInfo.id, path, JSON.parse(data), callback))
+    socket.on("share-journal", (id, data, callback) => modifyJournal.share(accountInfo, sessionInfo.id, id, JSON.parse(data), io, callback))
+    socket.on("modify-journal-text", (id, text, callback) => modifyJournal.modifyText(accountInfo, sessionInfo.id, ObjectId(id), text, io, callback))
+    socket.on("modify-journal-header", (id, header, callback) => modifyJournal.modifyHeader(accountInfo, sessionInfo.id, ObjectId(id), header, io, callback))
+    socket.on("modify-journal-image", (id, buffer, callback) => modifyJournal.modifyImage(accountInfo, sessionInfo.id, ObjectId(id), buffer, io, callback))
+    socket.on("create-journal-folder", (path, name, callback) => createJournal.folder(accountInfo, sessionInfo.id, path, name, callback))
+    socket.on("rename-journal-folder", (path, name, callback) => renameJournalFolder(accountInfo, sessionInfo.id, path, name, callback))
+    socket.on("remove-journal", (path, blueprintId, callback) => removeJournal.journal(accountInfo, sessionInfo.id, path, ObjectId(blueprintId), callback))
+    socket.on("remove-journal-folder", (path, callback) => removeJournal.folder(accountInfo, sessionInfo.id, path, callback))
+    socket.on("move-journal", (blueprintId, oldPath, newPath, callback) => moveJournal.journal(accountInfo, sessionInfo.id, ObjectId(blueprintId), oldPath, newPath, callback))
+    socket.on("move-journal-folder", (oldPath, newPath, callback) => moveJournal.folder(accountInfo, sessionInfo.id, oldPath, newPath, callback))
+    socket.on("save-journal", (id, callback) => saveJournal(accountInfo, sessionInfo.id, id, callback))
+    socket.on("show-journal", (id, callback) => {
+        io.to(sessionInfo.id.toString()).emit("show-journal", id)
+        callback(true)
     })
 
-    socket.on('get-tokens', async (id, callback) => {
-        try {
-            const data = await token.getAll(ObjectId(id))
-            callback(true, data)
-        } catch (e) {
-            console.error(e)
-            callback(false, e.message)
-        }
+    socket.on("ping", (location, strong) => ping(accountInfo, sessionInfo.id, location, strong, io))
+    socket.on("start-pointer", (location) => pointer.start(accountInfo, sessionInfo.id, location, io))
+    socket.on("update-pointer", (location) => pointer.update(accountInfo, sessionInfo.id, location, io))
+    socket.on("stop-pointer", () => pointer.stop(accountInfo, sessionInfo.id, io))
+
+    socket.on("get-light", (id, callback) => getLight(accountInfo, ObjectId(id), callback))
+    socket.on("create-light", (data, info, callback) => createLight.light(accountInfo, sessionInfo.id, sessionInfo.scene, JSON.parse(data), JSON.parse(info), io, callback))
+    socket.on("paste-light", (info, usePreset, callback) => pasteLight(accountInfo, sessionInfo.id, sessionInfo.scene, JSON.parse(info), usePreset, io, callback))
+    socket.on("modify-light", (id, info, data, callback) => modifyLight.light(accountInfo, sessionInfo.id, sessionInfo.scene, ObjectId(id), JSON.parse(info), JSON.parse(data), io, callback))
+    socket.on("move-light", (id, data, callback) => modifyLight.move(accountInfo, sessionInfo.id, sessionInfo.scene, ObjectId(id), JSON.parse(data), io, callback))
+    socket.on("toggle-light", (id, enabled, callback) => modifyLight.toggle(accountInfo, sessionInfo.id, sessionInfo.scene, ObjectId(id), enabled, io, callback))
+    socket.on("remove-light", (id, callback) => removeLight.light(accountInfo, sessionInfo.id, sessionInfo.scene, ObjectId(id), io, callback))
+    socket.on("modify-lighting", (data, callback) => modifyLighting(accountInfo, sessionInfo.id, sessionInfo.scene, JSON.parse(data), io, callback))
+
+    socket.on("create-preset", (data, callback) => createLight.preset(accountInfo, sessionInfo.id, JSON.parse(data), io, callback))
+    socket.on("modify-preset", (id, data, callback) => modifyLight.preset(accountInfo, sessionInfo.id, ObjectId(id), JSON.parse(data), io, callback))
+    socket.on("remove-preset", (id, callback) => removeLight.preset(accountInfo, sessionInfo.id, ObjectId(id), io, callback))
+
+    socket.on("get-initiatives", (callback) => getInitiatives(accountInfo, sessionInfo.scene, callback))
+    socket.on("create-initiative", (data, callback) => createInitiative(accountInfo, sessionInfo.id, sessionInfo.scene, JSON.parse(data), io, callback))
+    socket.on("modify-initiative", (id, data, callback) => modifyInitiative(accountInfo, sessionInfo.id, sessionInfo.scene, id, JSON.parse(data), io, callback))
+    socket.on("remove-initiative", (id, callback) => removeInitiative(accountInfo, sessionInfo.id, sessionInfo.scene, id, io, callback))
+    socket.on("reset-initiatives", (callback) => resetInitiative(accountInfo, sessionInfo.id, sessionInfo.scene, io, callback))
+    socket.on("sort-initiative", (callback) => {
+        io.to(sessionInfo.id.toString()).emit("sort-initiative")
+        callback(true)
     })
 
-    socket.on('create-token', async (json, callback) => {
-        try {
-            if (!sessionInfo.master) throw new Error('Operation not allowed')
-            const data = JSON.parse(json)
-            const tokenId = await token.create(sessionInfo.scene, new tokenModel({
-                name: data.name,
-                type: data.type,
-                permissions: data.permissions,
-                dimensions: data.dimensions,
-                hasVision: data.hasVision,
-                nightVision: data.nightVision,
-                highlighted: data.highlighted,
-                lightRadius: data.lightRadius,
-                lightEffect: data.lightEffect,
-                lightColor: data.lightColor,
-                lightIntensity: data.lightIntensity,
-                flickerFrequency: data.flickerFrequency,
-                flickerAmount: data.flickerAmount,
-                pulseInterval: data.pulseInterval,
-                pulseAmount: data.pulseAmount,
-                image: ObjectId(data.image),
-                position: data.position,
-                enabled: data.enabled,
-                health: 0,
-                elevation: "0 ft",
-                conditions: 0,
-                locked: false,
-                rotation: 0,
-                preset: data.preset
-            }))
-
-            io.to(sessionInfo.id.toString()).emit('create-token', data, tokenId)
-            callback(true)
-        } catch (e) {
-            console.error(e)
-            callback(false, e.message)
-        }
-    })
-    socket.on('move-token', async (id, json, callback) => {
-        try {
-            const data = JSON.parse(json)
-            await token.move(ObjectId(id), data.points[data.points.length - 1])
-            io.to(sessionInfo.id.toString()).emit('move-token', id, json)
-            callback(true)
-        } catch (e) {
-            console.error(e)
-            callback(false, e.message)
-        }
-    })
-    socket.on('modify-token', async (json, image, callback) => {
-        try {
-            const data = JSON.parse(json)
-            const newImage = await token.modify(ObjectId(data.id), new tokenModel({
-                _id: ObjectId(data.id),
-                name: data.name,
-                type: data.type,
-                permissions: data.permissions,
-                dimensions: data.dimensions,
-                hasVision: data.hasVision,
-                nightVision: data.nightVision,
-                highlighted: data.highlighted,
-                lightRadius: data.lightRadius,
-                lightEffect: data.lightEffect,
-                lightColor: data.lightColor,
-                lightIntensity: data.lightIntensity,
-                flickerFrequency: data.flickerFrequency,
-                flickerAmount: data.flickerAmount,
-                pulseInterval: data.pulseInterval,
-                pulseAmount: data.pulseAmount,
-                image: ObjectId(data.image),
-                position: data.position,
-                enabled: data.enabled,
-                health: data.health,
-                elevation: data.elevation,
-                conditions: data.conditions,
-                locked: data.locked,
-                rotation: data.rotation,
-                preset: data.preset
-            }), image)
-
-            data.image = newImage
-            io.to(sessionInfo.id.toString()).emit('modify-token', data.id, data)
-            callback(true, newImage)
-        } catch (e) {
-            console.error(e)
-            callback(false, e.message)
-        }
-    })
-    socket.on('remove-token', async (id, callback) => {
-        try {
-            await token.remove(sessionInfo.scene, ObjectId(id))
-            io.to(sessionInfo.id.toString()).emit('remove-token', id)
-            callback(true)
-        } catch (e) {
-            console.error(e)
-            callback(false, e.message)
-        }
+    socket.on("get-note", (id, callback) => getNote(accountInfo, id, callback))
+    socket.on("create-note", (data, info, callback) => createNote(accountInfo, sessionInfo.id, sessionInfo.scene, JSON.parse(data), JSON.parse(info), io, callback))
+    socket.on("move-note", (id, data, callback) => modifyNote.move(accountInfo, sessionInfo.id, sessionInfo.scene, ObjectId(id), JSON.parse(data), io, callback))
+    socket.on("modify-note-text", (id, text, callback) => modifyNote.modifyText(accountInfo, sessionInfo.id, ObjectId(id), text, io, callback))
+    socket.on("modify-note-header", (id, header, callback) => modifyNote.modifyHeader(accountInfo, sessionInfo.id, ObjectId(id), header, io, callback))
+    socket.on("modify-note-image", (id, buffer, callback) => modifyNote.modifyImage(accountInfo, sessionInfo.id, ObjectId(id), buffer, io, callback))
+    socket.on("set-note-global", (id, isGlobal, callback) => modifyNote.setGlobal(accountInfo, sessionInfo.id, sessionInfo.scene, ObjectId(id), isGlobal, io, callback))
+    socket.on("remove-note", (id, callback) => removeNote(accountInfo, sessionInfo.id, sessionInfo.scene, ObjectId(id), io, callback))
+    socket.on("save-note", (id, callback) => saveNote(accountInfo, sessionInfo.id, id, callback))
+    socket.on("show-note", (id, callback) => {
+        io.to(sessionInfo.id.toString()).emit("show-note", id)
+        callback(true)
     })
 
-    socket.on('update-visibility', async (id, state, callback) => {
-        try {
-            await token.setVisibility(ObjectId(id), state)
-            io.to(sessionInfo.id.toString()).emit('update-visibility', id, state)
-            callback(true)
-        } catch (e) {
-            console.error(e)
-            callback(false, e.message)
-        }
-    })
-    socket.on('update-elevation', async (id, elevation, callback) => {
-        try {
-            await token.setElevation(ObjectId(id), elevation)
-            io.to(sessionInfo.id.toString()).emit('update-elevation', id, elevation)
-            callback(true)
-        } catch (e) {
-            console.error(e)
-            callback(false, e.message)
-        }
-    })
-    socket.on('update-conditions', async (id, conditions, callback) => {
-        try {
-            await token.setConditions(ObjectId(id), conditions)
-            io.to(sessionInfo.id.toString()).emit('update-conditions', id, conditions)
-            callback(true)
-        } catch (e) {
-            console.error(e)
-            callback(false, e.message)
-        }
-    })
-    socket.on('rotate-token', async (id, angle, callback) => {
-        try {
-            await token.setRotation(ObjectId(id), angle)
-            io.to(sessionInfo.id.toString()).emit('rotate-token', id, angle)
-            callback(true)
-        } catch (e) {
-            console.error(e)
-            callback(false, e.message)
-        }
-    })
-    socket.on('lock-token', async (id, state, callback) => {
-        try {
-            await token.lock(ObjectId(id), state)
-            io.to(sessionInfo.id.toString()).emit('lock-token', id, state)
-            callback(true)
-        } catch (e) {
-            console.error(e)
-            callback(false, e.message)
-        }
-    })
-    socket.on('update-health', async (id, health, callback) => {
-        try {
-            await token.setHealth(ObjectId(id), health)
-            io.to(sessionInfo.id.toString()).emit('update-health', id, health)
-            callback(true)
-        } catch (e) {
-            console.error(e)
-            callback(false, e.message)
-        }
-    })
-    //#endregion
-
-    //#region State
-    socket.on('set-scene', async (sceneId, callback) => {
-        try {
-            const scene = await session.set(sessionInfo.id, sceneId ? ObjectId(sceneId) : undefined)
-            io.to(sessionInfo.id.toString()).emit('set-scene', sceneId)
-            callback(true)
-        } catch (e) {
-            console.error(e)
-            callback(false, e.message)
-        }
-    })
-    socket.on('update-scene', (id) => {
-        if (id) sessionInfo.scene = ObjectId(id)
-    })
-    socket.on('change-state', async (callback) => {
-        try {
-            await session.sync(sessionInfo.id, !sessionInfo.synced)
-            sessionInfo.synced = !sessionInfo.synced
-            io.to(sessionInfo.id.toString()).emit('change-state', sessionInfo.synced, sessionInfo.scene)
-            callback(true)
-        } catch (e) {
-            console.error(e)
-            callback(false, e.message)
-        }
-    })
-    //#endregion
-
-    //#region Doors
-    socket.on('toggle-door', async (id, state, callback) => {
-        try {
-            await scene.toggleDoor(sessionInfo.scene, ObjectId(id), state)
-            io.to(sessionInfo.id.toString()).emit('toggle-door', id, state)
-            callback(true)
-        } catch (e) {
-            console.error(e)
-            callback(false, e.message)
-        }
-    })
-    socket.on('modify-door', async (json, callback) => {
-        try {
-            await scene.modifyDoor(sessionInfo.scene, JSON.parse(json))
-            io.to(sessionInfo.id.toString()).emit('modify-door', json)
-            callback(true)
-        } catch (e) {
-            console.error(e)
-            callback(false, e.message)
-        }
-    })
-    //#endregion
-
-    //#region Lights
-    socket.on('create-light', async (json, callback) => {
-        try {
-            const data = await scene.createLight(sessionInfo.scene, JSON.parse(json))
-            io.to(sessionInfo.id.toString()).emit('create-light', data)
-            callback(true)
-        } catch (e) {
-            console.error(e)
-            callback(false, e.message)
-        }
-    })
-    socket.on('modify-light', async (json, callback) => {
-        try {
-            const data = await scene.modifyLight(sessionInfo.scene, JSON.parse(json))
-            io.to(sessionInfo.id.toString()).emit('modify-light', data)
-            callback(true)
-        } catch (e) {
-            console.error(e)
-            callback(false, e.message)
-        }
-    })
-    socket.on('remove-light', async (id, callback) => {
-        try {
-            await scene.removeLight(sessionInfo.scene, ObjectId(id))
-            io.to(sessionInfo.id.toString()).emit('remove-light', id)
-            callback(true)
-        } catch (e) {
-            console.error(e)
-            callback(false, e.message)
-        }
-    })
-    socket.on('create-preset', async (json, callback) => {
-        try {
-            const data = JSON.parse(json)
-
-            const id = await presets.create(sessionInfo.id, new presetModel(data))
-            io.to(sessionInfo.id.toString()).emit('create-preset', id, json)
-            callback(true)
-        } catch (e) {
-            console.error(e)
-            callback(false, e.message)
-        }
-    })
-    socket.on('modify-preset', async (id, json, callback) => {
-        try {
-            const data = JSON.parse(json)
-
-            await presets.modify(ObjectId(id), new presetModel(data))
-            io.to(sessionInfo.id.toString()).emit('modify-preset', id, json)
-            callback(true)
-        } catch (e) {
-            console.error(e)
-            callback(false, e.message)
-        }
-    })
-    socket.on('remove-preset', async (id, callback) => {
-        try {
-            await presets.remove(sessionInfo.id, ObjectId(id))
-            io.to(sessionInfo.id.toString()).emit('remove-preset', id)
-            callback(true)
-        } catch (e) {
-            console.error(e)
-            callback(false, e.message)
-        }
+    socket.on("get-token", (id, callback) => getToken.single(accountInfo, ObjectId(id), callback))
+    socket.on("get-tokens", (callback) => getToken.all(accountInfo, sessionInfo.scene, callback))
+    socket.on("create-token", (tokenData, lightingData, callback) => createToken(accountInfo, sessionInfo.id, sessionInfo.scene, JSON.parse(tokenData), JSON.parse(lightingData), io, callback))
+    socket.on("move-token", (data, callback) => moveToken(accountInfo, sessionInfo.id, JSON.parse(data), io, callback))
+    socket.on("modify-token", (id, tokenData, lightingData, imageBuffer, artBuffer, callback) => modifyToken(accountInfo, sessionInfo.id, ObjectId(id), JSON.parse(tokenData), JSON.parse(lightingData), imageBuffer, artBuffer, io, callback))
+    socket.on("remove-token", (id, callback) => removeToken(accountInfo, sessionInfo.id, sessionInfo.scene, ObjectId(id), io, callback))
+    socket.on("update-conditions", (id, conditions, callback) => updateConditions(accountInfo, sessionInfo.id, ObjectId(id), conditions, io, callback))
+    socket.on("update-visibility", (id, toggle, callback) => updateVisibility(accountInfo, sessionInfo.id, ObjectId(id), toggle, io, callback))
+    socket.on("lock-token", (id, toggle, callback) => lockToken(accountInfo, sessionInfo.id, ObjectId(id), toggle, io, callback))
+    socket.on("toggle-token-light", (id, toggle, callback) => toggleTokenLight(accountInfo, sessionInfo.id, ObjectId(id), toggle, io, callback))
+    socket.on("rotate-token", (id, angle, user, callback) => rotateToken(accountInfo, sessionInfo.id, ObjectId(id), angle, user, io, callback))
+    socket.on("rotate-token-light", (id, angle, user, callback) => rotateTokenLight(accountInfo, sessionInfo.id, ObjectId(id), angle, user, io, callback))
+    socket.on("update-health", (id, value, callback) => updateHealth(accountInfo, sessionInfo.id, ObjectId(id), value, io, callback))
+    socket.on("update-elevation", (id, value, callback) => updateElevation(accountInfo, sessionInfo.id, ObjectId(id), value, io, callback))
+    socket.on("show-image", (id, uid, callback) => {
+        io.to(sessionInfo.id.toString()).emit("show-image", id, uid)
+        callback(true)
     })
 
-    socket.on('load-preset', async (id, callback) => {
-        try {
-            const data = await presets.load(ObjectId(id))
-            callback(true, data)
-        } catch (e) {
-            console.error(e)
-            callback(false, e.message)
-        }
-    })
-    //#endregion
+    socket.on("change-scene-image", (buffer, callback) => changeImage(accountInfo, sessionInfo.id, sessionInfo.scene, buffer, io, callback))
 
-    //#region Tools
-    socket.on('ping', (position, strong) => {
-        io.to(sessionInfo.id.toString()).emit('ping', position, strong)
-    })
-
-    socket.on('start-pointer', (position, id) => {
-        socket.to(sessionInfo.id.toString()).emit('start-pointer', position, id)
-    })
-
-    socket.on('update-pointer', (position, id) => {
-        socket.to(sessionInfo.id.toString()).emit('update-pointer', position, id)
-    })
-
-    socket.on('end-pointer', (id) => {
-        socket.to(sessionInfo.id.toString()).emit('end-pointer', id)
-    })
-
-    socket.on('modify-initiatives', async (json, callback) => {
-        try {
-            if (!json) {
-                await scene.setInitiatives(sessionInfo.scene, null)
-            } else {
-                let list = []
-                for (let i = 0; i < json.length; i++) {
-                    const element = json[i];
-                    list.push(JSON.parse(element))
-                }
-                await scene.setInitiatives(sessionInfo.scene, list)
-            }
-            io.to(sessionInfo.id.toString()).emit('modify-initiatives', json)
-            callback(true)
-        } catch (e) {
-            console.error(e)
-            callback(false, e.message)
-        }
-    })
-    //#endregion
-
-    //#region Scenes
-    socket.on('get-scene', async (id, callback) => {
-        try {
-            const data = await scene.get(ObjectId(id))
-            callback(true, data, id)
-        } catch (e) {
-            console.error(e)
-            callback(false, e.message)
-        }
-    })
-    socket.on('get-scenes', async (callback) => {
-        try {
-            const result = await scene.getAll(sessionInfo.id)
-            callback(true, result)
-        } catch (e) {
-            console.error(e)
-            callback(false, e.message)
-        }
-    })
-    socket.on('upload-scene', async (path, json, image, callback) => {
-        try {
-            const data = JSON.parse(json)
-
-            const id = await scene.create(sessionInfo.id, path, new sceneModel({
-                info: {
-                    image: new ObjectId(),
-                    name: data.info.name,
-                    nightStrength: data.info.nightStrength
-                },
-                darkness: data.darkness,
-                grid: data.grid,
-                walls: data.walls,
-                tokens: data.tokens,
-                initiative: data.initiative
-            }), image)
-            callback(true, id)
-        } catch (e) {
-            console.error(e)
-            callback(false, e.message)
-        }
-    })
-    socket.on('remove-scene', async (id, path, callback) => {
-        try {
-            const requireUpdate = await scene.remove(sessionInfo.id, path, ObjectId(id))
-            if (requireUpdate) io.to(sessionInfo.id.toString()).emit('change-state', false, "")
-            callback(true)
-        } catch (e) {
-            console.error(e)
-            callback(false, e.message)
-        }
-    })
-    socket.on('modify-scene', async (id, json, callback) => {
-        try {
-            const data = JSON.parse(json)
-
-            await scene.modify(sessionInfo.id, ObjectId(id), new sceneModel({
-                info: data.info,
-                darkness: data.darkness,
-                grid: data.grid,
-                walls: data.walls,
-                tokens: data.tokens,
-                initiative: data.initiative
-            }))
-            callback(true)
-            io.to(sessionInfo.id.toString()).emit('set-scene', sessionInfo.scene)
-        } catch (e) {
-            console.error(e)
-            callback(false, e.message)
-        }
-    })
-    socket.on('rename-scene', async (id, name, callback) => {
-        try {
-            await scene.rename(ObjectId(id), name)
-            callback(true)
-        } catch (e) {
-            console.error(e)
-            callback(false, e.message)
-        }
-    })
-    socket.on('move-scene', async (id, oldPath, newPath, callback) => {
-        try {
-            await scene.move(sessionInfo.id, ObjectId(id), oldPath, newPath)
-            callback(true)
-        } catch (e) {
-            console.error(e)
-            callback(false, e.message)
-        }
-    })
-
-    socket.on('create-scene-folder', async (path, name, callback) => {
-        try {
-            const id = await scene.createFolder(sessionInfo.id, path, name)
-            callback(true, id)
-        } catch (e) {
-            console.error(e)
-            callback(false, e.message)
-        }
-    })
-    socket.on('remove-scene-folder', async (path, callback) => {
-        try {
-            const requireUpdate = await scene.removeFolder(sessionInfo.id, path)
-            if (requireUpdate) io.to(sessionInfo.id.toString()).emit('change-state', false)
-
-            callback(true, requireUpdate)
-        } catch (e) {
-            console.error(e)
-            callback(false, e.message)
-        }
-    })
-    socket.on('rename-scene-folder', async (path, name, callback) => {
-        try {
-            await scene.renameFolder(sessionInfo.id, path, name)
-            callback(true)
-        } catch (e) {
-            console.error(e)
-            callback(false, e.message)
-        }
-    })
-    socket.on('move-scene-folder', async (oldPath, newPath, callback) => {
-        try {
-            await scene.moveFolder(sessionInfo.id, oldPath, newPath)
-            callback(true)
-        } catch (e) {
-            console.error(e)
-            callback(false, e.message)
-        }
-    })
-    //#endregion
-
-    //#region Blueprints
-    socket.on('get-blueprint', async (id, callback) => {
-        try {
-            const bp = await blueprint.get(ObjectId(id))
-            callback(true, bp)
-        } catch (e) {
-            console.error(e)
-            callback(false, e.message)
-        }
-    })
-    socket.on('get-blueprints', async (callback) => {
-        try {
-            const result = await blueprint.getAll(sessionInfo.id)
-            callback(true, result)
-        } catch (e) {
-            console.error(e)
-            callback(false, e.message)
-        }
-    })
-    socket.on('create-blueprint', async (path, json, image, callback) => {
-        try {
-            const data = JSON.parse(json)
-            const result = await blueprint.create(sessionInfo.id, path, new blueprintModel({
-                name: data.name,
-                type: data.type,
-                permissions: data.permissions,
-                dimensions: data.dimensions,
-                hasVision: data.hasVision,
-                nightVision: data.nightVision,
-                highlighted: data.highlighted,
-                lightRadius: data.lightRadius,
-                lightEffect: data.lightEffect,
-                lightColor: data.lightColor,
-                lightIntensity: data.lightIntensity,
-                flickerFrequency: data.flickerFrequency,
-                flickerAmount: data.flickerAmount,
-                pulseInterval: data.pulseInterval,
-                pulseAmount: data.pulseAmount,
-                image: new ObjectId(),
-                preset: data.preset
-            }), image)
-            callback(true, result)
-        } catch (e) {
-            console.error(e)
-            callback(false, e.message)
-        }
-    })
-    socket.on('remove-blueprint', async (id, path, callback) => {
-        try {
-            await blueprint.remove(sessionInfo.id, path, ObjectId(id))
-            callback(true)
-        } catch (e) {
-            console.error(e)
-            callback(false, e.message)
-        }
-    })
-    socket.on('modify-blueprint', async (id, json, image, callback) => {
-        try {
-            const data = JSON.parse(json)
-            const bp = await blueprint.modify(ObjectId(id), new blueprintModel(data), image)
-            callback(true, bp)
-        } catch (e) {
-            console.error(e)
-            callback(false, e.message)
-        }
-    })
-    socket.on('set-permissions', async (blueprintId, json, callback) => {
-        try {
-            let list = []
-            for (let i = 0; i < json.length; i++) {
-                const element = JSON.parse(json[i]);
-                list.push({
-                    user: ObjectId(element.user),
-                    permission: element.permission
-                })
-            }
-            await blueprint.setPermissions(ObjectId(blueprintId), list)
-            callback(true)
-        } catch (e) {
-            console.error(e)
-            callback(false, e.message)
-        }
-    })
-    socket.on('refresh-permissions', async (blueprintId, callback) => {
-        try {
-            const bp = await blueprint.refreshPermissions(sessionInfo.id, ObjectId(blueprintId))
-            callback(true, bp)
-        } catch (e) {
-            console.error(e)
-            callback(false, e.message)
-        }
-    })
-    socket.on('move-blueprint', async (id, oldPath, newPath, callback) => {
-        try {
-            await blueprint.move(sessionInfo.id, ObjectId(id), oldPath, newPath)
-            callback(true)
-        } catch (e) {
-            console.error(e)
-            callback(false, e.message)
-        }
-    })
-
-    socket.on('create-blueprint-folder', async (path, name, callback) => {
-        try {
-            const id = await blueprint.createFolder(sessionInfo.id, path, name)
-            callback(true, id)
-        } catch (e) {
-            console.error(e)
-            callback(false, e.message)
-        }
-    })
-    socket.on('remove-blueprint-folder', async (path, callback) => {
-        try {
-            await blueprint.removeFolder(sessionInfo.id, path)
-            callback(true)
-        } catch (e) {
-            console.error(e)
-            callback(false, e.message)
-        }
-    })
-    socket.on('rename-blueprint-folder', async (path, name, callback) => {
-        try {
-            await blueprint.renameFolder(sessionInfo.id, path, name)
-            callback(true)
-        } catch (e) {
-            console.error(e)
-            callback(false, e.message)
-        }
-    })
-    socket.on('move-blueprint-folder', async (oldPath, newPath, callback) => {
-        try {
-            await blueprint.moveFolder(sessionInfo.id, oldPath, newPath)
-            callback(true)
-        } catch (e) {
-            console.error(e)
-            callback(false, e.message)
-        }
-    })
-    //#endregion
-
-    //#region Notes
-    socket.on('get-note', async (id, callback) => {
-        try {
-            const data = await notes.get(ObjectId(id))
-            callback(true, data, data._id.toString())
-        } catch (e) {
-            console.error(e)
-            callback(false, e.message)
-        }
-    })
-
-    socket.on('get-notes', async (id, callback) => {
-        try {
-            const data = await notes.getAll(ObjectId(id))
-            callback(true, data)
-        } catch (e) {
-            console.error(e)
-            callback(false, e.message)
-        }
-    })
-    socket.on('create-note', async (json, callback) => {
-        try {
-            const data = JSON.parse(json)
-            data.owner = accountInfo.uid
-
-            const id = await notes.create(sessionInfo.scene, new noteModel({
-                owner: data.owner,
-                text: data.text,
-                image: undefined,
-                position: data.position,
-                header: data.header,
-                isPublic: data.isPublic
-            }))
-
-            io.to(sessionInfo.id.toString()).emit('create-note', data, id)
-            callback(true)
-        } catch (e) {
-            console.error(e)
-            callback(false, e.message)
-        }
-    })
-    socket.on('modify-note-text', async (id, text, callback) => {
-        try {
-            await notes.modifyText(ObjectId(id), text)
-            io.to(sessionInfo.id.toString()).emit('modify-note-text', id, text)
-            callback(true)
-        } catch (e) {
-            console.error(e)
-            callback(false, e.message)
-        }
-    })
-    socket.on('modify-note-header', async (id, text, callback) => {
-        try {
-            await notes.modifyHeader(ObjectId(id), text)
-            io.to(sessionInfo.id.toString()).emit('modify-note-header', id, text)
-            callback(true)
-        } catch (e) {
-            console.error(e)
-            callback(false, e.message)
-        }
-    })
-    socket.on('modify-note-image', async (id, buffer, callback) => {
-        try {
-            const newImage = await notes.modifyImage(ObjectId(id), buffer)
-            io.to(sessionInfo.id.toString()).emit('modify-note-image', id, newImage)
-            callback(true)
-        } catch (e) {
-            console.error(e)
-            callback(false, e.message)
-        }
-    })
-    socket.on('remove-note', async (id, callback) => {
-        try {
-            await notes.remove(sessionInfo.scene, ObjectId(id))
-            io.to(sessionInfo.id.toString()).emit('remove-note', id)
-            callback(true)
-        } catch (e) {
-            console.error(e)
-            callback(false, e.message)
-        }
-    })
-    socket.on('move-note', async (id, position, callback) => {
-        try {
-            await notes.move(ObjectId(id), JSON.parse(position))
-            io.to(sessionInfo.id.toString()).emit('move-note', id, position)
-            callback(true)
-        } catch (e) {
-            console.error(e)
-            callback(false, e.message)
-        }
-    })
-    socket.on('set-note-state', async (id, isPublic, callback) => {
-        try {
-            await notes.setPublic(ObjectId(id), isPublic)
-            io.to(sessionInfo.id.toString()).emit('set-note-state', id, isPublic)
-            callback(true)
-        } catch (e) {
-            console.error(e)
-            callback(false, e.message)
-        }
-    })
-    socket.on('show-note', async (id, callback) => {
-        try {
-            socket.to(sessionInfo.id.toString()).emit('show-note', id)
-            callback(true)
-        } catch (e) {
-            console.error(e)
-            callback(false, e.message)
-        }
-    })
-    //#endregion
-
-    //#region Journals
-    socket.on('get-journal', async (id, callback) => {
-        try {
-            const data = await journals.get(ObjectId(id))
-            callback(true, data)
-        } catch (e) {
-            console.error(e)
-            callback(false, e.message)
-        }
-    })
-    socket.on('get-journals', async (callback) => {
-        try {
-            const result = await journals.getAll(sessionInfo.id, accountInfo.uid)
-            callback(true, result)
-        } catch (e) {
-            console.error(e)
-            callback(false, e.message)
-        }
-    })
-    socket.on('create-journal', async (path, json, callback) => {
-        try {
-            const data = JSON.parse(json)
-            data.owner = accountInfo.uid
-
-            const result = await journals.create(sessionInfo.id, path, new journalModel({
-                owner: data.owner,
-                header: data.header,
-                text: data.text,
-                image: undefined,
-                collaborators: data.collaborators
-            }))
-            callback(true, result)
-        } catch (e) {
-            console.error(e)
-            callback(false, e.message)
-        }
-    })
-    socket.on('remove-journal', async (id, path, callback) => {
-        try {
-            await journals.remove(sessionInfo.id, path, accountInfo.uid, ObjectId(id))
-            io.to(sessionInfo.id.toString()).emit('remove-journal', id)
-            callback(true)
-        } catch (e) {
-            console.error(e)
-            callback(false, e.message)
-        }
-    })
-    socket.on('modify-journal-text', async (id, text, callback) => {
-        try {
-            await journals.modifyText(ObjectId(id), text)
-            io.to(sessionInfo.id.toString()).emit('modify-journal-text', id, text)
-            callback(true)
-        } catch (e) {
-            console.error(e)
-            callback(false, e.message)
-        }
-    })
-    socket.on('modify-journal-header', async (id, text, callback) => {
-        try {
-            await journals.modifyHeader(ObjectId(id), text)
-            io.to(sessionInfo.id.toString()).emit('modify-journal-header', id, text)
-            callback(true)
-        } catch (e) {
-            console.error(e)
-            callback(false, e.message)
-        }
-    })
-    socket.on('modify-journal-image', async (id, buffer, callback) => {
-        try {
-            const newImage = await journals.modifyImage(ObjectId(id), buffer)
-            io.to(sessionInfo.id.toString()).emit('modify-journal-image', id, newImage)
-            callback(true)
-        } catch (e) {
-            console.error(e)
-            callback(false, e.message)
-        }
-    })
-    socket.on('show-journal', async (data, callback) => {
-        try {
-            socket.to(sessionInfo.id.toString()).emit('show-journal', data)
-            callback(true)
-        } catch (e) {
-            console.error(e)
-            callback(false, e.message)
-        }
-    })
-    socket.on('set-collaborators', async (journalId, json, callback) => {
-        try {
-            let list = []
-            for (let i = 0; i < json.length; i++) {
-                const element = JSON.parse(json[i]);
-                list.push({
-                    user: ObjectId(element.user),
-                    isCollaborator: element.isCollaborator
-                })
-            }
-            await journals.setCollaborators(ObjectId(journalId), list, sessionInfo.id)
-            socket.to(sessionInfo.id.toString()).emit('set-collaborators', journalId, json)
-            callback(true)
-        } catch (e) {
-            console.error(e)
-            callback(false, e.message)
-        }
-    })
-    socket.on('refresh-collaborators', async (blueprintId, callback) => {
-        try {
-            const bp = await journals.refreshCollaborators(sessionInfo.id, ObjectId(blueprintId))
-            callback(true, bp)
-        } catch (e) {
-            console.error(e)
-            callback(false, e.message)
-        }
-    })
-    socket.on('move-journal', async (id, oldPath, newPath, callback) => {
-        try {
-            await journals.move(sessionInfo.id, ObjectId(id), oldPath, newPath)
-            callback(true)
-        } catch (e) {
-            console.error(e)
-            callback(false, e.message)
-        }
-    })
-
-    socket.on('create-journal-folder', async (path, name, callback) => {
-        try {
-            const id = await journals.createFolder(sessionInfo.id, path, accountInfo.uid, name)
-            callback(true, id)
-        } catch (e) {
-            console.error(e)
-            callback(false, e.message)
-        }
-    })
-    socket.on('remove-journal-folder', async (path, callback) => {
-        try {
-            await journals.removeFolder(sessionInfo.id, path, accountInfo.uid)
-            callback(true)
-        } catch (e) {
-            console.error(e)
-            callback(false, e.message)
-        }
-    })
-    socket.on('rename-journal-folder', async (path, name, callback) => {
-        try {
-            await journals.renameFolder(sessionInfo.id, path, accountInfo.uid, name)
-            callback(true)
-        } catch (e) {
-            console.error(e)
-            callback(false, e.message)
-        }
-    })
-    socket.on('move-journal-folder', async (oldPath, newPath, callback) => {
-        try {
-            await journals.moveFolder(sessionInfo.id, oldPath, newPath, accountInfo.uid)
-            callback(true)
-        } catch (e) {
-            console.error(e)
-            callback(false, e.message)
-        }
-    })
-    //#endregion
 })
 
-startDatabaseAndServer()
+// Start everything
+async function main() {
+    try {
+        await networking.startDatabase()
+        httpServer.listen(port, console.log("Server listening on port", port))
+    } catch (error) {
+        console.error("Failed to start server", error)
+    }
+}
+main()

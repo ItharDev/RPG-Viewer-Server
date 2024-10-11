@@ -4,6 +4,93 @@
 
 RPG Viewer's official backend server
 
-## Releases
+# TODO
+- Logging levels
+- Cleanup modules
+- Documentation
+- Docker configuration
+    - compose
+    - nvmrc
+- Fix schema names
 
-![Latest](https://img.shields.io/github/v/release/ItharDev/RPG-Viewer-Server?label=Latest)
+## Events
+- [x] Download image
+- [x] Disconnect
+- [x] Accounts
+  - [x] Fetch
+  - [x] Register
+  - [x] Sign in
+  - [x] Sign out
+- [x] Licences
+  - [x] Validate
+  - [x] Fetch
+  - [x] Remove
+- [x] Sessions
+  - [x] Create
+  - [x] Join
+  - [x] Leave
+- [ ] Tokens
+  - [ ] Fetch (single & multiple)
+  - [ ] Create
+  - [ ] Move
+  - [ ] Modify
+  - [ ] Remove
+  - [ ] Visibility
+  - [ ] Elevation 
+  - [ ] Conditions
+  - [ ] Rotation
+  - [ ] Locking
+  - [ ] Health
+- [x] State
+- [x] Walls
+  - [x] Create
+  - [x] Modify
+  - [x] Remove
+- [ ] Lighting
+  - [ ] Create
+  - [ ] Modify
+  - [ ] Remove
+  - [ ] Config settings
+- [ ] Presets
+  - [ ] Create
+  - [ ] Modify
+  - [ ] Remove
+  - [ ] Fetch (single & multiple)
+- [x] Ping
+  - [x] Ping
+  - [x] Start pointer
+  - [x] Update pointer
+  - [x] Stop pointer
+- [ ] Initiative
+- [x] Scenes
+  - [x] Fetch (single & multiple)
+  - [x] Create (scene & folder)
+  - [x] Rename (scene & folder)
+  - [x] Remove (scene & folder)
+  - [x] Move (scene & folder)
+- [ ] Blueprints
+  - [ ] Fetch (single & multiple)
+  - [ ] Create (blueprint & folder)
+  - [ ] Modify blueprint
+  - [ ] Rename folder
+  - [ ] Remove (blueprint & folder)
+  - [ ] Move (blueprint & folder)
+  - [ ] Update permissions
+  - [ ] Refresh permissions
+- [ ] Notes
+  - [ ] Fetch (single & multiple)
+  - [ ] Create
+  - [ ] Modify
+  - [ ] Remove
+  - [ ] Move
+  - [ ] Set as public / private
+  - [ ] Show to others
+- [ ] Journals
+  - [ ] Fetch (single & multiple)
+  - [ ] Create (journal & folder)
+  - [ ] Modify journal
+  - [ ] Rename folder
+  - [ ] Remove (journal & folder)
+  - [ ] Move (journal & folder)
+  - [ ] Update collaborators
+  - [ ] Refresh collaborators

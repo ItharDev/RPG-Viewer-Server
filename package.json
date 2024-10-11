@@ -5,15 +5,22 @@
   "main": "server.js",
   "scripts": {
     "start": "set DEBUG=*,-socket.io-parser,-engine:socket,-engine:ws,-socket.io:socket, node ./src/server.js && node ./src/server.js",
-    "dev": "set DEBUG=*,-socket.io-parser,-engine:socket,-engine:ws,-socket.io:socket, node ./dev/server.js && node ./dev/server.js"
+    "dev": "set DEBUG=-*&& node ./src/server.js"
   },
   "author": "Ithar",
   "license": "ISC",
   "dependencies": {
     "bcrypt": "^5.1.0",
     "debug": "^4.3.4",
+    "dotenv": "^16.0.3",
     "mongodb": "^4.10.0",
     "mongoose": "^6.7.2",
     "socket.io": "^4.5.2"
+  },
+  "devDependencies": {
+    "eslint": "^8.5.0",
+    "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-plugin-import": "^2.25.3",
+    "eslint-plugin-prettier": "^4.0.0"
   }
 }

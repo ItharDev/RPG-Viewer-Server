@@ -1,12 +1,13 @@
-const { sceneModel, noteModel } = require('../schemas')
-const { ObjectId } = require('mongodb')
-const { connect } = require('mongoose')
-const networking = require('./networking')
+const { sceneModel, noteModel, sessionModel, journalModel } = require("../schemas")
+const { ObjectId } = require("mongodb")
+const { connect } = require("mongoose")
+const networking = require("./networking")
+const getFolder = require("./getFolder")
 
 async function prepareConnection() {
     return new Promise((resolve, reject) => {
         if (global.databaseConnected !== true) {
-            connect('mongodb://127.0.0.1:27017/rpg-viewer').then((db) => {
+            connect("mongodb://127.0.0.1:27017/rpg-viewer-dev").then((db) => {
                 global.databaseConnected = true
                 db.connection.once("error", (err) => {
                     console.error("Mongoose error:", err)
@@ -25,78 +26,107 @@ async function prepareConnection() {
 }
 
 module.exports = {
+    /**
+     * Get-note handler
+     * @param {ObjectId} noteId
+     * @returns {Promise<noteModel>}
+    */
     get: async function (noteId) {
         const note = await noteModel.findById(noteId).exec()
-        if (note) return note
-        else throw new Error('Invalid note id')
+        if (!note) throw new Error("Invalid note id")
+
+        return note
     },
 
-    getAll: async function (sceneId) {
-        const scene = await sceneModel.findById(sceneId).exec()
-        if (scene) {
-            let notes = []
-            for (let i = 0; i < scene.notes.length; i++) {
-                const element = scene.notes[i];
-                const note = await noteModel.findById(element).exec()
-                notes.push(note)
-            }
-
-            return notes
-        } else throw new Error('Invalid scene id')
-    },
-
-    create: async function (sceneId, data) {
+    /**
+     * Create-note handler
+     * @param {ObjectId} sceneId
+     * @param {noteModel} data
+     * @param {{}} info
+     * @returns {Promise<string>}
+    */
+    create: async function (sceneId, data, info) {
         await prepareConnection()
 
         const note = await noteModel.create(data)
-        if (note) {
-            const update = await sceneModel.findByIdAndUpdate(sceneId, { $addToSet: { notes: note._id } }).exec()
-            if (update) return note._id
-            else throw new Error('Failed to update directory')
-        } else throw new Error('Failed to create note')
+        if (!note) throw new Error("Failed to create note")
+
+        const update = await sceneModel.findByIdAndUpdate(sceneId, { $set: { [`notes.${note.id}`]: info } }).exec()
+        if (!update) throw new Error("Failed to update directory")
+
+        return note.id
     },
 
+    /**
+     * Remove-note handler
+     * @param {ObjectId} sceneId
+     * @param {ObjectId} noteId
+     * @returns {Promise<void>}
+    */
     remove: async function (sceneId, noteId) {
         return new Promise(async (resolve, reject) => {
             await prepareConnection()
 
+            const update = sceneModel.findByIdAndUpdate(sceneId, { $unset: { [`notes.${noteId.toString()}`]: "" } }).exec()
+            if (!update) reject("Failed to update directory")
+
             const note = await noteModel.findByIdAndDelete(noteId).exec()
-            if (note) {
-                const update = await sceneModel.findByIdAndUpdate(sceneId, { $pull: { notes: note._id } }).exec()
-                if (update) {
-                    if (note.image) await networking.modifyFile(note.image, -1).then((resolved) => {
-                        resolve()
-                    }, (rejected) => {
-                        reject(rejected)
-                    })
-                    else resolve()
-                }
-                else reject('Failed to update directory')
-            } else reject('Failed to remove note')
+            if (!note) reject("Failed to remove note")
+
+            if (note.image) await networking.modifyFile(note.image, -1).then(null, (rejected) => {
+                reject(rejected)
+            })
+
+            resolve()
         })
     },
 
-    move: async function (noteId, position) {
+    /**
+     * Move-note handler
+     * @param {ObjectId} sceneId
+     * @param {ObjectId} noteId
+     * @param {{}} data
+     * @returns {Promise<void>}
+    */
+    move: async function (sceneId, noteId, data) {
         await prepareConnection()
 
-        const update = await noteModel.findByIdAndUpdate(noteId, { $set: { 'position': position } }).exec()
-        if (!update) throw new Error('Failed to update note position')
+        const update = sceneModel.findByIdAndUpdate(sceneId, { $set: { [`notes.${noteId}`]: data } }).exec()
+        if (!update) throw new Error("Invalid scene id")
     },
 
+    /**
+     * Modify-note-text handler
+     * @param {ObjectId} noteId
+     * @param {string} text
+     * @returns {Promise<void>}
+    */
     modifyText: async function (noteId, text) {
         await prepareConnection()
 
-        const update = await noteModel.findByIdAndUpdate(noteId, { $set: { 'text': text } }).exec()
-        if (!update) throw new Error('Failed to modify note')
+        const update = await noteModel.findByIdAndUpdate(noteId, { $set: { "text": text } }).exec()
+        if (!update) throw new Error("Failed to modify note")
     },
 
+    /**
+     * Modify-note-header handler
+     * @param {ObjectId} noteId
+     * @param {string} text
+     * @returns {Promise<void>}
+    */
     modifyHeader: async function (noteId, text) {
         await prepareConnection()
 
-        const update = await noteModel.findByIdAndUpdate(noteId, { $set: { 'header': text } }).exec()
-        if (!update) throw new Error('Failed to modify note')
+        const update = await noteModel.findByIdAndUpdate(noteId, { $set: { "header": text } }).exec()
+        if (!update) throw new Error("Failed to modify note")
     },
 
+    /**
+     * Modify-note-image handler
+     * @param {ObjectId} noteId
+     * @param {Buffer} buffer
+     * @returns {Promise<string>}
+    */
     modifyImage: async function (noteId, buffer) {
         return new Promise(async (resolve, reject) => {
             await prepareConnection()
@@ -110,7 +140,8 @@ module.exports = {
             if (buffer) {
                 await networking.uploadFile(id, buffer).then(async (resolved) => {
                     const update = await noteModel.findByIdAndUpdate(noteId, { $set: { image: id } }).exec()
-                    if (!update) reject('Failed to modify note')
+                    if (!update) reject("Failed to modify note")
+
                     resolve(id)
                 }, (rejected) => {
                     reject(rejected)
@@ -118,16 +149,54 @@ module.exports = {
             }
             else {
                 const update = await noteModel.findByIdAndUpdate(noteId, { $set: { image: id } }).exec()
-                if (!update) reject('Failed to modify note')
+                if (!update) reject("Failed to modify note")
+
                 resolve(id)
             }
         })
     },
 
-    setPublic: async function (noteId, isPublic) {
+    /**
+     * Set-note-global handler
+     * @param {ObjectId} sceneId
+     * @param {ObjectId} noteId
+     * @param {boolean} isGlobal
+     * @returns {Promise<void>}
+    */
+    setGlobal: async function (sceneId, noteId, isGlobal) {
         await prepareConnection()
 
-        const update = await noteModel.findByIdAndUpdate(noteId, { $set: { 'isPublic': isPublic } }).exec()
-        if (!update) throw new Error('Failed to update visibility')
+        const update = sceneModel.findByIdAndUpdate(sceneId, { $set: { [`notes.${noteId}.global`]: isGlobal } }).exec()
+        if (!update) throw new Error("Invalid scene id")
+    },
+
+    /**
+     * Save-note handler
+     * @param {ObjectId} sessionId
+     * @param {ObjectId} noteId
+     * @param {string} accountId
+     * @returns {Promise<string>}
+    */
+    saveNote: async function (sessionId, noteId, accountId) {
+        await prepareConnection()
+
+        const session = await sessionModel.findById(sessionId).exec()
+        if (!session) throw new Error("Invalid session id")
+
+        const originalNote = await noteModel.findById(noteId).exec()
+        if (!originalNote) throw new Error("Invalid note id")
+
+        const journalData = {
+            owner: ObjectId(accountId),
+            header: originalNote.header,
+            text: originalNote.text,
+            image: originalNote.image,
+            collaborators: []
+        }
+        const newJournal = await journalModel.create(journalData)
+
+        await sessionModel.findByIdAndUpdate(sessionId, { $addToSet: { [`journals.${accountId}.contents`]: newJournal._id } }).exec()
+
+        return newJournal.id
     },
 }
