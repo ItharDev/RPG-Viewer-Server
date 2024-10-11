@@ -157,7 +157,8 @@ const sceneModel = model("scenes", new Schema({
         link: ObjectId,
         radius: Number,
         continuous: Boolean,
-        active: Boolean
+        active: Boolean,
+        visible: Boolean,
     }),
     tokens: Array(ObjectId),
     initiatives: {},

@@ -40,7 +40,8 @@ module.exports = {
             link: null,
             radius: radius,
             continuous: false,
-            active: false
+            active: false,
+            visible: true
         }
 
         const create = await sceneModel.findByIdAndUpdate(scene, { $addToSet: { portals: data } }).exec()
