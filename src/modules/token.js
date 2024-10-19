@@ -133,7 +133,7 @@ module.exports = {
     },
 
     /**
-     * Modify-blueprint handler
+     * Modify-token handler
      * @param {ObjectId} sessionId
      * @param {ObjectId} id
      * @param {{}} data

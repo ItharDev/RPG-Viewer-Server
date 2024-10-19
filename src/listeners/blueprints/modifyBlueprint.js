@@ -10,13 +10,15 @@ const { modify } = require("../../modules/blueprint")
  * @param {{}} lightingData
  * @param {Buffer} imageBuffer
  * @param {Buffer} artBuffer
+ * @param {Server} socketServer
  * @param {() => {}} callback
 */
-module.exports = async (accountInfo, sessionId, id, tokenData, lightingData, imageBuffer, artBuffer, callback) => {
+module.exports = async (accountInfo, sessionId, id, tokenData, lightingData, imageBuffer, artBuffer, socketServer, callback) => {
     console.debug(`[ ${accountInfo.username} (${accountInfo.uid}) ]`, "Package: modify-blueprint")
     try {
         const image = await modify(sessionId, id, tokenData, lightingData, imageBuffer, artBuffer)
         callback(true, image.image, image.art)
+        socketServer.to(sessionId.toString()).emit("modify-blueprint", id)
     } catch (error) {
         console.error("Failed to modify blueprint", error)
         callback(false, error.message)
