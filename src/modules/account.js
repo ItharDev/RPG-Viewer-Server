@@ -88,7 +88,7 @@ module.exports = {
 
         const user = await userModel.findOne({ email: email }).exec()
         if (!user) throw new Error("Invalid email address")
-	
+
         const match = await bcrypt.compare(password, user.password)
         if (!match) throw new Error("Invalid password")
 
@@ -152,7 +152,7 @@ module.exports = {
         let licences = []
         for (const key of user.licences) {
             const session = await sessionModel.findById(key)
-            if (session) licences.push({ id: key, name: session.name })
+            if (session) licences.push({ id: key, name: session.name, landingPage: session.background })
             else await userModel.findByIdAndUpdate(uid, { $pull: { licences: key } }).exec()
         }
 

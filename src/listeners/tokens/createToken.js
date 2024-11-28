@@ -25,6 +25,7 @@ module.exports = async (accountInfo, sessionId, sceneId, tokenData, lightingData
         const model = new tokenModel(tokenData)
         lighting._id = id
         model._id = id
+        model.enabled = false
         model.lightEnabled = true
 
         const tokenId = await create(sceneId, model, lighting)
