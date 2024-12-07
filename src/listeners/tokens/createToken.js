@@ -20,9 +20,8 @@ module.exports = async (accountInfo, sessionId, sceneId, tokenData, lightingData
         const id = new ObjectId()
         const lighting = new lightModel(lightingData)
 
-        tokenData.enabled = false
         if (!tokenData.light) tokenData.light = id
-        if (isPublic) tokenData.enabled = true
+        tokenData.enabled = isPublic
         const model = new tokenModel(tokenData)
         lighting._id = id
         model._id = id
