@@ -55,6 +55,20 @@ module.exports = {
     },
 
     /**
+     * Get-public-blueprints handler
+     * @param {ObjectId} sessionId
+     * @returns {Promise<{}>}
+    */
+    getPublic: async function (sessionId) {
+        await prepareConnection()
+
+        const session = await sessionModel.findById(sessionId).exec()
+        if (!session) throw new Error("Invalid session id")
+
+        return session.blueprints["folders"]["public"]
+    },
+
+    /**
      * Create-blueprint handler
      * @param {ObjectId} sessionId
      * @param {string} path

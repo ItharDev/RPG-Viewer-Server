@@ -1,5 +1,5 @@
 const { ObjectId } = require("mongodb")
-const { get, getAll } = require("../../modules/blueprint")
+const { get, getAll, getPublic } = require("../../modules/blueprint")
 
 module.exports = {
     /**
@@ -29,6 +29,23 @@ module.exports = {
         console.debug(`[ ${accountInfo.username} (${accountInfo.uid}) ]`, "Package: get-all-blueprints")
         try {
             const blueprints = await getAll(sessionId)
+            callback(true, blueprints)
+        } catch (error) {
+            console.error("Failed to get blueprints", error)
+            callback(false, error.message)
+        }
+    },
+
+    /**
+     * Get-public-blueprints packet listener
+     * @param {{ uid: ObjectId, username: string }} accountInfo
+     * @param {ObjectId} sessionId
+     * @param {() => {}} callback
+    */
+    public: async (accountInfo, sessionId, callback) => {
+        console.debug(`[ ${accountInfo.username} (${accountInfo.uid}) ]`, "Package: get-public-blueprints")
+        try {
+            const blueprints = await getPublic(sessionId)
             callback(true, blueprints)
         } catch (error) {
             console.error("Failed to get blueprints", error)

@@ -10,10 +10,11 @@ const { Server } = require("socket.io")
  * @param {ObjectId} sceneId
  * @param {{}} tokenData
  * @param {{}} lightingData
+ * @param {boolean} isPublic
  * @param {Server} socketServer
  * @param {() => {}} callback
 */
-module.exports = async (accountInfo, sessionId, sceneId, tokenData, lightingData, socketServer, callback) => {
+module.exports = async (accountInfo, sessionId, sceneId, tokenData, lightingData, isPublic, socketServer, callback) => {
     console.debug(`[ ${accountInfo.username} (${accountInfo.uid}) ]`, "Package: create-token")
     try {
         const id = new ObjectId()
@@ -21,6 +22,7 @@ module.exports = async (accountInfo, sessionId, sceneId, tokenData, lightingData
 
         tokenData.enabled = false
         if (!tokenData.light) tokenData.light = id
+        if (isPublic) tokenData.enabled = true
         const model = new tokenModel(tokenData)
         lighting._id = id
         model._id = id

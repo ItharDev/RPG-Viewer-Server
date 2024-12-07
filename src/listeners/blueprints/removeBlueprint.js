@@ -8,13 +8,15 @@ module.exports = {
      * @param {ObjectId} sessionId
      * @param {string} path
      * @param {ObjectId} blueprintId
+     * @param {Server} socketServer
      * @param {() => {}} callback
     */
-    blueprint: async (accountInfo, sessionId, path, blueprintId, callback) => {
+    blueprint: async (accountInfo, sessionId, path, blueprintId, socketServer, callback) => {
         console.debug(`[ ${accountInfo.username} (${accountInfo.uid}) ]`, "Package: remove-blueprint")
         try {
             await remove(sessionId, path, blueprintId)
             callback(true)
+            if (path.includes("public")) socketServer.to(sessionId.toString()).emit("remove-blueprint", blueprintId)
         } catch (error) {
             console.error("Failed to remove blueprint", error)
             callback(false, error.message)
