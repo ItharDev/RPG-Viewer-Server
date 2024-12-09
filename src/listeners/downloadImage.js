@@ -14,6 +14,6 @@ module.exports = async (accountInfo, imageId, callback) => {
         callback(true, buffer)
     } catch (error) {
         console.error("Failed to download and send an image", error)
-        callback(false, error.message)
+        callback(false, error)
     }
 }
