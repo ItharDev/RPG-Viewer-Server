@@ -21,6 +21,7 @@ const validateLicense = require("./listeners/licence/validateLicence")
 const loadLicences = require("./listeners/licence/loadLicences")
 const removeLicences = require("./listeners/licence/removeLicences")
 
+const getSession = require("./listeners/session/getSession")
 const createSession = require("./listeners/session/createSession")
 const joinSession = require("./listeners/session/joinSession")
 const leaveSession = require("./listeners/session/leaveSession")
@@ -150,6 +151,7 @@ io.on("connection", (socket) => {
     socket.on("load-licences", (callback) => loadLicences(accountInfo, callback))
     socket.on("remove-licences", (callback) => removeLicences(accountInfo, callback))
 
+    socket.on("get-session", (sessionId, callback) => getSession(accountInfo, ObjectId(sessionId), callback))
     socket.on("create-session", (name, buffer, callback) => createSession(accountInfo, name, buffer, callback))
     socket.on("join-session", (sessionId, callback) => joinSession(accountInfo, sessionInfo, socket, sessionId, callback))
     socket.on("leave-session", (callback) => leaveSession(accountInfo, sessionInfo, socket, io, callback))
