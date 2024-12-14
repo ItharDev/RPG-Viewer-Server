@@ -167,7 +167,7 @@ module.exports = {
         let licences = []
         for (const key of user.licences) {
             const session = await sessionModel.findById(key)
-            if (session) licences.push({ id: key, name: session.name, landingPage: session.background })
+            if (session) licences.push({ id: key, master: session.master, name: session.name, landingPage: session.background })
             else await userModel.findByIdAndUpdate(uid, { $pull: { licences: key } }).exec()
         }
 
