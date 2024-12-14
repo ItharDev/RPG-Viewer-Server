@@ -49,6 +49,20 @@ module.exports = {
     },
 
     /**
+    * Get-user handler
+    * @param {ObjectId} email
+    * @returns {Promise<string>}
+   */
+    getId: async function (email) {
+        await prepareConnection()
+
+        const account = await userModel.findOne({ email: email.toLowerCase() }).exec()
+        if (!account) throw new Error("User with this email not found")
+
+        return account.id
+    },
+
+    /**
      * Register handler
      * @param {{email: string, name: string, password: string, licences: Array}} userData
      * @returns {Promise<string>}

@@ -11,6 +11,7 @@ const disconnectListener = require("./listeners/disconnect")
 const downloadImage = require("./listeners/downloadImage")
 
 const getUser = require("./listeners/account/getUser")
+const getUserId = require("./listeners/account/getUserId")
 const getProfile = require("./listeners/account/getProfile")
 const getUsers = require("./listeners/session/getUsers")
 const register = require("./listeners/account/register")
@@ -141,6 +142,7 @@ io.on("connection", (socket) => {
     socket.on("disconnect", () => disconnectListener(accountInfo, sessionInfo, io))
     socket.on("download-image", (imageId, callback) => downloadImage(accountInfo, imageId, callback))
     socket.on("get-user", (uid, callback) => getUser(accountInfo, uid, callback))
+    socket.on("get-user-id", (email, callback) => getUserId(accountInfo, email, callback))
     socket.on("get-profile", (uid, callback) => getProfile(accountInfo, uid, callback))
     socket.on("get-users", (callback) => getUsers(accountInfo, sessionInfo.id, callback))
 
@@ -176,7 +178,7 @@ io.on("connection", (socket) => {
     socket.on("remove-portal", (id, callback) => removePortal(accountInfo, sessionInfo.id, sessionInfo.scene, id, io, callback))
     socket.on("move-portal", (id, position, callback) => movePortal(accountInfo, sessionInfo.id, sessionInfo.scene, id, position, io, callback))
     socket.on("enter-portal", (tokenId, portalId, callback) => enterPortal(accountInfo, sessionInfo.id, sessionInfo.scene, tokenId, portalId, io, callback))
-    
+
     socket.on("get-scene", (sceneId, callback) => getScene.single(accountInfo, ObjectId(sceneId), callback))
     socket.on("get-scenes", (callback) => getScene.all(accountInfo, sessionInfo.id, callback))
     socket.on("create-scene", (path, data, buffer, callback) => createScene.scene(accountInfo, sessionInfo.id, path, JSON.parse(data), buffer, callback))
