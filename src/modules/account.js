@@ -36,15 +36,16 @@ module.exports = {
     /**
      * Get-user handler
      * @param {ObjectId} uid
-     * @returns {Promise<string>}
+     * @param {boolean} hasEmail
+     * @returns {Promise<{name: string, email: string | null}>}
     */
-    get: async function (uid) {
+    get: async function (uid, hasEmail) {
         await prepareConnection()
 
         const account = await userModel.findById(uid).exec()
         if (!account) throw new Error("Failed to load user data")
 
-        return account.name
+        return { name: account.name, email: hasEmail ? account.email : null }
     },
 
     /**

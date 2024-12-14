@@ -58,6 +58,17 @@ module.exports = {
         })
     },
 
+    getSession: async function (sessionId) {
+        return new Promise(async (resolve, reject) => {
+            await prepareConnection()
+
+            const session = await sessionModel.findById(sessionId).exec()
+            if (!session) reject("Session not found")
+
+            resolve(session)
+        })
+    },
+
     /**
      * Join-session handler
      * @param {ObjectId} sessionId
