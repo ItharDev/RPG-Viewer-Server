@@ -8,10 +8,10 @@ const { get } = require("../../modules/account")
  * @param {() => {}} callback
 */
 module.exports = async (accountInfo, uid, callback) => {
-    console.debug(`[ ${accountInfo.username} (${accountInfo.uid}) ]`, "Package: get-user")
+    console.debug(`[ ${accountInfo.username} (${accountInfo.uid}) ]`, "Package: get-profile")
     try {
-        const accountData = await get(uid, false)
-        callback(true, accountData.name)
+        const accountData = await get(uid, true)
+        callback(true, accountData.name, accountData.email)
     } catch (error) {
         console.error("Failed to get user", error)
         callback(false, error.message)

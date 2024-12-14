@@ -11,6 +11,7 @@ const disconnectListener = require("./listeners/disconnect")
 const downloadImage = require("./listeners/downloadImage")
 
 const getUser = require("./listeners/account/getUser")
+const getProfile = require("./listeners/account/getProfile")
 const getUsers = require("./listeners/session/getUsers")
 const register = require("./listeners/account/register")
 const signIn = require("./listeners/account/signIn")
@@ -140,6 +141,7 @@ io.on("connection", (socket) => {
     socket.on("disconnect", () => disconnectListener(accountInfo, sessionInfo, io))
     socket.on("download-image", (imageId, callback) => downloadImage(accountInfo, imageId, callback))
     socket.on("get-user", (uid, callback) => getUser(accountInfo, uid, callback))
+    socket.on("get-profile", (uid, callback) => getProfile(accountInfo, uid, callback))
     socket.on("get-users", (callback) => getUsers(accountInfo, sessionInfo.id, callback))
 
     socket.on("register", (email, name, password, callback) => register(email, name, password, callback))
