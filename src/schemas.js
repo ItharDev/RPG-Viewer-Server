@@ -170,6 +170,7 @@ const sessionModel = model("sessions", new Schema({
     name: String,
     master: ObjectId,
     users: Array(ObjectId),
+    invites: Array(ObjectId),
     presets: Array(ObjectId),
     state: {
         scene: ObjectId,
