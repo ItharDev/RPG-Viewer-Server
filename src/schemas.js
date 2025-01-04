@@ -108,8 +108,13 @@ const sceneModel = model("scenes", new Schema({
             b: Number,
             a: Number
         },
+        globalLighting: {
+            r: Number,
+            g: Number,
+            b: Number,
+            a: Number
+        },
         enabled: Boolean,
-        globalLighting: Boolean,
         visionRange: Number
     },
     grid: {
