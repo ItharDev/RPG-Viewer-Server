@@ -1,4 +1,4 @@
-const { sceneModel, tokenModel } = require("../schemas")
+const { sceneModel } = require("../schemas")
 const { connect } = require("mongoose")
 const { ObjectId } = require("mongodb")
 const { move } = require("./token")
@@ -39,7 +39,7 @@ module.exports = {
             position: position,
             link: null,
             radius: radius,
-            continuous: false,
+            continuous: true,
             active: false,
             visible: true
         }
