@@ -15,7 +15,7 @@ module.exports = async (accountInfo, sceneId, tokens, groupNumber, callback) => 
         await group(sceneId, tokens, groupNumber)
         callback(true)
     } catch (error) {
-        console.error("Failed to lock token", error)
+        console.error("Failed to group tokens", error)
         callback(false, error.message)
     }
 }

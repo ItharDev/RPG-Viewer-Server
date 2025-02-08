@@ -345,6 +345,35 @@ module.exports = {
     },
 
     /**
+     * Clear-group handler
+     * @param {ObjectId} sceneId
+     * @param {number} groupNumber
+     * @param {boolean} state
+     * @returns {Promise<void>}
+     */
+    toggleGroup: async function (sceneId, groupNumber, state) {
+        await prepareConnection()
+
+        let group = ""
+        switch (groupNumber) {
+            case 1:
+                group = "groupOne"
+                break
+            case 2:
+                group = "groupTwo"
+                break
+            case 3:
+                group = "groupThree"
+                break
+            default:
+                throw new Error("Invalid group number")
+        }
+
+        const update = await sceneModel.findByIdAndUpdate(sceneId, { $set: { [`${group}.selected`]: state } }).exec()
+        if (!update) throw new Error("Invalid scene id")
+    },
+
+    /**
      * Update-health handler
      * @param {ObjectId} id
      * @param {boolean} state

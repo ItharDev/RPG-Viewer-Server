@@ -14,7 +14,7 @@ module.exports = async (accountInfo, sceneId, groupNumber, callback) => {
         await clearGroup(sceneId, groupNumber)
         callback(true)
     } catch (error) {
-        console.error("Failed to lock token", error)
+        console.error("Failed to clear group", error)
         callback(false, error.message)
     }
 }
