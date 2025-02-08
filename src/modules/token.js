@@ -102,7 +102,14 @@ module.exports = {
 
             const token = await tokenModel.findByIdAndDelete(tokenId).exec()
             if (token) {
-                const update = await sceneModel.findByIdAndUpdate(sceneId, { $pull: { tokens: token._id } }).exec()
+                const update = await sceneModel.findByIdAndUpdate(sceneId, {
+                    $pull: {
+                        tokens: token._id,
+                        groupOne: token._id,
+                        groupTwo: token._id,
+                        groupThree: token._id
+                    }
+                }).exec()
                 if (update) {
                     await networking.modifyFile(token.image, -1).then(null, (rejected) => {
                         reject(rejected)
@@ -273,11 +280,68 @@ module.exports = {
      * @param {boolean} state
      * @returns {Promise<void>}
     */
-    lock: async function (tokenId, state) {
+    lock: async function (id, state) {
         await prepareConnection()
 
-        const update = await tokenModel.findByIdAndUpdate(tokenId, { $set: { locked: state } }).exec()
+        const update = await tokenModel.findByIdAndUpdate(id, { $set: { locked: state } }).exec()
         if (!update) throw new Error("Invalid token id")
+    },
+
+    /**
+     * Group-token handler
+     * @param {ObjectId} sceneId
+     * @param {ObjectId[]} tokens
+     * @param {number} groupNumber
+     * @returns {Promise<void>}
+    */
+    group: async function (sceneId, tokens, groupNumber) {
+        await prepareConnection()
+
+        let group = ""
+        switch (groupNumber) {
+            case 1:
+                group = "groupOne"
+                break
+            case 2:
+                group = "groupTwo"
+                break
+            case 3:
+                group = "groupThree"
+                break
+            default:
+                throw new Error("Invalid group number")
+        }
+
+        const update = await sceneModel.findByIdAndUpdate(sceneId, { $pushAll: { [`${group}.tokens`]: tokens } }).exec()
+        if (!update) throw new Error("Invalid scene id")
+    },
+
+    /**
+     * Clear-group handler
+     * @param {ObjectId} sceneId
+     * @param {number} groupNumber
+     * @returns {Promise<void>}
+     */
+    clearGroup: async function (sceneId, groupNumber) {
+        await prepareConnection()
+
+        let group = ""
+        switch (groupNumber) {
+            case 1:
+                group = "groupOne"
+                break
+            case 2:
+                group = "groupTwo"
+                break
+            case 3:
+                group = "groupThree"
+                break
+            default:
+                throw new Error("Invalid group number")
+        }
+
+        const update = await sceneModel.findByIdAndUpdate(sceneId, { $set: { [`${group}.tokens`]: [] } }).exec()
+        if (!update) throw new Error("Invalid scene id")
     },
 
     /**

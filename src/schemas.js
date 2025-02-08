@@ -166,6 +166,18 @@ const sceneModel = model("scenes", new Schema({
         visible: Boolean,
     }),
     tokens: Array(ObjectId),
+    groupOne: {
+        selected: Boolean,
+        tokens: Array(ObjectId)
+    },
+    groupTwo: {
+        selected: Boolean,
+        tokens: Array(ObjectId)
+    },
+    groupThree: {
+        selected: Boolean,
+        tokens: Array(ObjectId)
+    },
     initiatives: {},
     lights: {},
     notes: {}
