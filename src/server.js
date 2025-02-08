@@ -269,7 +269,7 @@ io.on("connection", (socket) => {
     socket.on("update-conditions", (id, conditions, callback) => updateConditions(accountInfo, sessionInfo.id, ObjectId(id), conditions, io, callback))
     socket.on("update-visibility", (id, toggle, callback) => updateVisibility(accountInfo, sessionInfo.id, ObjectId(id), toggle, io, callback))
     socket.on("lock-token", (id, toggle, callback) => lockToken(accountInfo, sessionInfo.id, ObjectId(id), toggle, io, callback))
-    socket.on("group-token", (tokens, group, callback) => groupToken(accountInfo, sessionInfo.scene, tokens.map(e => ObjectId(e)), group, callback))
+    socket.on("group-tokens", (tokens, group, callback) => groupToken(accountInfo, sessionInfo.scene, tokens.map(e => ObjectId(e)), group, callback))
     socket.on("clear-group", (group, callback) => clearGroup(accountInfo, sessionInfo.scene, group, callback))
     socket.on("toggle-group", (group, state, callback) => toggleGroup(accountInfo, sessionInfo.scene, group, state, callback))
     socket.on("toggle-token-light", (id, toggle, callback) => toggleTokenLight(accountInfo, sessionInfo.id, ObjectId(id), toggle, io, callback))
