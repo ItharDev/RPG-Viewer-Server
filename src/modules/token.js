@@ -105,9 +105,9 @@ module.exports = {
                 const update = await sceneModel.findByIdAndUpdate(sceneId, {
                     $pull: {
                         tokens: token._id,
-                        groupOne: token._id,
-                        groupTwo: token._id,
-                        groupThree: token._id
+                        "groupOne.tokens": token._id,
+                        "groupTwo.tokens": token._id,
+                        "groupThree.tokens": token._id
                     }
                 }).exec()
                 if (update) {
@@ -312,7 +312,7 @@ module.exports = {
                 throw new Error("Invalid group number")
         }
 
-        const update = await sceneModel.findByIdAndUpdate(sceneId, { $pushAll: { [`${group}.tokens`]: tokens } }).exec()
+        const update = await sceneModel.findByIdAndUpdate(sceneId, { $push: { [`${group}.tokens`]: tokens } }).exec()
         if (!update) throw new Error("Invalid scene id")
     },
 
