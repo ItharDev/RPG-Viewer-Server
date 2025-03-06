@@ -187,10 +187,16 @@ module.exports = {
             }
 
             const token = await tokenModel.findOneAndReplace({ "_id": id }, data).exec()
-            if (!token) reject("Failed to modify token")
+            if (!token) {
+                reject("Failed to modify token")
+                return
+            }
 
             const light = await lightModel.findOneAndReplace({ "_id": id }, lightData, { upsert: true }).exec()
-            if (!light) reject("Failed to modify lighting data")
+            if (!light) {
+                reject("Failed to modify lighting data")
+                return
+            }
 
             resolve({ image: data.image.toString(), art: data.art.toString() })
         })

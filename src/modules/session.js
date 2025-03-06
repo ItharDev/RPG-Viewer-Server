@@ -40,7 +40,10 @@ module.exports = {
             await networking.uploadFile(data.background, buffer).then(null, (rejected) => reject(rejected))
 
             const create = await sessionModel.create(data)
-            if (!create) reject("Failed to create session")
+            if (!create) {
+                reject("Failed to create session")
+                return
+            }
 
             const folderStructure = {
                 shared: {
@@ -52,7 +55,10 @@ module.exports = {
             await sessionModel.findByIdAndUpdate(create._id, { $set: { [`journals.${master.toString()}`]: { name: master.toString(), folders: folderStructure, contents: [] } } }).exec()
 
             const licence = await account.validateLicence(create._id, master)
-            if (!licence) reject("Failed to validate licence")
+            if (!licence) {
+                reject("Failed to validate licence")
+                return
+            }
 
             resolve()
         })
@@ -104,8 +110,7 @@ module.exports = {
 
             const update = await sessionModel.findByIdAndUpdate(sessionId, { $set: { "background": id } }).exec()
             if (!update) reject("Operation failed")
-
-            resolve(id)
+            else resolve(id)
         })
     },
 

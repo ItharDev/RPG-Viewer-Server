@@ -68,13 +68,20 @@ module.exports = {
 
             await networking.uploadFile(data.info.image, buffer).then(null, (rejected) => {
                 reject(rejected)
+                return
             })
 
             const session = await sessionModel.findById(sessionId).exec()
-            if (!session) reject("Invalid session id")
+            if (!session) {
+                reject("Invalid session id")
+                return
+            }
 
             const scene = await sceneModel.create(data)
-            if (!scene) reject("Failed to create scene")
+            if (!scene) {
+                reject("Failed to create scene")
+                return
+            }
 
             const targetFolder = await getFolder(session.scenes, path)
             if (targetFolder) await sessionModel.findByIdAndUpdate(sessionId, { $addToSet: { [`scenes.folders.${targetFolder.path}.contents`]: scene._id } }).exec()
@@ -331,8 +338,7 @@ module.exports = {
 
             const update = await sceneModel.findByIdAndUpdate(sceneId, { $set: { "info.image": id } }).exec()
             if (!update) reject("Operation failed")
-
-            resolve(id)
+            else resolve(id)
         })
     },
 }

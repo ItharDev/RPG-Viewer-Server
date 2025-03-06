@@ -84,24 +84,35 @@ module.exports = {
 
             await networking.uploadFile(data.image, imageBuffer).then(null, (rejected) => {
                 reject(rejected)
+                return
             })
 
             if (artBuffer) await networking.uploadFile(data.art, artBuffer).then(null, (rejected) => {
                 reject(rejected)
+                return
             })
 
             const session = await sessionModel.findById(sessionId).exec()
-            if (!session) reject("Invalid session id")
+            if (!session) {
+                reject("Invalid session id")
+                return
+            }
 
             const blueprint = await blueprintModel.create(data)
-            if (!blueprint) reject("Failed to create blueprint")
+            if (!blueprint) {
+                reject("Failed to create blueprint")
+                return
+            }
 
             const targetFolder = await getFolder(session.blueprints, path)
             if (targetFolder) await sessionModel.findByIdAndUpdate(sessionId, { $addToSet: { [`blueprints.folders.${targetFolder.path}.contents`]: blueprint._id } }).exec()
             else await sessionModel.findByIdAndUpdate(sessionId, { $addToSet: { [`blueprints.contents`]: blueprint._id } }).exec()
 
             const light = await lightModel.create(lightData)
-            if (!light) reject("Failed to create lighting data")
+            if (!light) {
+                reject("Failed to create lighting data")
+                return
+            }
 
             resolve(blueprint.id)
         })
@@ -155,10 +166,16 @@ module.exports = {
             }
 
             const blueprint = await blueprintModel.findOneAndReplace({ "_id": id }, data).exec()
-            if (!blueprint) reject("Failed to modify blueprint")
+            if (!blueprint) {
+                reject("Failed to modify blueprint")
+                return
+            }
 
             const light = await lightModel.findOneAndReplace({ "_id": id }, lightData, { upsert: true }).exec()
-            if (!light) reject("Failed to modify lighting data")
+            if (!light) {
+                reject("Failed to modify lighting data")
+                return
+            }
 
             resolve({ image: data.image.toString(), art: data.art.toString() })
         })

@@ -68,13 +68,20 @@ module.exports = {
             await prepareConnection()
 
             const update = sceneModel.findByIdAndUpdate(sceneId, { $unset: { [`notes.${noteId.toString()}`]: "" } }).exec()
-            if (!update) reject("Failed to update directory")
+            if (!update) {
+                reject("Failed to update directory")
+                return
+            }
 
             const note = await noteModel.findByIdAndDelete(noteId).exec()
-            if (!note) reject("Failed to remove note")
+            if (!note) {
+                reject("Failed to remove note")
+                return
+            }
 
             if (note.image) await networking.modifyFile(note.image, -1).then(null, (rejected) => {
                 reject(rejected)
+                return
             })
 
             resolve()
@@ -135,23 +142,23 @@ module.exports = {
             const note = await noteModel.findById(noteId).exec()
             if (note.image) await networking.modifyFile(note.image, -1).then(null, (rejected) => {
                 reject(rejected)
+                return
             })
 
             if (buffer) {
                 await networking.uploadFile(id, buffer).then(async (resolved) => {
                     const update = await noteModel.findByIdAndUpdate(noteId, { $set: { image: id } }).exec()
                     if (!update) reject("Failed to modify note")
-
-                    resolve(id)
+                    else resolve(id)
                 }, (rejected) => {
                     reject(rejected)
+                    return
                 })
             }
             else {
                 const update = await noteModel.findByIdAndUpdate(noteId, { $set: { image: id } }).exec()
                 if (!update) reject("Failed to modify note")
-
-                resolve(id)
+                else resolve(id)
             }
         })
     },

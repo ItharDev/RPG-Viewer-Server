@@ -158,6 +158,7 @@ module.exports = {
             const journal = await journalModel.findById(journalId).exec()
             if (journal.image) await networking.modifyFile(journal.image, -1).then(null, (rejected) => {
                 reject(rejected)
+                return
             })
 
             if (buffer) {
@@ -168,11 +169,15 @@ module.exports = {
                     resolve(id)
                 }, (rejected) => {
                     reject(rejected)
+                    return
                 })
             }
             else {
                 const update = await journalModel.findByIdAndUpdate(journalId, { $set: { image: id } }).exec()
-                if (!update) reject("Failed to modify journal page")
+                if (!update) {
+                    reject("Failed to modify journal page")
+                    return
+                }
 
                 resolve(id)
             }
