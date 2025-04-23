@@ -19,7 +19,7 @@ module.exports = async (accountInfo, sessionId, sceneId, tokenId, socketServer, 
 
         callback(true)
     } catch (error) {
-        console.error("Failed to remove blueprint", error)
+        console.error("Failed to remove token", error)
         callback(false, error.message)
     }
 }

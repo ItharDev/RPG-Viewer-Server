@@ -62,7 +62,7 @@ module.exports = {
      * @param {tokenModel} data
      * @param {lightModel} lightData
      * @param {ObjectId | null} parentInstance
-     * @returns {Promise<string>}
+     * @returns {Promise<{tokenId: string, data: tokenModel}>}
     */
     create: async function (sceneId, data, lightData, parentInstance) {
         return new Promise(async (resolve, reject) => {
@@ -80,11 +80,11 @@ module.exports = {
                         if (!light) return reject("Failed to create lighting data")
 
                         if (data.art) await networking.modifyFile(data.art, 1).then(async () => {
-                            resolve(token._id)
+                            resolve({ tokenId: token._id, data: token })
                         }, (rejected) => {
                             reject(rejected)
                         })
-                        else resolve(token._id)
+                        else resolve({ tokenId: token._id, data: token })
                     }, (rejected) => {
                         reject(rejected)
                     })
@@ -191,8 +191,21 @@ module.exports = {
                 data.light = id
             }
 
-            const token = await tokenModel.updateMany({ "parentInstance": id }, data).exec()
-            if (!token) {
+            const tokens = await tokenModel.updateMany({ "parentInstance": id }, {
+                $set: {
+                    light: data.light,
+                    art: data.art,
+                    image: data.image,
+                    nightRadius: data.nightRadius,
+                    visionRadius: data.visionRadius,
+                    dimensions: data.dimensions,
+                    visible: data.visible,
+                    permissions: data.permissions,
+                    type: data.type,
+                    name: data.name
+                }
+            }).exec()
+            if (!tokens) {
                 reject("Failed to modify token")
                 return
             }
@@ -201,6 +214,25 @@ module.exports = {
             if (!light) {
                 reject("Failed to modify lighting data")
                 return
+            }
+
+            const blueprint = await blueprintModel.findByIdAndUpdate(data.parentInstance, {
+                $set: {
+                    light: data.light,
+                    art: data.art,
+                    image: data.image,
+                    nightRadius: data.nightRadius,
+                    visionRadius: data.visionRadius,
+                    dimensions: data.dimensions,
+                    visible: data.visible,
+                    permissions: data.permissions,
+                    type: data.type,
+                    name: data.name
+                }
+            }).exec()
+            if (blueprint) {
+                if (imageBuffer) await networking.modifyFile(blueprint.image, -1)
+                if (artBuffer) await networking.modifyFile(blueprint.art, -1)
             }
 
             resolve({ image: data.image.toString(), art: data.art.toString() })

@@ -29,8 +29,8 @@ module.exports = async (accountInfo, sessionId, sceneId, tokenData, lightingData
         model.parentInstance = id
         model.lightEnabled = false
 
-        const tokenId = await create(sceneId, model, lighting, blueprintId)
-        socketServer.to(sessionId.toString()).emit("create-token", tokenId, tokenData)
+        const { tokenId, data } = await create(sceneId, model, lighting, blueprintId)
+        socketServer.to(sessionId.toString()).emit("create-token", tokenId, data)
 
         callback(true)
     } catch (error) {

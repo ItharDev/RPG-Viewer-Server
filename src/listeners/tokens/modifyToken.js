@@ -17,10 +17,11 @@ const { Server } = require("socket.io")
 module.exports = async (accountInfo, sessionId, id, tokenData, lightingData, imageBuffer, artBuffer, socketServer, callback) => {
     console.debug(`[ ${accountInfo.username} (${accountInfo.uid}) ]`, "Package: modify-token")
     try {
-        const image = await modify(sessionId, id, tokenData, lightingData, imageBuffer, artBuffer)
-        tokenData.image = image.image
-        tokenData.art = image.art
+        const { image, art } = await modify(sessionId, id, tokenData, lightingData, imageBuffer, artBuffer)
+        tokenData.image = image
+        tokenData.art = art
         socketServer.to(sessionId.toString()).emit("modify-token", id, tokenData)
+        socketServer.to(sessionId.toString()).emit("modify-blueprint", id)
 
         callback(true)
     } catch (error) {

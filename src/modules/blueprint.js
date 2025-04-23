@@ -126,12 +126,13 @@ module.exports = {
      * @param {{}} lightData
      * @param {Buffer} imageBuffer
      * @param {Buffer} artBuffer
-     * @returns {Promise<{image: string, art: string}>}
+     * @returns {Promise<{image: string, art: string, token: tokenModel}>}
     */
     modify: async function (sessionId, id, data, lightData, imageBuffer, artBuffer) {
         return new Promise(async (resolve, reject) => {
             await prepareConnection()
 
+            console.log(id)
             if (imageBuffer) {
                 await networking.modifyFile(data.image, -1).then(async () => {
                     data.image = new ObjectId()
@@ -177,17 +178,35 @@ module.exports = {
                 return
             }
 
+            let token = null
+
             if (blueprint.synced) {
-                const token = await tokenModel.updateMany(
+                const tokens = await tokenModel.updateMany(
                     { "parentInstance": id },
-                    { $set: { ...data } },
+                    {
+                        $set: {
+                            light: blueprint.light,
+                            art: blueprint.art,
+                            image: blueprint.image,
+                            nightRadius: blueprint.nightRadius,
+                            visionRadius: blueprint.visionRadius,
+                            dimensions: blueprint.dimensions,
+                            visible: blueprint.visible,
+                            permissions: blueprint.permissions,
+                            type: blueprint.type,
+                            name: blueprint.name
+                        }
+                    },
+                    { new: true }
                 ).exec()
-                if (!token) {
+                if (!tokens.acknowledged) {
                     reject("Failed to modify token")
                     return
                 }
+
+                token = await tokenModel.findOne({ "parentInstance": id }).exec()
             }
-            resolve({ image: data.image.toString(), art: data.art.toString() })
+            resolve({ image: data.image.toString(), art: data.art.toString(), token: token })
         })
     },
 
