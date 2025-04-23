@@ -14,7 +14,7 @@ module.exports = async (accountInfo, sessionId, id, synced, socketServer, callba
     console.debug(`[ ${accountInfo.username} (${accountInfo.uid}) ]`, "Package: sync-blueprint")
     try {
         await sync(sessionId, id, synced)
-        socketServer.to(sessionId.toString()).emit("sync-blueprint", { id, synced })
+        socketServer.to(sessionId.toString()).emit("sync-blueprint", id, synced)
         callback(true)
     } catch (error) {
         console.error("Failed to modify blueprint", error)

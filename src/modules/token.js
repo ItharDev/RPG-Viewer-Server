@@ -53,10 +53,10 @@ module.exports = {
             tokens.push(token)
         }
 
-        const allTokens = await tokenModel.find().exec()
+        const allTokens = await blueprintModel.find().exec()
         for (let i = 0; i < allTokens.length; i++) {
             const token = allTokens[i]
-            await tokenModel.findByIdAndUpdate(token._id, { $set: { "parentInstance": token._id } }).exec()
+            await blueprintModel.findByIdAndUpdate(token._id, { $set: { "synced": false } }).exec()
         }
 
         return tokens
