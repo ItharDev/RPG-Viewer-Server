@@ -1,5 +1,5 @@
 const { ObjectId } = require("mongodb")
-const { tokenModel, sceneModel, lightModel, sessionModel } = require("../schemas")
+const { tokenModel, sceneModel, lightModel, sessionModel, blueprintModel } = require("../schemas")
 const networking = require("./networking");
 const { connect } = require("mongoose");
 
@@ -53,6 +53,12 @@ module.exports = {
             tokens.push(token)
         }
 
+        const allTokens = await tokenModel.find().exec()
+        for (let i = 0; i < allTokens.length; i++) {
+            const token = allTokens[i]
+            await tokenModel.findByIdAndUpdate(token._id, { $set: { "parentInstance": token._id } }).exec()
+        }
+
         return tokens
     },
 
@@ -61,21 +67,30 @@ module.exports = {
      * @param {ObjectId} sceneId
      * @param {tokenModel} data
      * @param {lightModel} lightData
+     * @param {ObjectId | null} parentInstance
      * @returns {Promise<string>}
     */
-    create: async function (sceneId, data, lightData) {
+    create: async function (sceneId, data, lightData, parentInstance) {
         return new Promise(async (resolve, reject) => {
             await prepareConnection()
+
+            const blueprint = parentInstance ? await blueprintModel.findById(parentInstance).exec() : null
+            if (blueprint) {
+                data.parentInstance = parentInstance
+                Object.keys(blueprint.toObject()).forEach(key => {
+                    data[key] = blueprint[key]
+                })
+            }
 
             const token = await tokenModel.create(data)
             if (token) {
                 const update = await sceneModel.findByIdAndUpdate(sceneId, { $addToSet: { tokens: token._id } }).exec()
                 if (update) {
-                    await networking.modifyFile(data.image, 1).then(async (resolved) => {
+                    await networking.modifyFile(data.image, 1).then(async () => {
                         const light = await lightModel.create(lightData)
                         if (!light) return reject("Failed to create lighting data")
 
-                        if (data.art) await networking.modifyFile(data.art, 1).then(async (resolved) => {
+                        if (data.art) await networking.modifyFile(data.art, 1).then(async () => {
                             resolve(token._id)
                         }, (rejected) => {
                             reject(rejected)
@@ -93,7 +108,7 @@ module.exports = {
     /**
      * Remove-token handler
      * @param {ObjectId} sceneId 
-     * @param {ObjectId} blueprintId 
+     * @param {ObjectId} tokenId 
      * @returns {Promise<void>}
      */
     remove: async function (sceneId, tokenId) {
@@ -153,8 +168,9 @@ module.exports = {
         return new Promise(async (resolve, reject) => {
             await prepareConnection()
 
+            const tokenCount = await tokenModel.countDocuments({ "parentInstance": id }).exec()
             if (imageBuffer) {
-                await networking.modifyFile(data.image, -1).then(async (resolved) => {
+                await networking.modifyFile(data.image, -tokenCount).then(async () => {
                     data.image = new ObjectId()
                     await networking.uploadFile(data.image, imageBuffer).then(null, (rejected) => {
                         reject(rejected)
@@ -167,7 +183,7 @@ module.exports = {
             }
 
             if (artBuffer) {
-                await networking.modifyFile(data.art, -1).then(async (resolved) => {
+                await networking.modifyFile(data.art, -tokenCount).then(async () => {
                     data.art = new ObjectId()
                     await networking.uploadFile(data.art, artBuffer).then(null, (rejected) => {
                         reject(rejected)
@@ -186,7 +202,7 @@ module.exports = {
                 data.light = id
             }
 
-            const token = await tokenModel.findOneAndReplace({ "_id": id }, data).exec()
+            const token = await tokenModel.updateMany({ "parentInstance": id }, data).exec()
             if (!token) {
                 reject("Failed to modify token")
                 return
@@ -224,7 +240,7 @@ module.exports = {
     setElevation: async function (id, value) {
         await prepareConnection()
 
-        const update = await tokenModel.findByIdAndUpdate(id, { $set: { elevation: value } }).exec()
+        const update = await tokenModel.updateMany({ "parentInstance": id }, { $set: { elevation: value } }).exec()
         if (!update) throw new Error("Invalid token id")
     },
 
@@ -237,7 +253,7 @@ module.exports = {
     setConditions: async function (id, conditions) {
         await prepareConnection()
 
-        const update = await tokenModel.findByIdAndUpdate(id, { $set: { conditions: conditions } }).exec()
+        const update = await tokenModel.updateMany({ "parentInstance": id }, { $set: { conditions: conditions } }).exec()
         if (!update) throw new Error("Invalid token id")
     },
 
@@ -276,7 +292,7 @@ module.exports = {
     toggleLight: async function (id, enabled) {
         await prepareConnection()
 
-        const update = await tokenModel.findByIdAndUpdate(id, { $set: { lightEnabled: enabled } }).exec()
+        const update = await tokenModel.updateMany({ "parentInstance": id }, { $set: { lightEnabled: enabled } }).exec()
         if (!update) throw new Error("Invalid token id")
     },
 
@@ -388,7 +404,7 @@ module.exports = {
     setHealth: async function (id, value) {
         await prepareConnection()
 
-        const update = await tokenModel.findByIdAndUpdate(id, { $set: { health: value } }).exec()
+        const update = await tokenModel.updateMany({ "parentInstance": id }, { $set: { health: value } }).exec()
         if (!update) throw new Error("Invalid token id")
     },
 }

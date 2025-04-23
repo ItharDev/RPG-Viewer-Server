@@ -193,7 +193,7 @@ io.on("connection", (socket) => {
     socket.on("get-public-blueprints", (callback) => getBlueprint.public(accountInfo, sessionInfo.id, callback))
     socket.on("create-blueprint", (path, tokenData, lightingData, imageBuffer, artBuffer, callback) => createBlueprint.blueprint(accountInfo, sessionInfo.id, path, JSON.parse(tokenData), JSON.parse(lightingData), imageBuffer, artBuffer, io, callback))
     socket.on("modify-blueprint", (id, tokenData, lightingData, imageBuffer, artBuffer, callback) => modifyBlueprint(accountInfo, sessionInfo.id, ObjectId(id), JSON.parse(tokenData), JSON.parse(lightingData), imageBuffer, artBuffer, io, callback))
-    socket.on("sync-blueprint", (id, synced) => syncBlueprint(accountInfo, sessionInfo.id, ObjectId(id), synced, io))
+    socket.on("sync-blueprint", (id, synced, callback) => syncBlueprint(accountInfo, sessionInfo.id, ObjectId(id), synced, io, callback))
     socket.on("create-blueprint-folder", (path, name, callback) => createBlueprint.folder(accountInfo, sessionInfo.id, path, name, callback))
     socket.on("rename-blueprint-folder", (path, name, callback) => renameBlueprintFolder(accountInfo, sessionInfo.id, path, name, callback))
     socket.on("remove-blueprint", (path, blueprintId, callback) => removeBlueprint.blueprint(accountInfo, sessionInfo.id, path, ObjectId(blueprintId), io, callback))
@@ -264,7 +264,7 @@ io.on("connection", (socket) => {
 
     socket.on("get-token", (id, callback) => getToken.single(accountInfo, ObjectId(id), callback))
     socket.on("get-tokens", (callback) => getToken.all(accountInfo, sessionInfo.scene, callback))
-    socket.on("create-token", (tokenData, lightingData, isPublic, callback) => createToken(accountInfo, sessionInfo.id, sessionInfo.scene, JSON.parse(tokenData), JSON.parse(lightingData), isPublic, io, callback))
+    socket.on("create-token", (tokenData, lightingData, isPublic, blueprintId, callback) => createToken(accountInfo, sessionInfo.id, sessionInfo.scene, JSON.parse(tokenData), JSON.parse(lightingData), isPublic, blueprintId ? ObjectId(blueprintId) : null, io, callback))
     socket.on("move-token", (data, callback) => moveToken(accountInfo, sessionInfo.id, JSON.parse(data), io, callback))
     socket.on("modify-token", (id, tokenData, lightingData, imageBuffer, artBuffer, callback) => modifyToken(accountInfo, sessionInfo.id, ObjectId(id), JSON.parse(tokenData), JSON.parse(lightingData), imageBuffer, artBuffer, io, callback))
     socket.on("remove-token", (id, callback) => removeToken(accountInfo, sessionInfo.id, sessionInfo.scene, ObjectId(id), io, callback))

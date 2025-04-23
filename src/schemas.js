@@ -61,6 +61,7 @@ const tokenModel = model("tokens", new Schema({
     lightRotation: Number,
     lightEnabled: Boolean,
     teleportProtection: Boolean,
+    parentInstance: ObjectId
 }))
 
 const lightModel = model("lights", new Schema({
