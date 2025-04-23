@@ -22,7 +22,8 @@ const blueprintModel = model("blueprints", new Schema({
     nightRadius: Number,
     light: ObjectId,
     image: ObjectId,
-    art: {}
+    art: {},
+    isSynced: Boolean,
 }))
 
 const tokenModel = model("tokens", new Schema({

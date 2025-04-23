@@ -1,4 +1,4 @@
-const { blueprintModel, sessionModel, lightModel } = require("../schemas")
+const { blueprintModel, sessionModel, lightModel, tokenModel } = require("../schemas")
 const { ObjectId } = require("mongodb")
 const { connect } = require("mongoose")
 const networking = require("./networking")
@@ -104,6 +104,14 @@ module.exports = {
                 return
             }
 
+            if (data.isSynced) {
+                const token = await tokenModel.create(data)
+                if (!token) {
+                    reject("Failed to create token")
+                    return
+                }
+            }
+
             const targetFolder = await getFolder(session.blueprints, path)
             if (targetFolder) await sessionModel.findByIdAndUpdate(sessionId, { $addToSet: { [`blueprints.folders.${targetFolder.path}.contents`]: blueprint._id } }).exec()
             else await sessionModel.findByIdAndUpdate(sessionId, { $addToSet: { [`blueprints.contents`]: blueprint._id } }).exec()
@@ -133,7 +141,7 @@ module.exports = {
             await prepareConnection()
 
             if (imageBuffer) {
-                await networking.modifyFile(data.image, -1).then(async (resolved) => {
+                await networking.modifyFile(data.image, -1).then(async () => {
                     data.image = new ObjectId()
                     await networking.uploadFile(data.image, imageBuffer).then(null, (rejected) => {
                         reject(rejected)
@@ -146,7 +154,7 @@ module.exports = {
             }
 
             if (artBuffer) {
-                await networking.modifyFile(data.art, -1).then(async (resolved) => {
+                await networking.modifyFile(data.art, -1).then(async () => {
                     data.art = new ObjectId()
                     await networking.uploadFile(data.art, artBuffer).then(null, (rejected) => {
                         reject(rejected)
@@ -165,7 +173,7 @@ module.exports = {
                 data.light = id
             }
 
-            const blueprint = await blueprintModel.findOneAndReplace({ "_id": id }, data).exec()
+            const blueprint = await blueprintModel.findOneAndReplace({ "_id": id }, data, { new: true }).exec()
             if (!blueprint) {
                 reject("Failed to modify blueprint")
                 return
@@ -177,8 +185,34 @@ module.exports = {
                 return
             }
 
+            if (blueprint.isSynced) {
+                const token = await tokenModel.findByIdAndUpdate(
+                    { "_id": id },
+                    { $set: { ...data } },
+                ).exec()
+                if (!token) {
+                    reject("Failed to modify token")
+                    return
+                }
+            }
             resolve({ image: data.image.toString(), art: data.art.toString() })
         })
+    },
+
+    /**
+     * Sync-blueprint handler
+     * @param {ObjectId} sessionId
+     * @param {ObjectId} id
+     * @param {boolean} synced
+     */
+    sync: async function (sessionId, id, synced) {
+        await prepareConnection()
+
+        const session = await sessionModel.findById(sessionId).exec()
+        if (!session) throw new Error("Invalid session id")
+
+        const blueprint = await blueprintModel.findByIdAndUpdate(id, { $set: { "isSynced": synced } }).exec()
+        if (!blueprint) throw new Error("Invalid blueprint id")
     },
 
     /**

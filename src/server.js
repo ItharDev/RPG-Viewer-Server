@@ -48,6 +48,7 @@ const modifyGrid = require("./listeners/scenes/modifyGrid")
 
 const createBlueprint = require("./listeners/blueprints/createBlueprint")
 const modifyBlueprint = require("./listeners/blueprints/modifyBlueprint")
+const syncBlueprint = require("./listeners/blueprints/syncBlueprint")
 const getBlueprint = require("./listeners/blueprints/getBlueprint")
 const moveBlueprint = require("./listeners/blueprints/moveBlueprint")
 const removeBlueprint = require("./listeners/blueprints/removeBlueprint")
@@ -175,7 +176,7 @@ io.on("connection", (socket) => {
     socket.on("remove-portal", (id, callback) => removePortal(accountInfo, sessionInfo.id, sessionInfo.scene, id, io, callback))
     socket.on("move-portal", (id, position, callback) => movePortal(accountInfo, sessionInfo.id, sessionInfo.scene, id, position, io, callback))
     socket.on("enter-portal", (tokenId, portalId, callback) => enterPortal(accountInfo, sessionInfo.id, sessionInfo.scene, tokenId, portalId, io, callback))
-    
+
     socket.on("get-scene", (sceneId, callback) => getScene.single(accountInfo, ObjectId(sceneId), callback))
     socket.on("get-scenes", (callback) => getScene.all(accountInfo, sessionInfo.id, callback))
     socket.on("create-scene", (path, data, buffer, callback) => createScene.scene(accountInfo, sessionInfo.id, path, JSON.parse(data), buffer, callback))
@@ -192,6 +193,7 @@ io.on("connection", (socket) => {
     socket.on("get-public-blueprints", (callback) => getBlueprint.public(accountInfo, sessionInfo.id, callback))
     socket.on("create-blueprint", (path, tokenData, lightingData, imageBuffer, artBuffer, callback) => createBlueprint.blueprint(accountInfo, sessionInfo.id, path, JSON.parse(tokenData), JSON.parse(lightingData), imageBuffer, artBuffer, io, callback))
     socket.on("modify-blueprint", (id, tokenData, lightingData, imageBuffer, artBuffer, callback) => modifyBlueprint(accountInfo, sessionInfo.id, ObjectId(id), JSON.parse(tokenData), JSON.parse(lightingData), imageBuffer, artBuffer, io, callback))
+    socket.on("sync-blueprint", (id, synced) => syncBlueprint(accountInfo, sessionInfo.id, ObjectId(id), synced, io))
     socket.on("create-blueprint-folder", (path, name, callback) => createBlueprint.folder(accountInfo, sessionInfo.id, path, name, callback))
     socket.on("rename-blueprint-folder", (path, name, callback) => renameBlueprintFolder(accountInfo, sessionInfo.id, path, name, callback))
     socket.on("remove-blueprint", (path, blueprintId, callback) => removeBlueprint.blueprint(accountInfo, sessionInfo.id, path, ObjectId(blueprintId), io, callback))
