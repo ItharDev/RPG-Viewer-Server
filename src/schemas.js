@@ -23,7 +23,7 @@ const blueprintModel = model("blueprints", new Schema({
     light: ObjectId,
     image: ObjectId,
     art: {},
-    isSynced: Boolean,
+    synced: Boolean,
 }))
 
 const tokenModel = model("tokens", new Schema({

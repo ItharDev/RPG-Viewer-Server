@@ -104,14 +104,6 @@ module.exports = {
                 return
             }
 
-            if (data.isSynced) {
-                const token = await tokenModel.create(data)
-                if (!token) {
-                    reject("Failed to create token")
-                    return
-                }
-            }
-
             const targetFolder = await getFolder(session.blueprints, path)
             if (targetFolder) await sessionModel.findByIdAndUpdate(sessionId, { $addToSet: { [`blueprints.folders.${targetFolder.path}.contents`]: blueprint._id } }).exec()
             else await sessionModel.findByIdAndUpdate(sessionId, { $addToSet: { [`blueprints.contents`]: blueprint._id } }).exec()
@@ -185,9 +177,9 @@ module.exports = {
                 return
             }
 
-            if (blueprint.isSynced) {
-                const token = await tokenModel.findByIdAndUpdate(
-                    { "_id": id },
+            if (blueprint.synced) {
+                const token = await tokenModel.updateMany(
+                    { "parentInstance": id },
                     { $set: { ...data } },
                 ).exec()
                 if (!token) {
@@ -211,7 +203,7 @@ module.exports = {
         const session = await sessionModel.findById(sessionId).exec()
         if (!session) throw new Error("Invalid session id")
 
-        const blueprint = await blueprintModel.findByIdAndUpdate(id, { $set: { "isSynced": synced } }).exec()
+        const blueprint = await blueprintModel.findByIdAndUpdate(id, { $set: { "synced": synced } }).exec()
         if (!blueprint) throw new Error("Invalid blueprint id")
     },
 
