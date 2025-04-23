@@ -69,12 +69,7 @@ module.exports = {
             await prepareConnection()
 
             const blueprint = parentInstance ? await blueprintModel.findById(parentInstance).exec() : null
-            if (blueprint) {
-                data.parentInstance = parentInstance
-                Object.keys(blueprint.toObject()).forEach(key => {
-                    data[key] = blueprint[key]
-                })
-            }
+            if (blueprint) data.parentInstance = parentInstance
 
             const token = await tokenModel.create(data)
             if (token) {
