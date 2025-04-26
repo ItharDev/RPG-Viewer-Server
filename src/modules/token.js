@@ -263,6 +263,8 @@ module.exports = {
 
         const update = await tokenModel.updateMany({ "parentInstance": id }, { $set: { elevation: value } }).exec()
         if (!update) throw new Error("Invalid token id")
+
+        await blueprintModel.findByIdAndUpdate(id, { $set: { elevation: value } }).exec()
     },
 
     /**
@@ -276,6 +278,8 @@ module.exports = {
 
         const update = await tokenModel.updateMany({ "parentInstance": id }, { $set: { conditions: conditions } }).exec()
         if (!update) throw new Error("Invalid token id")
+
+        await blueprintModel.findByIdAndUpdate(id, { $set: { conditions: conditions } }).exec()
     },
 
     /**
@@ -315,6 +319,8 @@ module.exports = {
 
         const update = await tokenModel.updateMany({ "parentInstance": id }, { $set: { lightEnabled: enabled } }).exec()
         if (!update) throw new Error("Invalid token id")
+
+        await blueprintModel.findByIdAndUpdate(id, { $set: { lightEnabled: enabled } }).exec()
     },
 
     /**
@@ -427,5 +433,7 @@ module.exports = {
 
         const update = await tokenModel.updateMany({ "parentInstance": id }, { $set: { health: value } }).exec()
         if (!update) throw new Error("Invalid token id")
+
+        await blueprintModel.findByIdAndUpdate(id, { $set: { health: value } }).exec()
     },
 }

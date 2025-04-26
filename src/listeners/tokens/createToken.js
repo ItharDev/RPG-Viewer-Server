@@ -27,7 +27,6 @@ module.exports = async (accountInfo, sessionId, sceneId, tokenData, lightingData
         lighting._id = id
         model._id = id
         model.parentInstance = id
-        model.lightEnabled = false
 
         const { tokenId, data } = await create(sceneId, model, lighting, blueprintId)
         socketServer.to(sessionId.toString()).emit("create-token", tokenId, data)

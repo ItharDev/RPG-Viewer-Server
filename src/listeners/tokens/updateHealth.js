@@ -16,6 +16,7 @@ module.exports = async (accountInfo, sessionId, id, value, socketServer, callbac
     try {
         await setHealth(id, value)
         socketServer.to(sessionId.toString()).emit("update-health", id, value)
+        socketServer.to(sessionId.toString()).emit("modify-blueprint", id)
 
         callback(true)
     } catch (error) {

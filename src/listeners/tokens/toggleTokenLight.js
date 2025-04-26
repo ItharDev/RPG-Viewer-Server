@@ -16,6 +16,7 @@ module.exports = async (accountInfo, sessionId, id, enabled, socketServer, callb
     try {
         await toggleLight(id, enabled)
         socketServer.to(sessionId.toString()).emit("toggle-token-light", id, enabled)
+        socketServer.to(sessionId.toString()).emit("modify-blueprint", id)
 
         callback(true)
     } catch (error) {

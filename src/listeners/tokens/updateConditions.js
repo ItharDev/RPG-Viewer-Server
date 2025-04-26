@@ -16,6 +16,7 @@ module.exports = async (accountInfo, sessionId, id, conditions, socketServer, ca
     try {
         await setConditions(id, conditions)
         socketServer.to(sessionId.toString()).emit("update-conditions", id, conditions)
+        socketServer.to(sessionId.toString()).emit("modify-blueprint", id)
 
         callback(true)
     } catch (error) {

@@ -16,6 +16,7 @@ module.exports = async (accountInfo, sessionId, id, value, socketServer, callbac
     try {
         await setElevation(id, value)
         socketServer.to(sessionId.toString()).emit("update-elevation", id, value)
+        socketServer.to(sessionId.toString()).emit("modify-blueprint", id)
 
         callback(true)
     } catch (error) {
