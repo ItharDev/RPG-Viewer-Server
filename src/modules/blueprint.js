@@ -132,7 +132,6 @@ module.exports = {
         return new Promise(async (resolve, reject) => {
             await prepareConnection()
 
-            console.log(id)
             if (imageBuffer) {
                 await networking.modifyFile(data.image, -1).then(async () => {
                     data.image = new ObjectId()
@@ -194,7 +193,8 @@ module.exports = {
                             visible: blueprint.visible,
                             permissions: blueprint.permissions,
                             type: blueprint.type,
-                            name: blueprint.name
+                            name: blueprint.name,
+                            effect: blueprint.effect
                         }
                     },
                     { new: true }

@@ -72,6 +72,11 @@ const modifyLight = require("./listeners/lights/modifyLight")
 const removeLight = require("./listeners/lights/removeLight")
 const modifyLighting = require("./listeners/lights/modifyLighting")
 
+const createEffect = require("./listeners/effects/createEffect")
+const getEffect = require("./listeners/effects/getEffect")
+const modifyEffect = require("./listeners/effects/modifyEffect")
+const removeEffect = require("./listeners/effects/removeEffect")
+
 const getToken = require("./listeners/tokens/getToken")
 const createToken = require("./listeners/tokens/createToken")
 const moveToken = require("./listeners/tokens/moveToken")
@@ -233,6 +238,11 @@ io.on("connection", (socket) => {
     socket.on("toggle-light", (id, enabled, callback) => modifyLight.toggle(accountInfo, sessionInfo.id, sessionInfo.scene, ObjectId(id), enabled, io, callback))
     socket.on("remove-light", (id, callback) => removeLight.light(accountInfo, sessionInfo.id, sessionInfo.scene, ObjectId(id), io, callback))
     socket.on("modify-lighting", (data, callback) => modifyLighting(accountInfo, sessionInfo.id, sessionInfo.scene, JSON.parse(data), io, callback))
+
+    socket.on("get-effect", (id, callback) => getEffect(accountInfo, ObjectId(id), callback))
+    socket.on("create-effect", (data, imageBuffer, callback) => createEffect(accountInfo, sessionInfo.id, JSON.parse(data), imageBuffer, io, callback))
+    socket.on("modify-effect", (id, data, imageBuffer, callback) => modifyEffect(accountInfo, sessionInfo.id, ObjectId(id), JSON.parse(data), imageBuffer, io, callback))
+    socket.on("remove-effect", (id, callback) => removeEffect(accountInfo, sessionInfo.id, ObjectId(id), io, callback))
 
     socket.on("create-preset", (data, callback) => createLight.preset(accountInfo, sessionInfo.id, JSON.parse(data), io, callback))
     socket.on("modify-preset", (id, data, callback) => modifyLight.preset(accountInfo, sessionInfo.id, ObjectId(id), JSON.parse(data), io, callback))

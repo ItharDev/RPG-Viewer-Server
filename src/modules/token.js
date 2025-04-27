@@ -202,7 +202,8 @@ module.exports = {
                     visible: data.visible,
                     permissions: data.permissions,
                     type: data.type,
-                    name: data.name
+                    name: data.name,
+                    effect: data.effect
                 }
             }).exec()
             if (!tokens) {

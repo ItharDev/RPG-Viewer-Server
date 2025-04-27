@@ -22,6 +22,7 @@ module.exports = async (accountInfo, sessionInfo, socket, sessionId, callback) =
         sessionInfo.scene = model.state.scene
         sessionInfo.users = model.users
         sessionInfo.presets = model.presets
+        sessionInfo.effects = model.effects
         sessionInfo.background = model.background
 
         socket.join(sessionId.toString())

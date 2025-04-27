@@ -24,6 +24,11 @@ const blueprintModel = model("blueprints", new Schema({
     image: ObjectId,
     art: {},
     synced: Boolean,
+    health: Number,
+    elevation: Number,
+    conditions: Number,
+    lightEnabled: Boolean,
+    effect: ObjectId | null
 }))
 
 const tokenModel = model("tokens", new Schema({
@@ -61,8 +66,29 @@ const tokenModel = model("tokens", new Schema({
     lightRotation: Number,
     lightEnabled: Boolean,
     teleportProtection: Boolean,
-    parentInstance: ObjectId
+    parentInstance: ObjectId,
+    effect: ObjectId | null
 }))
+
+const effectModel = model("effects", new Schema({
+    name: String,
+    image: ObjectId,
+    overTokens: Boolean,
+    radius: Number,
+    animation: {
+        type: { type: Number },
+        pulseFrequency: Number,
+        pulseStrength: Number,
+        rotationSpeed: Number,
+    },
+    color: {
+        r: Number,
+        g: Number,
+        b: Number,
+        a: Number
+    }
+}))
+
 
 const lightModel = model("lights", new Schema({
     name: String,
@@ -191,6 +217,7 @@ const sessionModel = model("sessions", new Schema({
     users: Array(ObjectId),
     invites: Array(ObjectId),
     presets: Array(ObjectId),
+    effects: Array(ObjectId),
     state: {
         scene: ObjectId,
         synced: Boolean
@@ -240,5 +267,6 @@ module.exports = {
     fileModel,
     noteModel,
     journalModel,
-    lightModel
+    lightModel,
+    effectModel
 }
