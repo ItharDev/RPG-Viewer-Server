@@ -1,6 +1,6 @@
 # RPG Viewer Server
 
-This server is intended to be used alongside the [RPG Viewer frontend](https://github.com/ItharDev/RPG-Viewer-Client)
+This server is intended to be used alongside the [RPG Viewer Client](https://github.com/ItharDev/RPG-Viewer-Client)
 
 ## Table of Contents
 
