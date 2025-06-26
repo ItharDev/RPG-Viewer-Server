@@ -1,96 +1,52 @@
 # RPG Viewer Server
 
-## Description
+This server is intended to be used alongside the [RPG Viewer frontend](https://github.com/ItharDev/RPG-Viewer-Client)
 
-RPG Viewer's official backend server
+## Table of Contents
 
-# TODO
-- Logging levels
-- Cleanup modules
-- Documentation
-- Docker configuration
-    - compose
-    - nvmrc
-- Fix schema names
+- [RPG Viewer Server](#rpg-viewer-server)
+  - [Table of Contents](#table-of-contents)
+  - [Setup Guide](#setup-guide)
+  - [Important Note](#important-note)
+  - [Port Forwarding (If Running Locally)](#port-forwarding-if-running-locally)
 
-## Events
-- [x] Download image
-- [x] Disconnect
-- [x] Accounts
-  - [x] Fetch
-  - [x] Register
-  - [x] Sign in
-  - [x] Sign out
-- [x] Licences
-  - [x] Validate
-  - [x] Fetch
-  - [x] Remove
-- [x] Sessions
-  - [x] Create
-  - [x] Join
-  - [x] Leave
-- [ ] Tokens
-  - [ ] Fetch (single & multiple)
-  - [ ] Create
-  - [ ] Move
-  - [ ] Modify
-  - [ ] Remove
-  - [ ] Visibility
-  - [ ] Elevation 
-  - [ ] Conditions
-  - [ ] Rotation
-  - [ ] Locking
-  - [ ] Health
-- [x] State
-- [x] Walls
-  - [x] Create
-  - [x] Modify
-  - [x] Remove
-- [ ] Lighting
-  - [ ] Create
-  - [ ] Modify
-  - [ ] Remove
-  - [ ] Config settings
-- [ ] Presets
-  - [ ] Create
-  - [ ] Modify
-  - [ ] Remove
-  - [ ] Fetch (single & multiple)
-- [x] Ping
-  - [x] Ping
-  - [x] Start pointer
-  - [x] Update pointer
-  - [x] Stop pointer
-- [ ] Initiative
-- [x] Scenes
-  - [x] Fetch (single & multiple)
-  - [x] Create (scene & folder)
-  - [x] Rename (scene & folder)
-  - [x] Remove (scene & folder)
-  - [x] Move (scene & folder)
-- [ ] Blueprints
-  - [ ] Fetch (single & multiple)
-  - [ ] Create (blueprint & folder)
-  - [ ] Modify blueprint
-  - [ ] Rename folder
-  - [ ] Remove (blueprint & folder)
-  - [ ] Move (blueprint & folder)
-  - [ ] Update permissions
-  - [ ] Refresh permissions
-- [ ] Notes
-  - [ ] Fetch (single & multiple)
-  - [ ] Create
-  - [ ] Modify
-  - [ ] Remove
-  - [ ] Move
-  - [ ] Set as public / private
-  - [ ] Show to others
-- [ ] Journals
-  - [ ] Fetch (single & multiple)
-  - [ ] Create (journal & folder)
-  - [ ] Modify journal
-  - [ ] Rename folder
-  - [ ] Remove (journal & folder)
-  - [ ] Move (journal & folder)
-  - [ ] Update collaborators
-  - [ ] Refresh collaborators
+## Setup Guide
+
+Follow these steps to set up the RPG Viewer Server:
+
+1. **MongoDB Setup**
+  - Option 1: [Install MongoDB locally](https://docs.mongodb.com/manual/installation/) and create a new database.
+  - Option 2: Use an existing MongoDB instance (local or cloud, e.g., [MongoDB Atlas](https://www.mongodb.com/atlas)).
+
+2. **Configure Environment Variables**
+  - Copy the `.env.example` file to `.env` in the project root.
+  - Update the values in `.env` as needed:
+    - `MONGODB_URL`: your MongoDB connection string.
+    - `PORT`: the port number for the server (e.g., `3000`).
+
+3. **Install Dependencies**
+  ```bash
+  npm install
+  ```
+
+4. **Start the Server**
+  ```bash
+  npm start
+  ```
+
+The server should now be running and connected to your MongoDB database.
+
+## Important Note
+
+Make sure to note the server's public IP address and the port number you configured. You will need these details when setting up the frontend application to connect to the server.
+
+## Port Forwarding (If Running Locally)
+
+If you are running the server on your local machine and want to access it from other devices or over the internet, you may need to set up port forwarding on your router:
+
+1. Log in to your router's admin panel.
+2. Locate the port forwarding section.
+3. Forward the port you configured for the server (e.g., `3000`) to your local machine's IP address.
+4. Save the changes and restart your router if necessary.
+
+**Note:** Exposing your server to the internet can have security implications. Ensure you understand the risks and consider using a firewall or VPN for additional protection.
