@@ -1,23 +1,22 @@
 const { MongoClient, GridFSBucket } = require("mongodb")
 const { fileModel } = require("../schemas")
 
-let networking = {}
+require("dotenv").config()
 
-let db
-let gfs
+// Server configuration (use .env file)
+const url = process.env.DATABASE_URL
+
+const networking = {}
 
 networking.startDatabase = async () => {
-    const client = await new MongoClient("mongodb://127.0.0.1:27017").connect()
-
-    db = client.db("rpg-viewer")
-    gfs = new GridFSBucket(db)
-    networking.db = db
-    networking.gfs = gfs
+    const client = await new MongoClient(url).connect()
+    networking.db = client.db()
+    networking.gfs = new GridFSBucket(networking.db)
 }
 
 networking.uploadFile = (id, base64) => {
     return new Promise(async (resolve, reject) => {
-        let stream = gfs.openUploadStreamWithId(id, id.toString())
+        let stream = networking.gfs.openUploadStreamWithId(id, id.toString())
 
         stream.write(Buffer.from(base64, "base64"), async (callback) => {
             stream.end()
@@ -38,12 +37,12 @@ networking.uploadFile = (id, base64) => {
 networking.downloadFile = (id) => {
     return new Promise(async (resolve, reject) => {
         let exists = false
-        const cursor = await gfs.find({ _id: id })
+        const cursor = await networking.gfs.find({ _id: id })
         await cursor.forEach(doc => exists = true);
 
         if (!exists) reject("File not found")
         else {
-            let stream = gfs.openDownloadStream(id)
+            let stream = networking.gfs.openDownloadStream(id)
             const chunks = []
 
             stream.on("readable", () => {
@@ -76,11 +75,11 @@ networking.modifyFile = (id, increment) => {
 networking.deleteFile = async (id) => {
     return new Promise(async (resolve, reject) => {
         let exists = false
-        const cursor = await gfs.find({ _id: id })
+        const cursor = await networking.gfs.find({ _id: id })
         await cursor.forEach(doc => exists = true);
 
         if (!exists) resolve()
-        else await gfs.delete(id, (callback) => {
+        else await networking.gfs.delete(id, (callback) => {
             if (callback) reject(callback)
             resolve()
         })

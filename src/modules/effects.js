@@ -1,28 +1,7 @@
 const { sessionModel, effectModel } = require("../schemas")
 const { ObjectId } = require("mongodb")
-const { connect } = require("mongoose")
+const { prepareConnection } = require("../database")
 const { uploadFile, modifyFile } = require("./networking")
-
-async function prepareConnection() {
-    return new Promise((resolve, reject) => {
-        if (global.databaseConnected !== true) {
-            connect("mongodb://127.0.0.1:27017/rpg-viewer-dev").then((db) => {
-                global.databaseConnected = true
-                db.connection.once("error", (err) => {
-                    console.error("Mongoose error:", err)
-                    setTimeout(async () => {
-                        console.warn("Trying to reconnect...")
-                        await prepareConnection()
-                        resolve()
-                    }, 5000)
-                })
-                resolve()
-            }).catch((...err) => reject(...err))
-        } else {
-            resolve()
-        }
-    })
-}
 
 module.exports = {
     /**
