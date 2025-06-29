@@ -5,7 +5,7 @@ require("dotenv").config()
 // Server configuration (use .env file)
 const url = process.env.DATABASE_URL
 
-export async function prepareConnection() {
+async function prepareConnection() {
     return new Promise((resolve, reject) => {
         if (global.databaseConnected !== true) {
             connect(url).then((db) => {
@@ -24,4 +24,8 @@ export async function prepareConnection() {
             resolve()
         }
     })
+}
+
+moduile.exports = {
+    prepareConnection
 }
