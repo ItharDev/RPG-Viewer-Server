@@ -26,6 +26,6 @@ async function prepareConnection() {
     })
 }
 
-moduile.exports = {
+module.exports = {
     prepareConnection
 }
