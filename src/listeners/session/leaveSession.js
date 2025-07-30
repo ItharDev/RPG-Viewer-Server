@@ -1,5 +1,6 @@
 const { Server, Socket } = require("socket.io")
 const { ObjectId } = require("mongodb")
+const { gameStates } = require("../../server")
 
 /**
  * leave-session packet listener
@@ -14,9 +15,11 @@ module.exports = async (accountInfo, sessionInfo, socket, socketServer, callback
     try {
         if (!socket.rooms.has(sessionInfo.id.toString())) throw new Error("Client not connected to any game session")
 
-        socket.to(sessionInfo.id.toString()).emit("user-disconnected", username)
+        socket.to(sessionInfo.id.toString()).emit("user-disconnected", accountInfo.username)
         socket.leave(sessionInfo.id.toString())
         if (sessionInfo.isMaster) {
+            delete gameStates[sessionInfo.id.toString()]
+            socketServer.to(sessionInfo.id.toString()).emit("pause-game", false)
             socketServer.to(sessionInfo.id.toString()).emit("set-state", "", false)
         }
 

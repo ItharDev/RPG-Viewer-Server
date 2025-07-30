@@ -115,6 +115,8 @@ require("dotenv").config()
 const port = process.env.PORT
 const maxBuffer = process.env.MAX_BUFFER
 
+export const gameStates = {}
+
 const httpServer = createServer()
 const io = socketIo(httpServer, {
     maxHttpBufferSize: maxBuffer
@@ -293,7 +295,12 @@ io.on("connection", (socket) => {
     })
 
     socket.on("change-scene-image", (buffer, callback) => changeImage(accountInfo, sessionInfo.id, sessionInfo.scene, buffer, io, callback))
-
+    socket.on("pause-game", (state, callback) => {
+        if (!gameStates[sessionInfo.id]) gameStates[sessionInfo.id] = {}
+        gameStates[sessionInfo.id].paused = state
+        io.to(sessionInfo.id.toString()).emit("pause-game", state)
+        callback(true)
+    })
 })
 
 // Start everything
