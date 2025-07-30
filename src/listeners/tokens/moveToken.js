@@ -6,21 +6,21 @@ const { getGameState } = require("../../gameStates")
 /**
  * Move-token packet listener
  * @param {{ uid: ObjectId, username: string }} accountInfo
- * @param {{ isMaster: boolean }} sessionInfo
+ * @param {{ isMaster: boolean, sessionId: string }} sessionInfo
  * @param {ObjectId} sessionId
  * @param {{}} data
  * @param {Server} socketServer
  * @param {() => {}} callback
 */
-module.exports = async (accountInfo, sessionInfo, sessionId, data, socketServer, callback) => {
+module.exports = async (accountInfo, sessionInfo, data, socketServer, callback) => {
     console.debug(`[ ${accountInfo.username} (${accountInfo.uid}) ]`, "Package: move-token")
     try {
-        if (getGameState(sessionId.toString())?.paused && !sessionInfo.isMaster) {
+        if (getGameState(sessionInfo.sessionId)?.paused && !sessionInfo.isMaster) {
             return callback(false, "Game is paused")
         }
 
         await move(ObjectId(data.id), data.points[data.points.length - 1])
-        socketServer.to(sessionId.toString()).emit("move-token", data.id, data)
+        socketServer.to(sessionInfo.sessionId.toString()).emit("move-token", data.id, data)
         callback(true)
     } catch (error) {
         console.error("Failed to move token", error)
