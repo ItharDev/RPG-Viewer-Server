@@ -15,7 +15,7 @@ const { getGameState } = require("../../gameStates")
 module.exports = async (accountInfo, sessionInfo, data, socketServer, callback) => {
     console.debug(`[ ${accountInfo.username} (${accountInfo.uid}) ]`, "Package: move-token")
     try {
-        if (getGameState(sessionInfo.id)?.paused && !sessionInfo.isMaster) {
+        if (getGameState(sessionInfo.id)?.isPaused && !sessionInfo.isMaster) {
             return callback(false, "Game is paused")
         }
 

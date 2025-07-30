@@ -5,6 +5,9 @@ module.exports = {
         if (gameStates[sessionId]) {
             gameStates[sessionId].isPaused = state
         }
+        else {
+            gameStates[sessionId] = { isPaused: state }
+        }
     },
     getGameState: (sessionId) => {
         return gameStates[sessionId] || null
