@@ -1,6 +1,7 @@
 const { ObjectId } = require("mongodb")
 const { join } = require("../../modules/session")
 const { Socket } = require("socket.io")
+const { addGameState } = require("../../gameStatets")
 
 /**
  * Join-session packet listener
@@ -14,6 +15,8 @@ module.exports = async (accountInfo, sessionInfo, socket, sessionId, callback) =
     console.debug(`[ ${accountInfo.username} (${accountInfo.uid}) ]`, "Package: join-session")
     try {
         const model = await join(ObjectId(sessionId), socket, accountInfo.username)
+
+        addGameState(sessionId.toString(), { paused: false })
 
         sessionInfo.id = model._id
         sessionInfo.master = model.master
