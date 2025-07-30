@@ -1,7 +1,7 @@
 const { ObjectId } = require("mongodb")
 const { move } = require("../../modules/token")
 const { Server } = require("socket.io")
-const { getGameState } = require("../../gameStatets")
+const { getGameState } = require("../../gameStates")
 
 /**
  * Move-token packet listener
@@ -18,7 +18,7 @@ module.exports = async (accountInfo, sessionInfo, sessionId, data, socketServer,
         if (getGameState(sessionId.toString())?.paused && !sessionInfo.isMaster) {
             return callback(false, "Game is paused")
         }
-        
+
         await move(ObjectId(data.id), data.points[data.points.length - 1])
         socketServer.to(sessionId.toString()).emit("move-token", data.id, data)
         callback(true)

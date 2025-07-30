@@ -1,7 +1,7 @@
 const { ObjectId } = require("mongodb")
 const { join } = require("../../modules/session")
 const { Socket } = require("socket.io")
-const { addGameState } = require("../../gameStatets")
+const { addGameState } = require("../../gameStates")
 
 /**
  * Join-session packet listener

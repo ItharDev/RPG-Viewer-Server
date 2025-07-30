@@ -1,6 +1,6 @@
 const { Server, Socket } = require("socket.io")
 const { ObjectId } = require("mongodb")
-const { removeGameState } = require("../../gameStatets")
+const { removeGameState } = require("../../gameStates")
 
 /**
  * leave-session packet listener
