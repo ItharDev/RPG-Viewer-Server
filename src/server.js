@@ -115,7 +115,7 @@ require("dotenv").config()
 const port = process.env.PORT
 const maxBuffer = process.env.MAX_BUFFER
 
-export const gameStates = {}
+const gameStates = {}
 
 const httpServer = createServer()
 const io = socketIo(httpServer, {
@@ -313,3 +313,5 @@ async function main() {
     }
 }
 main()
+
+module.exports = { gameStates }
