@@ -1,7 +1,7 @@
 const { ObjectId } = require("mongodb")
 const { move } = require("../../modules/token")
 const { Server } = require("socket.io")
-const { gameStates } = require("../../server")
+const { getGameState } = require("../../gameStatets")
 
 /**
  * Move-token packet listener
@@ -14,7 +14,7 @@ const { gameStates } = require("../../server")
 */
 module.exports = async (accountInfo, sessionInfo, sessionId, data, socketServer, callback) => {
     console.debug(`[ ${accountInfo.username} (${accountInfo.uid}) ]`, "Package: move-token")
-    if (gameStates[sessionId.toString()]?.paused && !sessionInfo.isMaster) {
+    if (getGameState(sessionId.toString())?.paused && !sessionInfo.isMaster) {
         return callback(false, "Game is paused")
     }
 

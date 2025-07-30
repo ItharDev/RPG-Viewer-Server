@@ -1,6 +1,6 @@
 const { Server, Socket } = require("socket.io")
 const { ObjectId } = require("mongodb")
-const { gameStates } = require("../../server")
+const { removeGameState } = require("../../gameStatets")
 
 /**
  * leave-session packet listener
@@ -18,7 +18,7 @@ module.exports = async (accountInfo, sessionInfo, socket, socketServer, callback
         socket.to(sessionInfo.id.toString()).emit("user-disconnected", accountInfo.username)
         socket.leave(sessionInfo.id.toString())
         if (sessionInfo.isMaster) {
-            delete gameStates[sessionInfo.id.toString()]
+            removeGameState(sessionInfo.id.toString())
             socketServer.to(sessionInfo.id.toString()).emit("pause-game", false)
             socketServer.to(sessionInfo.id.toString()).emit("set-state", "", false)
         }

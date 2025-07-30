@@ -2,6 +2,7 @@
 const { createServer } = require("http")
 const { ObjectId } = require("mongodb")
 const socketIo = require("socket.io")
+const { pauseGame } = require("./utils/gameStates")
 
 // Modules
 const networking = require("./modules/networking")
@@ -114,8 +115,6 @@ require("dotenv").config()
 // Server configuration (use .env file)
 const port = process.env.PORT
 const maxBuffer = process.env.MAX_BUFFER
-
-const gameStates = {}
 
 const httpServer = createServer()
 const io = socketIo(httpServer, {
@@ -296,8 +295,7 @@ io.on("connection", (socket) => {
 
     socket.on("change-scene-image", (buffer, callback) => changeImage(accountInfo, sessionInfo.id, sessionInfo.scene, buffer, io, callback))
     socket.on("pause-game", (state, callback) => {
-        if (!gameStates[sessionInfo.id]) gameStates[sessionInfo.id] = {}
-        gameStates[sessionInfo.id].paused = state
+        pauseGame(sessionInfo.id, state)
         io.to(sessionInfo.id.toString()).emit("pause-game", state)
         callback(true)
     })
@@ -313,5 +311,3 @@ async function main() {
     }
 }
 main()
-
-module.exports = { gameStates }
