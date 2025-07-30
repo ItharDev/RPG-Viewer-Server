@@ -2,7 +2,7 @@
 const { createServer } = require("http")
 const { ObjectId } = require("mongodb")
 const socketIo = require("socket.io")
-const { pauseGame } = require("./utils/gameStates")
+const { pauseGame } = require("./gameStates")
 
 // Modules
 const networking = require("./modules/networking")
